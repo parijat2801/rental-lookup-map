@@ -1,39 +1,55 @@
 # Rental Lookup Phase 1: NoBroker + Location Scoring
 
-**Goal:** Fetch rental listings from NoBroker's undocumented JSON API for central Bangalore (budget <= 60K, 2-3 BHK, unfurnished), score each listing against 7 cat-owner criteria using OpenStreetMap geospatial data, and output a ranked shortlist as JSON/CSV.
+**Goal:** Fetch rental listings from NoBroker for central Bangalore (budget <= 60K, 2-3 BHK), score each against cat-owner criteria using OpenStreetMap data, output a ranked shortlist. One-time tool — run it, find a house, done.
+
+## Spike 0: Validate before building
+
+0. Before writing any code, capture a real NoBroker API request from browser DevTools (Network tab → filter XHR → search for a 2BHK in Indiranagar → copy the request as cURL). Save the sanitized request and one sample response to `data/spike/nobroker-sample-request.txt` and `data/spike/nobroker-sample-response.json`. This tells us the real endpoint, params, headers, and response shape — everything in item 2 below is then adjusted to match reality. Also verify Bangalore metro OSM tags: run a quick Overpass query for `railway=station` within Bangalore bbox to see how Namma Metro stations are actually tagged.
 
 ## Design
 
-1. The project is a Python CLI (`python -m rental_lookup`) with three modules: `nobroker.py` (fetch listings), `location.py` (geospatial scoring), `scorer.py` (rank and output). Dependencies: `httpx` for async HTTP (NoBroker API returns paginated JSON, async lets us fetch pages concurrently), `osmnx` for OpenStreetMap queries (5000+ stars, actively maintained, returns GeoDataFrames — the gold standard for querying parks/lakes/metro by coordinates), and `pandas` for tabular output. No web framework, no database — plain CLI that writes `output/results.csv` and `output/results.json`.
+1. Python CLI (`python -m rental_lookup`), four modules: `nobroker.py` (fetch), `geo.py` (location data), `scorer.py` (rank), `run.py` (orchestrate + output). Dependencies: `httpx` (sync — no async until we know the API tolerates concurrency), `osmnx`, `geopandas`, `geopy`, `pandas`, `tqdm`. Writes `output/results.csv`. No config files, no YAML, no CLI args — hardcode everything for Bangalore/60K/2-3BHK in constants at top of each module. Change a constant, re-run.
 
-2. `nobroker.py` hits `GET https://www.nobroker.in/api/v3/multi/property/RENT/filter` with query params: `city=bangalore`, `rent=0-60000`, `type=BHK2,BHK3`, `furnishing=NOT_FURNISHED,SEMI_FURNISHED`, `buildingType=AP,IH` (apartments + independent houses), `pageNo=N`, `radius=5`. The `searchParam` is a base64-encoded JSON blob containing lat/lng centroids for target neighborhoods (Indiranagar: 12.9716/77.6412, Jayanagar: 12.9250/77.5938, Malleshwaram: 12.9963/77.5713, Basavanagudi: 12.9416/77.5713, Ulsoor: 12.9812/77.6200, Rajajinagar: 12.9900/77.5525); we fire one search per neighborhood. Headers mimic a browser (`User-Agent`, `Accept: application/json`); cookies are optional but improve reliability — the fetcher logs a warning if a 403 is returned and retries once with a fresh session. Each response's `data` array contains objects with `rent`, `deposit`, `latitude`, `longitude`, `propertySize`, `furnishing`, `parking`, `powerBackup`, `balconyCount`, `floorNo`, `society`, `locality`, `photoUrls`, `propertyTitle`, `detailUrl`. We deduplicate by `propertyId` across neighborhoods and store as a list of `Listing` dataclass instances.
+2. `nobroker.py` hits NoBroker's undocumented listing endpoint (exact URL/params/headers determined by Spike 0). We search 6 neighborhoods by lat/lng centroid: Indiranagar (12.9716, 77.6412), Jayanagar (12.9250, 77.5938), Malleshwaram (12.9963, 77.5713), Basavanagudi (12.9416, 77.5713), Ulsoor (12.9812, 77.6200), Rajajinagar (12.9900, 77.5525). Paginates until empty page. Saves raw JSON responses to `data/raw/` (so we can re-score without re-fetching). Parses each listing into a `Listing` dataclass, deduplicates by `propertyId`, skips listings missing lat/lng. If a 403 hits, prints the cURL equivalent so we can manually grab fresh cookies.
 
-3. `location.py` takes a `(lat, lng)` and uses `osmnx.features.features_from_point()` to query three categories within configurable radii: parks (`{"leisure": "park"}`, 1km radius), water bodies (`{"natural": "water"}`, 1.5km radius — covers lakes), and metro stations (`{"railway": "station", "station": "subway"}`, 1.5km radius — Namma Metro is tagged as subway in OSM). Each query returns a GeoDataFrame; we compute haversine distance from the listing to the nearest feature in each category using `geopy.distance.distance()`. Returns a `LocationScore` dataclass: `nearest_park_m`, `nearest_lake_m`, `nearest_metro_m`, `park_count_1km`, `lake_count_1500m`. OSMnx caches aggressively by default (filesystem cache), so repeated queries for nearby listings are fast.
+3. `geo.py` does NOT query Overpass per listing. Instead, it bulk-fetches three GeoDataFrames for all of central Bangalore (bbox: 12.90-13.05 lat, 77.50-77.70 lng) in exactly 3 Overpass calls: green spaces (`{"leisure": ["park", "garden"], "landuse": "recreation_ground"}`), water bodies (`{"natural": "water", "water": "lake"}`), metro/rail stations (`{"railway": "station", "public_transport": "station"}`). Caches results to `data/cache/parks.gpkg`, `lakes.gpkg`, `metro.gpkg` (GeoPackage files — reload on next run without hitting Overpass). For each listing, computes nearest-feature distance using geopandas spatial index (`sindex.nearest`) on projected CRS (UTM 43N for Bangalore) — proper geometry distance, not centroid-to-centroid haversine.
 
-4. `scorer.py` combines NoBroker listing fields with location scores into a weighted total (0-100). Weights and thresholds: **metro** (25pts: <500m=25, <1000m=20, <1500m=10, else 0), **greenery** (20pts: park <500m=15 + lake <1500m=5, diminishing with distance), **cat safety** (20pts: gated community/society name present=10, has balcony grills or ground/1st floor=5, parking=covered adds 5 — proxy for well-maintained building), **spacious** (15pts: >1000sqft=15, >800sqft=10, else 5), **power backup** (10pts: field truthy=10), **parking** (10pts: car parking available=10). Wall color cannot be scored from data (NoBroker doesn't expose it) — we flag this as "verify in photos" in output. The scorer sorts descending by total score, writes top-50 to CSV (with columns: score, rent, deposit, sqft, locality, society, metro_dist, park_dist, lake_dist, parking, power_backup, url) and full results to JSON.
+4. `scorer.py` applies hard filters first, then scores survivors. **Hard filters** (listing is dropped if any fail): rent <= 60000, sqft >= 700 (catches mismarked listings), has lat/lng. **Scoring** (0-100): **pet compatibility** (25pts: listing description/title contains "pet" or "pet friendly"=15, gated community/society name present=10), **greenery** (20pts: park <500m=15 + lake <1500m=5, linear decay with distance), **metro** (15pts: <500m=15, <1000m=12, <1500m=8, else 0), **space** (15pts: >1200sqft=15, >1000sqft=12, >800sqft=8, else 5), **power backup** (10pts: field truthy=10, missing=0), **parking** (10pts: car parking present=10), **floor safety** (5pts: ground or 1st floor=5 — easier for cat netting, less balcony risk). Wall color and balcony grills: can't score from data, added as "CHECK MANUALLY" columns. Unknowns score 0, not negative — we're ranking, not rejecting. Outputs sorted CSV with: score, rent, deposit, sqft, locality, society, floor, metro_dist_m, park_dist_m, lake_dist_m, parking, power_backup, pet_friendly_signal, nobroker_url. Prints top-10 to terminal.
 
-5. `config.py` holds all tunable constants: neighborhood centroids, rent range, BHK types, scoring weights, distance thresholds, output paths. A `config.yaml` override is optional (loaded with PyYAML if present, else defaults). This means re-running for different cities or budgets requires zero code changes.
+5. `run.py` is the entrypoint: fetch listings → save raw → load geo data (from cache or Overpass) → score → write CSV → print summary. No error handling beyond printing what went wrong and continuing. This is a script, not a service.
 
-6. `__main__.py` orchestrates: parse CLI args (`--city`, `--budget`, `--bhk`, `--output-dir`), fetch listings from NoBroker (with progress bar via `tqdm`), score each listing's location (batched to respect Overpass API rate limits — 1 req/sec, though OSMnx cache means most hits are local after the first run), merge scores, sort, write output, print top-10 summary to stdout.
+## Spike 0 execution plan
 
-7. Error handling: NoBroker 403/429 → exponential backoff (3 retries, 2s/4s/8s), then skip that neighborhood with a warning. Overpass timeout → retry once, then score that listing's location as 0 with a flag. Empty results for a neighborhood → log and continue. All errors surface to stderr with context, never silently swallowed.
+Run these in Claude Code before writing any module code:
+- Open NoBroker in Chrome (via claude-in-chrome), search 2BHK rent Indiranagar Bangalore < 60K, capture the XHR request
+- Run an Overpass query: `[out:json];area["name"="Bengaluru"]->.a;node["railway"="station"](area.a);out;` to see how metro is tagged
+- Document findings, adjust item 2 and 3 tag assumptions
 
 ## Files
 
 | File | What it does |
 |------|-------------|
 | `rental_lookup/__init__.py` | Package marker |
-| `rental_lookup/__main__.py` | CLI entrypoint, orchestration |
-| `rental_lookup/nobroker.py` | NoBroker API client — fetch, paginate, deduplicate |
-| `rental_lookup/location.py` | OSMnx queries — parks, lakes, metro distance |
-| `rental_lookup/scorer.py` | Weighted scoring, CSV/JSON output |
-| `rental_lookup/config.py` | Constants, defaults, YAML override loader |
+| `rental_lookup/run.py` | Entrypoint — orchestrate fetch → geo → score → output |
+| `rental_lookup/nobroker.py` | NoBroker fetcher — paginate, parse, save raw JSON |
+| `rental_lookup/geo.py` | Bulk OSM fetch, cache, spatial nearest-neighbor |
+| `rental_lookup/scorer.py` | Hard filters, weighted scoring, CSV output |
 | `rental_lookup/models.py` | `Listing`, `LocationScore`, `ScoredListing` dataclasses |
-| `config.yaml` | Optional user overrides (neighborhoods, weights, budget) |
-| `pyproject.toml` | Dependencies: httpx, osmnx, geopy, pandas, tqdm, pyyaml |
-| `output/` | Generated results (gitignored) |
-| `tests/test_scorer.py` | Unit tests for scoring logic |
-| `tests/test_location.py` | Unit tests for distance calculations (mocked OSMnx) |
-| `tests/test_nobroker.py` | Unit tests for response parsing, dedup (mocked HTTP) |
+| `pyproject.toml` | Dependencies |
+| `data/raw/` | Raw NoBroker JSON responses (gitignored) |
+| `data/cache/` | Cached GeoPackage files (gitignored) |
+| `data/spike/` | Spike 0 artifacts |
+| `output/results.csv` | Final ranked output |
 
-**What does NOT change:** No web framework, no database, no frontend, no MCP server (Phase 2 concern). No Selenium/Playwright — NoBroker is pure JSON API.
+**Tests** (strict TDD — test first, watch it fail, implement, watch it pass):
+
+| File | What it tests |
+|------|-------------|
+| `tests/test_nobroker.py` | Response parsing, dedup by propertyId, skip-if-no-latlng, pagination assembly. Uses saved `data/spike/nobroker-sample-response.json` as fixture — no mocking, real data shape. |
+| `tests/test_geo.py` | Nearest-feature distance calculation given a small synthetic GeoDataFrame (3 parks, 2 lakes, 2 metro stations with known coords). Verifies distances are in meters, correct nearest is picked, empty GeoDataFrame returns None. Does NOT hit Overpass — constructs GeoDataFrames in-memory. |
+| `tests/test_scorer.py` | Hard filter rejects (over budget, too small, no latlng). Scoring arithmetic: a listing with park 200m away scores higher than one 800m away. Pet-friendly text signal scores 15pts. Unknown power_backup scores 0 not negative. Full ranking: given 3 listings with known attributes, verify sort order. |
+| `tests/conftest.py` | Shared fixtures: sample listing dicts, sample GeoDataFrames. |
+
+Test runner: `pytest`. Added to `pyproject.toml` as dev dependency.
+
+**What does NOT change:** No config files, no async, no web framework, no database. Retries are "print error and move on."
