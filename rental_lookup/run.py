@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from rental_lookup.geo import compute_location_scores, fetch_osm_features
 from rental_lookup.models import Listing, LocationScore
-from rental_lookup.nobroker import fetch_all
+from rental_lookup.nobroker import fetch_all, load_from_raw
 from rental_lookup.scorer import passes_hard_filters, rank_listings, write_csv
 
 DATA_DIR = Path("data")
@@ -14,9 +14,10 @@ OUTPUT_DIR = Path("output")
 
 def main(cookie: str = "") -> None:
     print("=" * 60)
-    print("STEP 1: Fetching listings from NoBroker")
+    print("STEP 1: Loading listings")
     print("=" * 60)
-    listings = fetch_all(cookie=cookie, raw_dir=DATA_DIR / "raw")
+    raw_dir = DATA_DIR / "raw"
+    listings = fetch_all(cookie=cookie, raw_dir=raw_dir)
 
     print(f"\nApplying hard filters (rent <= 60K, sqft >= 700)...")
     filtered = [l for l in listings if passes_hard_filters(l)]
