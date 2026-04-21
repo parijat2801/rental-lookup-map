@@ -10,7 +10,7 @@ from rental_lookup.models import Listing
 
 NOBROKER_API = "https://www.nobroker.in/api/v3/multi/property/RENT/filter"
 CITY = "bangalore"
-RENT_RANGE = "0,70000"
+RENT_RANGE = "0,150000"
 BHK_TYPES = "BHK2,BHK3"
 
 NEIGHBORHOODS = {
@@ -38,6 +38,10 @@ NEIGHBORHOODS = {
     "Wilson Garden": {"lat": 12.9430, "lon": 77.5980, "placeId": ""},
     "Domlur": {"lat": 12.9610, "lon": 77.6387, "placeId": ""},
     "Cunningham Road": {"lat": 12.9870, "lon": 77.5920, "placeId": ""},
+    "Jayamahal": {"lat": 13.0000, "lon": 77.5920, "placeId": ""},
+    "Langford Town": {"lat": 12.9550, "lon": 77.5950, "placeId": ""},
+    "Lalbagh": {"lat": 12.9507, "lon": 77.5848, "placeId": ""},
+    "Hombegowda Nagar": {"lat": 12.9400, "lon": 77.6050, "placeId": ""},
 }
 
 
