@@ -1,6 +1,18 @@
 data/raw/
-data/cache/
+data/raw_mb/
+data/raw_prev/
+data/raw_v1/
+data/raw_v2/
+data/sample_photos/
 output/
 __pycache__/
 *.egg-info/
 .venv/
+
+# Cache - track these for GitHub Actions
+!data/cache/
+data/cache/*.gpkg
+!data/cache/photo_ratings.json
+!data/cache/stars_and_dismissals.json
+!data/cache/fake_location_ids.json
+!data/cache/detail_enrichment.json

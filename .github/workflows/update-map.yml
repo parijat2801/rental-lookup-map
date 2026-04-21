@@ -1,0 +1,67 @@
+name: Update Rental Map
+
+on:
+  schedule:
+    - cron: '30 2 * * *'  # 8am IST (2:30 UTC)
+  workflow_dispatch:  # manual trigger from Actions tab
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # need all branches
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install httpx osmnx geopandas geopy pandas tqdm shapely
+
+      - name: Fetch NoBroker listings
+        run: |
+          # Clear old raw data, fetch fresh
+          rm -rf data/raw
+          mkdir -p data/raw
+          python3 -m rental_lookup
+
+      - name: Fetch MagicBricks listings
+        run: |
+          rm -rf data/raw_mb
+          mkdir -p data/raw_mb
+          python3 -m rental_lookup.magicbricks
+
+      - name: Download stars from cloud
+        run: |
+          mkdir -p data/cache
+          curl -s -H "Accept: application/json" \
+            "https://jsonblob.com/api/jsonBlob/019db14b-45c3-7828-83e7-9ea4c00a88bc" \
+            -o data/cache/stars_and_dismissals.json || true
+          python3 -c "
+          import json
+          try:
+              with open('data/cache/stars_and_dismissals.json') as f:
+                  d = json.load(f)
+              print(f'Stars: {len(d.get(\"starred\", {}))} starred, {len(d.get(\"dismissed\", {}))} dismissed')
+          except:
+              print('No cloud stars found')
+          "
+
+      - name: Build map
+        run: python3 build_map.py
+
+      - name: Deploy to GitHub Pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout gh-pages
+          cp output/map.html index.html
+          git add index.html
+          git commit -m "Update map $(date -u +%Y-%m-%d)" || echo "No changes"
+          git push origin gh-pages
