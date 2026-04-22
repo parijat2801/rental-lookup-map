@@ -121,7 +121,7 @@ def normalize_listing(raw: dict) -> Optional[Listing]:
 
     # URL
     url_path = raw.get('url', '')
-    url = f"https://www.magicbricks.com/{url_path}" if url_path else ''
+    url = f"https://www.magicbricks.com/propertyDetails/{url_path}" if url_path else ''
 
     # Age
     age_str = raw.get('acD', '')
