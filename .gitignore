@@ -4,7 +4,8 @@ data/raw_prev/
 data/raw_v1/
 data/raw_v2/
 data/sample_photos/
-output/
+output/*
+!output/map_template.html
 __pycache__/
 *.egg-info/
 .venv/
