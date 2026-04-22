@@ -93,6 +93,7 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
     <span class="chip" data-f="noFake" onclick="toggleChip(this)">No Fake Location</span>
     <span class="chip" data-f="nbOnly" onclick="toggleChip(this)">NoBroker Only</span>
     <span class="chip" data-f="mbOnly" onclick="toggleChip(this)">MagicBricks Only</span>
+    <span class="chip" data-f="vibeOnly" onclick="toggleChip(this)">🏡 Villa Vibe</span>
     <span class="chip" data-f="starredOnly" onclick="toggleChip(this)">⭐ Starred Only</span>
     <span class="chip on" data-f="hideDismissed" onclick="toggleChip(this)">❌ Hide Dismissed</span>
   </div>
@@ -154,7 +155,7 @@ function setRankMode(mode) {
     document.getElementById('btn-value').style.borderColor = mode === 'value' ? '#2563eb' : '#ccc';
     applyAll();
 }
-var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,starredOnly:false,hideDismissed:true,prLight:false,prTrees:false,prView:false,prWalls:false,prKitchen:false,prBalcony:false,prSpacious:false,prCat:false,prClean:false,prVisit:false};
+var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,starredOnly:false,hideDismissed:true,prLight:false,prTrees:false,prView:false,prWalls:false,prKitchen:false,prBalcony:false,prSpacious:false,prCat:false,prClean:false,prVisit:false};
 
 function toggleChip(el) { chipState[el.dataset.f] = !chipState[el.dataset.f]; el.classList.toggle('on'); applyAll(); }
 var _vThresholds = null;
@@ -482,6 +483,12 @@ function applyAll() {
         if (chipState.noFake && d.fake) return false;
         if (chipState.nbOnly && d.source !== 'nb') return false;
         if (chipState.mbOnly && d.source !== 'mb') return false;
+        if (chipState.vibeOnly) {
+            var isHouse = d.bt === 'IH' || (d.society && d.society.toLowerCase().match(/villa|duplex|row house|townhouse|bungalow|independent/));
+            var isSpacious = d.sqft >= 1000;
+            if (!isHouse && !isSpacious) return false;
+            if (d.sqft < 800) return false;
+        }
         if (chipState.starredOnly && !isStarred(d.url)) return false;
         if (chipState.hideDismissed && isDismissed(d.url)) return false;
         return true;
