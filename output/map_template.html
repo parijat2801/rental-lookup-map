@@ -84,8 +84,8 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
   <div class="row" style="margin-top:8px">
     <span class="chip on" data-f="noWest" onclick="toggleChip(this)">No W/NW</span>
     <span class="chip on" data-f="hasBalc" onclick="toggleChip(this)">Has Balcony</span>
-    <span class="chip on" data-f="noStandalone" onclick="toggleChip(this)">No Standalone</span>
-    <span class="chip on" data-f="noIH" onclick="toggleChip(this)">No Ind.House</span>
+    <span class="chip" data-f="noStandalone" onclick="toggleChip(this)">No Standalone</span>
+    <span class="chip" data-f="noIH" onclick="toggleChip(this)">No Ind.House</span>
     <span class="chip on" data-f="realPhoto" onclick="toggleChip(this)">Real Photo</span>
     <span class="chip" data-f="petOnly" onclick="toggleChip(this)">Pet Friendly Only</span>
     <span class="chip" data-f="poolOnly" onclick="toggleChip(this)">Pool Only</span>
@@ -103,6 +103,7 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
     <button onclick="restoreState()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">📂 Restore</button></div>
     <button id="btn-quality" onclick="setRankMode('quality')" style="padding:4px 12px;border-radius:6px;border:1px solid #2563eb;background:#2563eb;color:white;cursor:pointer;font-size:12px">Quality</button>
     <button id="btn-value" onclick="setRankMode('value')" style="padding:4px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:12px">Value</button>
+    <button id="btn-vibe" onclick="setRankMode('vibe')" style="padding:4px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:12px">Villa Vibe</button>
     <button id="btn-deal" onclick="setRankMode('deal')" style="padding:4px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:12px">Best Deals</button>
   </div>
   
@@ -143,6 +144,9 @@ function setRankMode(mode) {
     document.getElementById('btn-quality').style.color = mode === 'quality' ? 'white' : '#333';
     document.getElementById('btn-quality').style.borderColor = mode === 'quality' ? '#2563eb' : '#ccc';
     document.getElementById('btn-value').style.background = mode === 'value' ? '#2563eb' : 'white';
+    document.getElementById('btn-vibe').style.background = mode === 'vibe' ? '#2563eb' : 'white';
+    document.getElementById('btn-vibe').style.color = mode === 'vibe' ? 'white' : '#333';
+    document.getElementById('btn-vibe').style.borderColor = mode === 'vibe' ? '#2563eb' : '#ccc';
     document.getElementById('btn-deal').style.background = mode === 'deal' ? '#2563eb' : 'white';
     document.getElementById('btn-deal').style.color = mode === 'deal' ? 'white' : '#333';
     document.getElementById('btn-deal').style.borderColor = mode === 'deal' ? '#2563eb' : '#ccc';
@@ -150,7 +154,7 @@ function setRankMode(mode) {
     document.getElementById('btn-value').style.borderColor = mode === 'value' ? '#2563eb' : '#ccc';
     applyAll();
 }
-var chipState = {noWest:true,hasBalc:true,noStandalone:true,noIH:true,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,starredOnly:false,hideDismissed:true,prLight:false,prTrees:false,prView:false,prWalls:false,prKitchen:false,prBalcony:false,prSpacious:false,prCat:false,prClean:false,prVisit:false};
+var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,starredOnly:false,hideDismissed:true,prLight:false,prTrees:false,prView:false,prWalls:false,prKitchen:false,prBalcony:false,prSpacious:false,prCat:false,prClean:false,prVisit:false};
 
 function toggleChip(el) { chipState[el.dataset.f] = !chipState[el.dataset.f]; el.classList.toggle('on'); applyAll(); }
 var _vThresholds = null;
@@ -176,6 +180,22 @@ function dealColor(d) {
     return '#ef4444';
 }
 var _dThresholds = null;
+var _vibeThresholds = null;
+function computeVibeThresholds(filtered) {
+    var vals = filtered.map(function(d){return d._vibe;}).sort(function(a,b){return a-b;});
+    var n = vals.length;
+    if (n < 5) { _vibeThresholds = [0,0,0,0,0]; return; }
+    _vibeThresholds = [vals[Math.floor(n*0.5)],vals[Math.floor(n*0.65)],vals[Math.floor(n*0.8)],vals[Math.floor(n*0.9)],vals[Math.floor(n*0.95)]];
+}
+function vibeColor(v) {
+    if (!_vibeThresholds) return '#9ca3af';
+    if (v >= _vibeThresholds[4]) return '#166534';
+    if (v >= _vibeThresholds[3]) return '#22c55e';
+    if (v >= _vibeThresholds[2]) return '#84cc16';
+    if (v >= _vibeThresholds[1]) return '#eab308';
+    if (v >= _vibeThresholds[0]) return '#f97316';
+    return '#ef4444';
+}
 function computeDealThresholds(filtered) {
     var vals = filtered.map(function(d){return d._deal;}).sort(function(a,b){return a-b;});
     var n = vals.length;
@@ -442,7 +462,7 @@ function applyAll() {
     document.getElementById('rv-photos').textContent = minPhotos;
     document.getElementById('rv-dep').textContent = maxDep+'x';
     document.getElementById('rv-score').textContent = minScore;
-    document.getElementById('score-label').textContent = rankMode === 'deal' ? 'deal score' : rankMode === 'value' ? 'value' : 'score';
+    document.getElementById('score-label').textContent = rankMode === 'vibe' ? 'vibe score' : rankMode === 'deal' ? 'deal score' : rankMode === 'value' ? 'value' : 'score';
     document.getElementById('rv-days').textContent = maxDays >= 90 ? 'Any' : maxDays + ' days';
             
     var scoreFn = getScoreFn();
@@ -468,6 +488,7 @@ function applyAll() {
     });
     filtered.forEach(function(d) { try { d._score = scoreFn(d); } catch(e) { d._score = 0; } });
     filtered = filtered.filter(function(d) {
+        if (rankMode === 'vibe') return d._vibe >= minScore;
         if (rankMode === 'deal') return d._deal >= minScore;
         if (rankMode === 'value') return d._value >= minScore;
         return d._score >= minScore;
@@ -505,9 +526,42 @@ function applyAll() {
         if (d.deposit > 0 && d.rent > 0 && d.deposit/d.rent <= 3) q += 5;
         d._quality = Math.round(q);
         d._deal = d.totalCost > 0 ? Math.round(q * q / d.totalCost * 1000) : 0;
+        // Villa Vibe score: optimized for spacious, well-lit, central houses/villas/duplexes
+        var vb = 0;
+        // Space is king (max 30)
+        if (d.sqft >= 2000) vb += 30;
+        else if (d.sqft >= 1500) vb += 25;
+        else if (d.sqft >= 1200) vb += 20;
+        else if (d.sqft >= 1000) vb += 15;
+        else vb += 5;
+        // House/villa/duplex bonus (max 20)
+        if (d.bt === 'IH') vb += 20;
+        else if (d.society && d.society.toLowerCase().match(/villa|duplex|row house|townhouse|bungalow/)) vb += 15;
+        // Light + view from photos (max 20)
+        if (d.rated && d.pr) {
+            if (d.pr.well_lit) vb += 7;
+            if (d.pr.has_big_windows) vb += 5;
+            if (d.pr.trees_or_greenery_outside) vb += 4;
+            if (d.pr.open_view_not_blocked) vb += 4;
+        }
+        // Light walls (max 5)
+        if (d.rated && d.pr && d.pr.light_colored_walls) vb += 5;
+        // Balconies / outdoor space (max 10)
+        if (d.balconies >= 3) vb += 10;
+        else if (d.balconies >= 2) vb += 7;
+        else if (d.balconies >= 1) vb += 4;
+        // Cat friendly (max 5)
+        if (d.rated && d.pr && d.pr.cat_could_sit_at_window) vb += 5;
+        // Central location bonus (max 10)
+        var centralAreas = ['indiranagar','koramangala','hsr','btm','jayanagar','jp nagar','malleshwaram','domlur','frazer','ulsoor','halasuru','richmond','basavanagudi','wilson','rajajinagar','banashankari','sadashiv','cox town','benson','langford','cunningham','vasanth','shivaji','lalbagh','shanti nagar'];
+        var loc2 = (d.locality + ' ' + d.society).toLowerCase();
+        if (centralAreas.some(function(a){return loc2.indexOf(a) >= 0;})) vb += 10;
+        d._vibe = vb;
     });
-    computeValueThresholds(filtered); computeDealThresholds(filtered);
-    if (rankMode === 'deal') {
+    computeValueThresholds(filtered); computeDealThresholds(filtered); computeVibeThresholds(filtered);
+    if (rankMode === 'vibe') {
+        filtered.sort(function(a,b) { return b._vibe - a._vibe || b.sqft - a.sqft; });
+    } else if (rankMode === 'deal') {
         filtered.sort(function(a,b) { return b._deal - a._deal || b._quality - a._quality; });
     } else if (rankMode === 'value') {
         filtered.sort(function(a,b) { return b._value - a._value || b._score - a._score; });
@@ -520,7 +574,7 @@ function applyAll() {
         d._rank = idx + 1;
         var jlat = d._jlat, jlng = d._jlng;
         var r = d.delisted ? 3 : Math.max(5, Math.min(18, d.sqft / 120));
-        var c = d.delisted ? '#d1d5db' : (rankMode === 'deal' ? dealColor(d._deal) : rankMode === 'value' ? valueColor(d._value) : scoreColor(d._score));
+        var c = d.delisted ? '#d1d5db' : (rankMode === 'vibe' ? vibeColor(d._vibe) : rankMode === 'deal' ? dealColor(d._deal) : rankMode === 'value' ? valueColor(d._value) : scoreColor(d._score));
         var m = L.circleMarker([jlat, jlng], {
             radius: r, color: c, fillColor: c,
             fillOpacity: d.delisted ? 0.25 : (d.stacked ? 0.4 : 0.65), weight: (_selected && _selected.url === d.url) ? 6 : isMultiSelected(d.url) ? 5 : isStarred(d.url) ? 5 : d.rated ? 3 : 2, color: (_selected && _selected.url === d.url) ? '#dc2626' : isMultiSelected(d.url) ? '#2563eb' : isStarred(d.url) ? '#eab308' : d.rated ? '#1e1b4b' : c,
@@ -550,7 +604,7 @@ function showHC(e, d) {
     if (d.pool) perks.push('Pool'); if (d.gym) perks.push('Gym'); if (d.club) perks.push('Club');
     if (d.gp) perks.push('Gated'); if (d.sec) perks.push('Sec'); if (d.pb) perks.push('Power');
     if (d.petFriendly) perks.push('PET FRIENDLY');
-    document.getElementById('hc-t').textContent = (isStarred(d.url) ? '\u2B50 ' : '') + (d.delisted ? '[DELISTED] ' : d.fake ? '[FAKE LOCATION] ' : '#' + d._rank + ' — ') + d.society + ' (Score ' + d._score + (rankMode === 'value' ? ' | Value ' + d._value : '') + (rankMode === 'deal' ? ' | Deal ' + d._deal + ' Q:' + d._quality : '') + ')';
+    document.getElementById('hc-t').textContent = (isStarred(d.url) ? '\u2B50 ' : '') + (d.delisted ? '[DELISTED] ' : d.fake ? '[FAKE LOCATION] ' : '#' + d._rank + ' — ') + d.society + ' (Score ' + d._score + (rankMode === 'value' ? ' | Value ' + d._value : '') + (rankMode === 'vibe' ? ' | Vibe ' + d._vibe : rankMode === 'deal' ? ' | Deal ' + d._deal + ' Q:' + d._quality : '') + ')';
     document.getElementById('hc-l').textContent = (d.source === 'mb' ? '[MagicBricks] ' : '') + d.locality.substring(0,50);
     var prHtml = '';
     if (d.rated && d.pr) {
