@@ -164,6 +164,16 @@ for f in sorted(glob.glob('data/raw/*.json')):
 mb_dir = Path("data/raw_mb")
 if mb_dir.exists() and any(mb_dir.glob("*.json")):
     from rental_lookup.magicbricks import normalize_listing as mb_normalize, dedupe_cross_platform
+    from datetime import datetime
+    def _mb_days_ago(raw):
+        try:
+            post_date = raw.get('postDateT', '')
+            if post_date:
+                dt = datetime.fromisoformat(post_date.replace('Z', '+00:00'))
+                return max(0, (datetime.now(dt.tzinfo) - dt).days)
+        except:
+            pass
+        return -1
     from rental_lookup.models import Listing
 
     mb_raw = []
@@ -237,7 +247,7 @@ if mb_dir.exists() and any(mb_dir.glob("*.json")):
             'fake': False,
             'rated': False,
             'pr': {},
-            'daysAgo': -1,
+            'daysAgo': _mb_days_ago(raw),
             'delisted': False,
             'img': imgs[0] if imgs else (raw.get('image', '') or ''),
             'imgs': imgs,
