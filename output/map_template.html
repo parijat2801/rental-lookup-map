@@ -484,10 +484,16 @@ function applyAll() {
         if (chipState.nbOnly && d.source !== 'nb') return false;
         if (chipState.mbOnly && d.source !== 'mb') return false;
         if (chipState.vibeOnly) {
-            var isHouse = d.bt === 'IH' || (d.society && d.society.toLowerCase().match(/villa|duplex|row house|townhouse|bungalow|independent/));
-            var isSpacious = d.sqft >= 1000;
-            if (!isHouse && !isSpacious) return false;
-            if (d.sqft < 800) return false;
+            // Villa Vibe: central, spacious houses/villas OR really spacious apartments
+            var soc = (d.society || '').toLowerCase();
+            var isVillaType = d.bt === 'IH' || /villa|duplex|row.?house|townhouse|bungalow|penthouse/.test(soc);
+            var isSpacApt = d.bt === 'AP' && d.sqft >= 1500 && d.rated && d.pr && d.pr.rooms_feel_spacious;
+            if (!isVillaType && !isSpacApt) return false;
+            if (d.sqft < 1000) return false;
+            if (d.totalCost < 40000 || d.totalCost > 75000) return false;
+            var centralAreas = ['indiranagar','koramangala','hsr','btm','jayanagar','jp nagar','malleshwaram','domlur','frazer','ulsoor','halasuru','richmond','basavanagudi','wilson','rajajinagar','banashankari','sadashiv','cox town','benson','langford','cunningham','vasanth','shivaji','lalbagh','shanti nagar','adugodi','hombegowda'];
+            var loc2 = (d.locality + ' ' + d.society).toLowerCase();
+            if (!centralAreas.some(function(a){return loc2.indexOf(a) >= 0;})) return false;
         }
         if (chipState.starredOnly && !isStarred(d.url)) return false;
         if (chipState.hideDismissed && isDismissed(d.url)) return false;
