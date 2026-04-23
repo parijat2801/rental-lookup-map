@@ -246,8 +246,16 @@ ALL.forEach(function(d) {
     if (d._starred) _embeddedStars[d.url] = d._starred;
     if (d._dismissed) _embeddedDismissed[d.url] = d._dismissed;
 });
-var _starred = Object.assign({}, _embeddedStars, JSON.parse(localStorage.getItem('rental_starred') || '{}'));
-var _dismissed = Object.assign({}, _embeddedDismissed, JSON.parse(localStorage.getItem('rental_dismissed') || '{}'));
+// Merge: start with embedded, add localStorage entries, add cloud entries
+// Never let an empty localStorage wipe embedded stars
+var _starred = Object.assign({}, _embeddedStars);
+var _dismissed = Object.assign({}, _embeddedDismissed);
+try {
+    var ls = JSON.parse(localStorage.getItem('rental_starred') || '{}');
+    for (var k in ls) _starred[k] = ls[k];
+    var ld = JSON.parse(localStorage.getItem('rental_dismissed') || '{}');
+    for (var k in ld) _dismissed[k] = ld[k];
+} catch(e) {}
 // Also load from cloud and merge
 fetch('https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f', {headers: {'Accept': 'application/json'}})
     .then(function(r) { return r.json(); })
