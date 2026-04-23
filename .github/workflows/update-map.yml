@@ -41,7 +41,7 @@ jobs:
         run: |
           mkdir -p data/cache
           curl -s -H "Accept: application/json" \
-            "https://jsonblob.com/api/jsonBlob/019db14b-45c3-7828-83e7-9ea4c00a88bc" \
+            "https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f" \
             -o data/cache/stars_and_dismissals.json || true
           python3 -c "
           import json

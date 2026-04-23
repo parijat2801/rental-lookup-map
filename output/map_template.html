@@ -249,7 +249,7 @@ ALL.forEach(function(d) {
 var _starred = Object.assign({}, _embeddedStars, JSON.parse(localStorage.getItem('rental_starred') || '{}'));
 var _dismissed = Object.assign({}, _embeddedDismissed, JSON.parse(localStorage.getItem('rental_dismissed') || '{}'));
 // Also load from cloud and merge
-fetch('https://jsonblob.com/api/jsonBlob/019db14b-45c3-7828-83e7-9ea4c00a88bc', {headers: {'Accept': 'application/json'}})
+fetch('https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f', {headers: {'Accept': 'application/json'}})
     .then(function(r) { return r.json(); })
     .then(function(cloud) {
         if (cloud.starred) Object.assign(_starred, cloud.starred);
@@ -269,7 +269,7 @@ function autoSave() {
         body: payload
     }).catch(function(){});
     // Save to cloud (jsonblob)
-    fetch('https://jsonblob.com/api/jsonBlob/019db14b-45c3-7828-83e7-9ea4c00a88bc', {
+    fetch('https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f', {
         method: 'PUT',
         headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
         body: payload
