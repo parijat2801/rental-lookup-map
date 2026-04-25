@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # need all branches
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -24,46 +24,91 @@ jobs:
       - name: Install dependencies
         run: pip install httpx osmnx geopandas geopy pandas tqdm shapely
 
+      - name: Restore cached data
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/raw
+            data/raw_mb
+          key: rental-data-${{ github.run_number }}
+          restore-keys: |
+            rental-data-
+
       - name: Fetch NoBroker listings
         run: |
-          # Clear old raw data, fetch fresh
-          rm -rf data/raw
           mkdir -p data/raw
           python3 -m rental_lookup
 
       - name: Fetch MagicBricks listings
         run: |
-          rm -rf data/raw_mb
           mkdir -p data/raw_mb
-          python3 -m rental_lookup.magicbricks
+          NEWEST=$(find data/raw_mb -name "*.json" -mmin -1200 2>/dev/null | head -1)
+          if [ -z "$NEWEST" ]; then
+            rm -rf data/raw_mb/*.json
+            python3 -m rental_lookup.magicbricks
+          else
+            echo "Cache fresh, skipping MB fetch"
+          fi
 
-      - name: Download stars from cloud
+      - name: Sync stars (jsonblob + Gist → merge → Gist)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p data/cache
-          curl -s -H "Accept: application/json" \
-            "https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f" \
-            -o data/cache/stars_and_dismissals.json || true
+          
+          # Read from jsonblob (browser writes here)
+          curl -s -H "Accept: application/json"             "https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f"             -o /tmp/stars_jsonblob.json 2>/dev/null || echo '{}' > /tmp/stars_jsonblob.json
+          
+          # Read from Gist (reliable backup)
+          curl -s "https://gist.githubusercontent.com/parijat2801/2281d52dbd169be5a240adc381fae28d/raw/stars_and_dismissals.json"             -o /tmp/stars_gist.json 2>/dev/null || echo '{}' > /tmp/stars_gist.json
+          
+          # Read embedded (from repo)
+          cp data/cache/stars_and_dismissals.json /tmp/stars_embedded.json 2>/dev/null || echo '{}' > /tmp/stars_embedded.json
+          
+          # Merge all three — most stars wins
           python3 -c "
           import json
-          try:
-              with open('data/cache/stars_and_dismissals.json') as f:
-                  d = json.load(f)
-              print(f'Stars: {len(d.get(\"starred\", {}))} starred, {len(d.get(\"dismissed\", {}))} dismissed')
-          except:
-              print('No cloud stars found')
+          sources = []
+          for f in ['/tmp/stars_jsonblob.json', '/tmp/stars_gist.json', '/tmp/stars_embedded.json']:
+              try:
+                  with open(f) as fh:
+                      sources.append(json.load(fh))
+              except:
+                  sources.append({})
+          
+          merged = {'starred': {}, 'dismissed': {}}
+          for s in sources:
+              for k, v in s.get('starred', {}).items():
+                  merged['starred'][k] = v
+              for k, v in s.get('dismissed', {}).items():
+                  merged['dismissed'][k] = v
+          
+          # Remove from dismissed if also starred (star wins)
+          for k in merged['starred']:
+              merged['dismissed'].pop(k, None)
+          
+          with open('data/cache/stars_and_dismissals.json', 'w') as f:
+              json.dump(merged, f, indent=2)
+          
+          print(f'Merged: {len(merged[\"starred\"])} starred, {len(merged[\"dismissed\"])} dismissed')
           "
+          
+          # Write merged back to Gist (reliable)
+          gh gist edit 2281d52dbd169be5a240adc381fae28d -f stars_and_dismissals.json data/cache/stars_and_dismissals.json
 
       - name: Build map
-        run: python3 build_map.py
+        run: |
+          mkdir -p output
+          python3 build_map.py
 
       - name: Deploy to GitHub Pages
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Save map before switching branches
           cp output/map.html /tmp/map.html
-          git stash --include-untracked
+          git stash --include-untracked || true
           git checkout gh-pages
+          git reset --hard origin/gh-pages
           cp /tmp/map.html index.html
           git add index.html
           git commit -m "Update map $(date -u +%Y-%m-%d)" || echo "No changes"
