@@ -444,7 +444,7 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         toggleStar(_selected.url);
         applyAll();
-    } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter' || e.key === 'v' || e.key === 'V') {
         e.preventDefault();
         window.open(_selected.url, '_blank');
     } else if (e.key === 'ArrowLeft') {
@@ -661,7 +661,7 @@ function showHC(e, d) {
         '<button onclick="toggleStar(_selected.url);applyAll();">' + (isStarred(d.url) ? 'Unstar ⭐' : 'Star ☆') + '</button>' +
         '<button onclick="toggleDismiss(_selected.url);deselectListing();">Dismiss ❌</button>' +
         '<button onclick="window.open(_selected.url,\'_blank\');">Open ↗</button></div>' +
-        '<div class="shortcut">C = star · X = dismiss · Enter = open · ←→ = photos · Ctrl+Z = undo · Esc = close</div>' : '';
+        '<div class="shortcut">C = star · X = dismiss · V/Enter = open · ←→ = photos · Ctrl+Z = undo · Esc = close</div>' : '';
     document.getElementById('hc-desc').innerHTML = prHtml + (d.desc ? '<div style="color:#666;font-size:10px;margin-top:4px">' + d.desc + '</div>' : '') + actionsHtml;
     var x = e.originalEvent.clientX + 20, y = e.originalEvent.clientY - 120;
     if (x + 330 > window.innerWidth - 420) x = e.originalEvent.clientX - 340;
