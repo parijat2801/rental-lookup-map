@@ -24,17 +24,19 @@ PROP_TYPES = "10002,10003,10021,10022"
 
 def normalize_listing(raw: dict) -> Optional[Listing]:
     """Convert a MagicBricks listing to our Listing format."""
-    lat_lng = raw.get('ltcoordGeo', '')
-    if lat_lng and ',' in lat_lng:
-        parts = lat_lng.split(',')
-        try:
-            lat = float(parts[0].strip())
-            lng = float(parts[1].strip())
-        except (ValueError, IndexError):
-            lat, lng = 0, 0
-    else:
-        lat = float(raw.get('pmtLat', 0) or 0)
-        lng = float(raw.get('pmtLong', 0) or 0)
+    # Use pmtLat/pmtLong first (property-specific)
+    # ltcoordGeo is locality centroid — causes stacking
+    lat = float(raw.get('pmtLat', 0) or 0)
+    lng = float(raw.get('pmtLong', 0) or 0)
+    if not lat or not lng:
+        lat_lng = raw.get('ltcoordGeo', '')
+        if lat_lng and ',' in lat_lng:
+            parts = lat_lng.split(',')
+            try:
+                lat = float(parts[0].strip())
+                lng = float(parts[1].strip())
+            except (ValueError, IndexError):
+                lat, lng = 0, 0
 
     if not lat or not lng or lat == 0 or lng == 0:
         return None

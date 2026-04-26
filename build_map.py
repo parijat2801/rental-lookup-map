@@ -86,6 +86,23 @@ for f in sorted(glob.glob('data/raw/*.json')):
             coord_counts[(round(lat, 4), round(lng, 4))] += 1
 stacked_coords = {k for k, v in coord_counts.items() if v > 3}
 
+# Also detect stacked MB coordinates
+mb_dir_check = Path('data/raw_mb')
+if mb_dir_check.exists():
+    for f in sorted(mb_dir_check.glob('*.json')):
+        with open(f) as fh:
+            d = json.load(fh)
+        for item in d.get('resultList', []):
+            lat_lng = item.get('ltcoordGeo', '')
+            if lat_lng and ',' in lat_lng:
+                parts = lat_lng.split(',')
+                try:
+                    lat, lng = float(parts[0].strip()), float(parts[1].strip())
+                    coord_counts[(round(lat, 4), round(lng, 4))] += 1
+                except: pass
+    stacked_coords = {k for k, v in coord_counts.items() if v > 3}
+    print(f'  Stacked coords (NB+MB): {len(stacked_coords)} locations')
+
 now_ms = time.time() * 1000
 results = []
 seen = set()
