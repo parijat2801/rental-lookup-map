@@ -94,7 +94,7 @@ jobs:
           "
           
           # Write merged back to Gist (reliable)
-          gh gist edit 2281d52dbd169be5a240adc381fae28d -f stars_and_dismissals.json data/cache/stars_and_dismissals.json
+          gh gist edit 2281d52dbd169be5a240adc381fae28d -f stars_and_dismissals.json data/cache/stars_and_dismissals.json || echo "Gist write skipped — GITHUB_TOKEN lacks gist scope"
 
       - name: Build map
         run: |
