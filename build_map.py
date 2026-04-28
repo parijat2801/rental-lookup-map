@@ -18,6 +18,17 @@ else:
     starred_urls = {}
     dismissed_urls = {}
 
+# Load first_seen dates (when WE first saw each listing, not platform dates)
+first_seen = {}
+first_seen_path = Path('data/cache/first_seen.json')
+if first_seen_path.exists():
+    with open(first_seen_path) as f:
+        first_seen = json.load(f)
+    print(f'  First seen: {len(first_seen)} listings tracked')
+
+from datetime import date
+today = str(date.today())
+
 # Load photo ratings
 photo_ratings = {}
 ratings_path = Path("data/cache/photo_ratings.json")
@@ -135,7 +146,15 @@ for f in sorted(glob.glob('data/raw/*.json')):
         desc_lower = description.lower()
         pet_friendly = bool(any(w in desc_lower for w in ['pet-friendly','pet friendly','pets allowed','pets welcome']))
         act = item.get('activationDate', 0)
-        days_ago = round((now_ms - act) / (1000 * 86400)) if act else -1
+        # Use first_seen date (when WE first saw it) instead of platform date
+        nb_url = 'https://www.nobroker.in' + item.get('detailUrl', '')
+        if nb_url not in first_seen:
+            first_seen[nb_url] = today
+        try:
+            fs_date = date.fromisoformat(first_seen[nb_url])
+            days_ago = (date.today() - fs_date).days
+        except:
+            days_ago = 0
         key = (round(lat, 4), round(lng, 4))
         soc_title = (society + ' ' + item.get('propertyTitle', '')).lower()
 
@@ -181,16 +200,14 @@ for f in sorted(glob.glob('data/raw/*.json')):
 mb_dir = Path("data/raw_mb")
 if mb_dir.exists() and any(mb_dir.glob("*.json")):
     from rental_lookup.magicbricks import normalize_listing as mb_normalize, dedupe_cross_platform
-    from datetime import datetime
-    def _mb_days_ago(raw):
+    def _mb_first_seen_days(url):
+        if url not in first_seen:
+            first_seen[url] = today
         try:
-            post_date = raw.get('postDateT', '')
-            if post_date:
-                dt = datetime.fromisoformat(post_date.replace('Z', '+00:00'))
-                return max(0, (datetime.now(dt.tzinfo) - dt).days)
+            fs_date = date.fromisoformat(first_seen[url])
+            return (date.today() - fs_date).days
         except:
-            pass
-        return -1
+            return 0
     from rental_lookup.models import Listing
 
     mb_raw = []
@@ -264,7 +281,7 @@ if mb_dir.exists() and any(mb_dir.glob("*.json")):
             'fake': False,
             'rated': False,
             'pr': {},
-            'daysAgo': _mb_days_ago(raw),
+            'daysAgo': _mb_first_seen_days(listing.url),
             'delisted': False,
             'img': imgs[0] if imgs else (raw.get('image', '') or ''),
             'imgs': imgs,
@@ -338,6 +355,11 @@ if prev_listings:
 for r in results:
     if 'delisted' not in r:
         r['delisted'] = False
+
+# Save updated first_seen
+with open(first_seen_path, 'w') as f:
+    json.dump(first_seen, f)
+print(f'  First seen saved: {len(first_seen)} listings')
 
 # Clean HTML entities that break JS JSON parsing
 import html as html_module

@@ -28,27 +28,22 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            data/raw
-            data/raw_mb
           key: rental-data-${{ github.run_number }}
           restore-keys: |
             rental-data-
 
       - name: Fetch NoBroker listings
         run: |
+          rm -rf data/raw
           mkdir -p data/raw
           python3 -m rental_lookup
 
       - name: Fetch MagicBricks listings
         run: |
           mkdir -p data/raw_mb
-          NEWEST=$(find data/raw_mb -name "*.json" -mmin -1200 2>/dev/null | head -1)
-          if [ -z "$NEWEST" ]; then
-            rm -rf data/raw_mb/*.json
-            python3 -m rental_lookup.magicbricks
-          else
-            echo "Cache fresh, skipping MB fetch"
-          fi
+          rm -rf data/raw_mb
+          mkdir -p data/raw_mb
+          python3 -m rental_lookup.magicbricks
 
       - name: Sync stars (jsonblob + Gist → merge → Gist)
         env:
