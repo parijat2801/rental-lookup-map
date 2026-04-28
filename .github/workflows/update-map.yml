@@ -1,6 +1,8 @@
 name: Update Rental Map
 
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: '30 2 * * *'  # 8am IST (2:30 UTC)
   workflow_dispatch:  # manual trigger from Actions tab
