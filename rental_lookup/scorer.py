@@ -28,16 +28,60 @@ def _has_pet_signal(title: str) -> bool:
     return bool(re.search(r'\bpet\b', title, re.IGNORECASE))
 
 
-def _score_value(listing: Listing) -> float:
-    """0-25: sqft per 1000 rupees — big + cheap = happy."""
-    value = listing.sqft / listing.rent * 1000 if listing.rent > 0 else 0
-    if value >= 50:
-        return 25.0
-    elif value >= 40:
-        return 20.0
-    elif value >= 30:
+def _score_pet_compatibility(listing: Listing) -> float:
+    """0-15: pet-friendly signals (text mention + gated community)."""
+    score = 0.0
+    if _has_pet_signal(listing.title):
+        score += 10.0
+    if listing.has_gated_community:
+        score += 5.0
+    return min(score, 15.0)
+
+
+def _score_greenery(loc: LocationScore) -> float:
+    """0-15: proximity to parks and lakes."""
+    score = 0.0
+    if loc.nearest_park_m is not None:
+        if loc.nearest_park_m < 500:
+            score += 10.0
+        elif loc.nearest_park_m < 1000:
+            score += 10.0 * (1 - (loc.nearest_park_m - 500) / 500)
+    if loc.nearest_lake_m is not None:
+        if loc.nearest_lake_m < 1500:
+            score += 5.0
+        elif loc.nearest_lake_m < 3000:
+            score += 5.0 * (1 - (loc.nearest_lake_m - 1500) / 1500)
+    return score
+
+
+def _score_metro(loc: LocationScore) -> float:
+    """0-15: proximity to metro station."""
+    if loc.nearest_metro_m is None:
+        return 0.0
+    d = loc.nearest_metro_m
+    if d < 500:
         return 15.0
-    return 10.0
+    elif d < 1000:
+        return 12.0
+    elif d < 1500:
+        return 8.0
+    return 0.0
+
+
+def _score_space(listing: Listing) -> float:
+    """0-10: bigger apartment = more room for cat + humans."""
+    if listing.sqft > 1200:
+        return 10.0
+    elif listing.sqft > 1000:
+        return 8.0
+    elif listing.sqft > 800:
+        return 5.0
+    return 0.0
+
+
+def _score_floor_safety(listing: Listing) -> float:
+    """0-5: lower floors safer for cats near windows/balconies."""
+    return 5.0 if listing.floor <= 3 else 0.0
 
 
 def _score_natural_light(listing: Listing) -> float:
@@ -110,7 +154,12 @@ def _score_negotiable(listing: Listing) -> float:
 
 def score_listing(listing: Listing, location: LocationScore) -> ScoredListing:
     total = (
-        _score_natural_light(listing)
+        _score_pet_compatibility(listing)
+        + _score_greenery(location)
+        + _score_metro(location)
+        + _score_space(listing)
+        + _score_floor_safety(listing)
+        + _score_natural_light(listing)
         + _score_freshness(listing)
         + _score_amenities(listing)
         + _score_parking(listing)

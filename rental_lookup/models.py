@@ -81,6 +81,14 @@ class Listing:
         )
 
 
+BRANDED_BUILDERS = frozenset([
+    'prestige', 'brigade', 'sobha', 'mantri', 'puravankara', 'salarpuria',
+    'godrej', 'embassy', 'raheja', 'mahaveer', 'nitesh', 'ds max', 'sattva',
+    'shriram', 'sjr', 'sumadhura', 'rohan', 'dnr', 'gopalan', 'purva', 'adarsh',
+    'century', 'arvind', 'total environment', 'vaishnavi', 'casagrand',
+])
+
+
 @dataclass
 class LocationScore:
     nearest_park_m: Optional[float] = None

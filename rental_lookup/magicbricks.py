@@ -48,18 +48,14 @@ def normalize_listing(raw: dict) -> Optional[Listing]:
     sqft = int(raw.get('carpetArea', 0) or raw.get('coveredArea', 0) or 0)
     deposit = int(raw.get('bookingAmtExact', 0) or 0)
 
-    # BHK
-    bedroom_d = raw.get('bedroomD', '')
-    if '3' in str(bedroom_d):
-        bhk = 'BHK3'
-    elif '2' in str(bedroom_d):
-        bhk = 'BHK2'
-    elif '4' in str(bedroom_d):
-        bhk = 'BHK4'
-    elif '1' in str(bedroom_d):
-        bhk = 'BHK1'
-    else:
-        bhk = ''
+    # BHK — extract leading digit to avoid substring false positives (e.g. "43" → 4, not 3)
+    bedroom_d = str(raw.get('bedroomD', ''))
+    bhk_num = None
+    for ch in bedroom_d:
+        if ch.isdigit():
+            bhk_num = int(ch)
+            break
+    bhk = f'BHK{bhk_num}' if bhk_num else ''
 
     # Floor
     floor_raw = raw.get('floorNo', 0)
@@ -157,9 +153,6 @@ def normalize_listing(raw: dict) -> Optional[Listing]:
     # Use 0 so it doesn't get filtered out by our NB score check
     # We'll need to handle this in the map
 
-    # Maintenance
-    maintenance = int(raw.get('maintenanceCharges', 0) or 0)
-
     # Build a unique ID prefixed with 'mb_' to avoid collision with NoBroker IDs
     mb_id = f"mb_{raw.get('id', '')}"
 
@@ -197,12 +190,8 @@ def normalize_listing(raw: dict) -> Optional[Listing]:
     )
 
 
-def fetch_page(page: int = 1, budget_min: int = 0, budget_max: int = 150000) -> dict:
+def fetch_page(client: httpx.Client, page: int = 1, budget_min: int = 0, budget_max: int = 150000) -> dict:
     """Fetch one page of results from MagicBricks."""
-    client = httpx.Client(follow_redirects=True, timeout=15, headers={
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        'Accept': 'application/json',
-    })
     try:
         resp = client.get(MB_API, params={
             'editSearch': 'Y',
@@ -219,8 +208,6 @@ def fetch_page(page: int = 1, budget_min: int = 0, budget_max: int = 150000) -> 
     except Exception as e:
         print(f"  [!] Error page {page}: {e}")
         return {}
-    finally:
-        client.close()
 
 
 def fetch_all(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50,
@@ -228,24 +215,31 @@ def fetch_all(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50
     """Fetch all pages of MagicBricks listings. Returns raw dicts."""
     all_raw = []
     page = 1
+    client = httpx.Client(follow_redirects=True, timeout=15, headers={
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept': 'application/json',
+    })
 
-    while page <= max_pages:
-        print(f"  MagicBricks page {page}...")
-        data = fetch_page(page, budget_min, budget_max)
+    try:
+        while page <= max_pages:
+            print(f"  MagicBricks page {page}...")
+            data = fetch_page(client, page, budget_min, budget_max)
 
-        results = data.get('resultList', [])
-        if not results:
-            break
+            results = data.get('resultList', [])
+            if not results:
+                break
 
-        all_raw.extend(results)
+            all_raw.extend(results)
 
-        if raw_dir:
-            raw_dir.mkdir(parents=True, exist_ok=True)
-            path = raw_dir / f"magicbricks_page{page}.json"
-            path.write_text(json.dumps(data, indent=2))
+            if raw_dir:
+                raw_dir.mkdir(parents=True, exist_ok=True)
+                path = raw_dir / f"magicbricks_page{page}.json"
+                path.write_text(json.dumps(data, indent=2))
 
-        page += 1
-        time.sleep(1)
+            page += 1
+            time.sleep(1)
+    finally:
+        client.close()
 
     print(f"  MagicBricks total: {len(all_raw)} raw listings across {page-1} pages")
     return all_raw

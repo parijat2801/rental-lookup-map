@@ -28,6 +28,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
+            data/cache
+            data/raw_prev
           key: rental-data-${{ github.run_number }}
           restore-keys: |
             rental-data-
@@ -68,7 +70,7 @@ jobs:
               try:
                   with open(f) as fh:
                       sources.append(json.load(fh))
-              except:
+              except (FileNotFoundError, json.JSONDecodeError, ValueError):
                   sources.append({})
           
           merged = {'starred': {}, 'dismissed': {}}

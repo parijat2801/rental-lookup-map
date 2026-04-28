@@ -65,7 +65,7 @@ if enrich_path.exists():
     with open(enrich_path) as f:
         enrichment = json.load(f)
 
-brands = ['prestige','brigade','sobha','mantri','puravankara','salarpuria','godrej','embassy','raheja','mahaveer','nitesh','ds max','sattva','shriram','sjr','sumadhura','rohan','dnr','gopalan','purva','adarsh','century','arvind','total environment','vaishnavi','casagrand']
+from rental_lookup.models import BRANDED_BUILDERS as brands
 
 def get_photo_url(item):
     pid = item['id']
@@ -110,7 +110,8 @@ if mb_dir_check.exists():
                 try:
                     lat, lng = float(parts[0].strip()), float(parts[1].strip())
                     coord_counts[(round(lat, 4), round(lng, 4))] += 1
-                except: pass
+                except (ValueError, IndexError):
+                    pass
     stacked_coords = {k for k, v in coord_counts.items() if v > 3}
     print(f'  Stacked coords (NB+MB): {len(stacked_coords)} locations')
 
@@ -153,7 +154,7 @@ for f in sorted(glob.glob('data/raw/*.json')):
         try:
             fs_date = date.fromisoformat(first_seen[nb_url])
             days_ago = (date.today() - fs_date).days
-        except:
+        except (ValueError, TypeError):
             days_ago = 0
         key = (round(lat, 4), round(lng, 4))
         soc_title = (society + ' ' + item.get('propertyTitle', '')).lower()
@@ -206,7 +207,7 @@ if mb_dir.exists() and any(mb_dir.glob("*.json")):
         try:
             fs_date = date.fromisoformat(first_seen[url])
             return (date.today() - fs_date).days
-        except:
+        except (ValueError, TypeError):
             return 0
     from rental_lookup.models import Listing
 
@@ -303,9 +304,7 @@ for r in results:
         r['_dismissed'] = dismissed_urls[url]
 
 # Add delisted listings (were in prev, not in current)
-current_ids = set(r['url'].split('/')[-2] if '/detail' in r['url'] else '' for r in results)
-# Actually match by extracting IDs from seen set
-current_ids = seen  # 'seen' set from the loop above has all current IDs
+current_ids = seen  # 'seen' set from the NB loop above has all current NB IDs
 
 delisted_count = 0
 if prev_listings:

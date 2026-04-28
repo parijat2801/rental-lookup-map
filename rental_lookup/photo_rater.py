@@ -4,13 +4,14 @@ Sends all photos for each listing to a vision model and gets a structured rating
 """
 
 import json
+import os
 import time
 import base64
 import urllib.request
 from pathlib import Path
 from typing import Optional
 
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "google/gemini-2.5-flash"  # cheap, fast, good at vision
 
@@ -177,10 +178,7 @@ def rate_top_listings(n=50):
     """Rate the top N listings by our scoring."""
     import glob
 
-    brands = ['prestige','brigade','sobha','mantri','puravankara','salarpuria',
-              'godrej','embassy','raheja','mahaveer','nitesh','ds max','sattva',
-              'shriram','sjr','sumadhura','rohan','dnr','gopalan','purva','adarsh',
-              'century','arvind','total environment','vaishnavi','casagrand']
+    from rental_lookup.models import BRANDED_BUILDERS as brands
 
     # Load all listings with scoring
     results = []

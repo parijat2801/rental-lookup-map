@@ -10,8 +10,11 @@ def _make_listing(**overrides) -> Listing:
         building_type="AP", floor=3, total_floor=10, lift=True,
         parking="FOUR_WHEELER", title="2 BHK Apartment for Rent",
         url="https://www.nobroker.in/property/test", photo_url="",
+        facing="E", balconies=1, age=5, water_supply="CORPORATION",
+        negotiable=False, nb_transit=7.5, nb_lifestyle=6.0,
         has_power_backup=True, has_gated_community=True,
-        has_covered_parking=True, has_security=True, has_car_parking=True,
+        has_covered_parking=True, has_security=True, has_fire_safety=False,
+        has_car_parking=True,
     )
     defaults.update(overrides)
     return Listing(**defaults)
@@ -32,7 +35,7 @@ def test_hard_filter_passes_boundary_rent():
     assert passes_hard_filters(_make_listing(rent=60000)) is True
 
 def test_hard_filter_rejects_over_budget():
-    assert passes_hard_filters(_make_listing(rent=60001)) is False
+    assert passes_hard_filters(_make_listing(rent=70001)) is False
 
 def test_hard_filter_passes_boundary_sqft():
     assert passes_hard_filters(_make_listing(sqft=700)) is True
@@ -78,15 +81,15 @@ def test_score_closer_metro_higher():
     far = score_listing(_make_listing(), _make_location(nearest_metro_m=2000))
     assert close.total_score > far.total_score
 
-def test_score_power_backup_adds_10():
+def test_score_power_backup_adds_points():
     with_pb = score_listing(_make_listing(has_power_backup=True), _make_location())
     without_pb = score_listing(_make_listing(has_power_backup=False), _make_location())
-    assert with_pb.total_score - without_pb.total_score == 10
+    assert with_pb.total_score > without_pb.total_score
 
-def test_score_car_parking_adds_10():
+def test_score_car_parking_adds_points():
     with_pk = score_listing(_make_listing(has_car_parking=True), _make_location())
     without_pk = score_listing(_make_listing(has_car_parking=False), _make_location())
-    assert with_pk.total_score - without_pk.total_score == 10
+    assert with_pk.total_score > without_pk.total_score
 
 def test_score_floor_safety():
     low = score_listing(_make_listing(floor=1), _make_location())

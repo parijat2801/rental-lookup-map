@@ -3,10 +3,10 @@ from typing import List, Tuple
 
 from tqdm import tqdm
 
-from rental_lookup.geo import compute_location_scores, fetch_osm_features
+from rental_lookup.geo import compute_location_scores, fetch_osm_features, UTM_CRS
 from rental_lookup.models import Listing, LocationScore
 from rental_lookup.nobroker import fetch_all, load_from_raw
-from rental_lookup.scorer import passes_hard_filters, rank_listings, write_csv
+from rental_lookup.scorer import MAX_RENT, MIN_RENT, MIN_SQFT, passes_hard_filters, rank_listings, write_csv
 
 DATA_DIR = Path("data")
 OUTPUT_DIR = Path("output")
@@ -19,7 +19,7 @@ def main(cookie: str = "") -> None:
     raw_dir = DATA_DIR / "raw"
     listings = fetch_all(cookie=cookie, raw_dir=raw_dir)
 
-    print(f"\nApplying hard filters (rent <= 60K, sqft >= 700)...")
+    print(f"\nApplying hard filters (rent {MIN_RENT//1000}K-{MAX_RENT//1000}K, sqft >= {MIN_SQFT})...")
     filtered = [l for l in listings if passes_hard_filters(l)]
     print(f"  {len(listings)} -> {len(filtered)} after filters")
 
@@ -32,6 +32,14 @@ def main(cookie: str = "") -> None:
     print("=" * 60)
     parks, lakes, metro = fetch_osm_features(cache_dir=DATA_DIR / "cache")
     print(f"  Parks: {len(parks)}, Lakes: {len(lakes)}, Metro stations: {len(metro)}")
+
+    # Pre-project to UTM once (avoids re-projecting per listing)
+    if not parks.empty:
+        parks = parks.to_crs(UTM_CRS)
+    if not lakes.empty:
+        lakes = lakes.to_crs(UTM_CRS)
+    if not metro.empty:
+        metro = metro.to_crs(UTM_CRS)
 
     print("\n" + "=" * 60)
     print("STEP 3: Scoring listings")

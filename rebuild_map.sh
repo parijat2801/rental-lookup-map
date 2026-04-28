@@ -16,7 +16,7 @@ echo "=== Step 2: Fetch detail enrichment for top 300 ==="
 python3 -c "
 import json, glob, time, urllib.request
 
-brands = ['prestige','brigade','sobha','mantri','puravankara','salarpuria','godrej','embassy','raheja','mahaveer','nitesh','ds max','sattva','shriram','sjr','sumadhura','rohan','dnr','gopalan','purva','adarsh','century','arvind','total environment','vaishnavi','casagrand']
+from rental_lookup.models import BRANDED_BUILDERS as brands
 results = []
 seen = set()
 for f in sorted(glob.glob('data/raw/*.json')):
@@ -66,7 +66,7 @@ top300_ids = set(r['id'] for r in results[:300])
 try:
     with open('data/cache/detail_enrichment.json') as f:
         existing = json.load(f)
-except: existing = {}
+except (FileNotFoundError, json.JSONDecodeError): existing = {}
 
 to_fetch = [pid for pid in top300_ids if pid not in existing]
 print(f'Top 300: {len(to_fetch)} need enrichment ({len(existing)} already cached)')
@@ -91,7 +91,7 @@ for i, pid in enumerate(to_fetch):
                 'latitude': p.get('latitude'),
                 'longitude': p.get('longitude'),
             }
-    except: pass
+    except Exception: pass
     if (i+1) % 50 == 0: print(f'  {i+1}/{len(to_fetch)}')
     time.sleep(1)
 

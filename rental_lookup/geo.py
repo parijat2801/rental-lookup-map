@@ -16,13 +16,18 @@ UTM_CRS = "EPSG:32643"
 def nearest_distance_m(
     lat: float, lng: float, features: gpd.GeoDataFrame
 ) -> Optional[float]:
-    """Distance in meters from (lat, lng) to nearest feature."""
+    """Distance in meters from (lat, lng) to nearest feature.
+
+    For best performance, pass features already projected to UTM_CRS.
+    If features are in EPSG:4326, they will be reprojected per call.
+    """
     if features.empty:
         return None
 
     point = gpd.GeoSeries([Point(lng, lat)], crs="EPSG:4326").to_crs(UTM_CRS)
-    projected = features.to_crs(UTM_CRS)
-    distances = projected.geometry.distance(point.iloc[0])
+    if features.crs and features.crs.to_epsg() != 32643:
+        features = features.to_crs(UTM_CRS)
+    distances = features.geometry.distance(point.iloc[0])
     return float(distances.min())
 
 
