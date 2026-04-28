@@ -47,50 +47,37 @@ jobs:
           mkdir -p data/raw_mb
           python3 -m rental_lookup.magicbricks
 
-      - name: Sync stars (jsonblob + Gist → merge → Gist)
+      - name: Sync stars (jsonblob + Gist + repo → merge → Gist)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p data/cache
-          
-          # Read from jsonblob (browser writes here)
-          curl -s -H "Accept: application/json"             "https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f"             -o /tmp/stars_jsonblob.json 2>/dev/null || echo '{}' > /tmp/stars_jsonblob.json
-          
-          # Read from Gist (reliable backup)
-          curl -s "https://gist.githubusercontent.com/parijat2801/2281d52dbd169be5a240adc381fae28d/raw/stars_and_dismissals.json"             -o /tmp/stars_gist.json 2>/dev/null || echo '{}' > /tmp/stars_gist.json
-          
-          # Read embedded (from repo)
-          cp data/cache/stars_and_dismissals.json /tmp/stars_embedded.json 2>/dev/null || echo '{}' > /tmp/stars_embedded.json
-          
-          # Merge all three — most stars wins
+
+          # Fetch from external sources (may return garbage — star_merge handles it)
+          curl -s -H "Accept: application/json" "https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f" -o /tmp/stars_jsonblob.json 2>/dev/null || echo '' > /tmp/stars_jsonblob.json
+          curl -s "https://gist.githubusercontent.com/parijat2801/2281d52dbd169be5a240adc381fae28d/raw/stars_and_dismissals.json" -o /tmp/stars_gist.json 2>/dev/null || echo '' > /tmp/stars_gist.json
+          cp data/cache/stars_and_dismissals.json /tmp/stars_embedded.json 2>/dev/null || echo '' > /tmp/stars_embedded.json
+
+          # Merge using tested module (handles corrupted JSON safely)
           python3 -c "
           import json
+          from rental_lookup.star_merge import load_json_safe, merge_stars
+
           sources = []
           for f in ['/tmp/stars_jsonblob.json', '/tmp/stars_gist.json', '/tmp/stars_embedded.json']:
               try:
-                  with open(f) as fh:
-                      sources.append(json.load(fh))
-              except (FileNotFoundError, json.JSONDecodeError, ValueError):
+                  sources.append(load_json_safe(open(f).read()))
+              except FileNotFoundError:
                   sources.append({})
-          
-          merged = {'starred': {}, 'dismissed': {}}
-          for s in sources:
-              for k, v in s.get('starred', {}).items():
-                  merged['starred'][k] = v
-              for k, v in s.get('dismissed', {}).items():
-                  merged['dismissed'][k] = v
-          
-          # Remove from dismissed if also starred (star wins)
-          for k in merged['starred']:
-              merged['dismissed'].pop(k, None)
-          
+
+          merged = merge_stars(sources)
           with open('data/cache/stars_and_dismissals.json', 'w') as f:
               json.dump(merged, f, indent=2)
-          
+
           print(f'Merged: {len(merged[\"starred\"])} starred, {len(merged[\"dismissed\"])} dismissed')
           "
-          
-          # Write merged back to Gist (reliable)
+
+          # Write merged back to Gist
           GH_TOKEN=${{ secrets.GH_PAT }} gh gist edit 2281d52dbd169be5a240adc381fae28d -f stars_and_dismissals.json data/cache/stars_and_dismissals.json
 
       - name: Build map

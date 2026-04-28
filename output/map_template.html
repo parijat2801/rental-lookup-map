@@ -67,7 +67,7 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
   <label>Min <span id="score-label">score</span>: <span class="rv" id="rv-score">0</span></label>
   <input type="range" id="f-score" min="0" max="100" step="5" value="0" oninput="applyAll()">
   <label>Max days since posted: <span class="rv" id="rv-days">Any</span></label>
-  <input type="range" id="f-days" min="1" max="90" step="1" value="90" oninput="applyAll()">
+  <input type="range" id="f-days" min="0" max="90" step="1" value="90" oninput="applyAll()">
   <label>Photo AI filters (rated listings only):</label>
   <div class="row" style="margin-top:4px">
     <span class="chip" data-f="prLight" onclick="toggleChip(this)">☀️ Well Lit</span>
@@ -94,6 +94,8 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
     <span class="chip" data-f="nbOnly" onclick="toggleChip(this)">NoBroker Only</span>
     <span class="chip" data-f="mbOnly" onclick="toggleChip(this)">MagicBricks Only</span>
     <span class="chip" data-f="vibeOnly" onclick="toggleChip(this)">🏡 Villa Vibe</span>
+    <span class="chip" data-f="penthouse" onclick="toggleChip(this)">🏙️ Penthouse</span>
+    <span class="chip" data-f="newToday" onclick="toggleChip(this)">🆕 New Today</span>
     <span class="chip" data-f="starredOnly" onclick="toggleChip(this)">⭐ Starred Only</span>
     <span class="chip on" data-f="hideDismissed" onclick="toggleChip(this)">❌ Hide Dismissed</span>
   </div>
@@ -155,7 +157,7 @@ function setRankMode(mode) {
     document.getElementById('btn-value').style.borderColor = mode === 'value' ? '#2563eb' : '#ccc';
     applyAll();
 }
-var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,starredOnly:false,hideDismissed:true,prLight:false,prTrees:false,prView:false,prWalls:false,prKitchen:false,prBalcony:false,prSpacious:false,prCat:false,prClean:false,prVisit:false};
+var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true,prLight:false,prTrees:false,prView:false,prWalls:false,prKitchen:false,prBalcony:false,prSpacious:false,prCat:false,prClean:false,prVisit:false};
 
 function toggleChip(el) { chipState[el.dataset.f] = !chipState[el.dataset.f]; el.classList.toggle('on'); applyAll(); }
 var _vThresholds = null;
@@ -503,6 +505,11 @@ function applyAll() {
             var loc2 = (d.locality + ' ' + d.society).toLowerCase();
             if (!centralAreas.some(function(a){return loc2.indexOf(a) >= 0;})) return false;
         }
+        if (chipState.penthouse) {
+            if (d.totalFloor < 4) return false;
+            if (d.floor !== d.totalFloor) return false;
+        }
+        if (chipState.newToday && d.daysAgo !== 0) return false;
         if (chipState.starredOnly && !isStarred(d.url)) return false;
         if (chipState.hideDismissed && isDismissed(d.url)) return false;
         return true;
