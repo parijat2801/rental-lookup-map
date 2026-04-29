@@ -2,6 +2,7 @@
 import json, glob, time
 from collections import Counter
 from pathlib import Path
+from rental_lookup.dates import compute_days_ago, compute_days_ago_mb
 
 print("Building map...")
 
@@ -146,16 +147,10 @@ for f in sorted(glob.glob('data/raw/*.json')):
         description = enrich.get('description', '')
         desc_lower = description.lower()
         pet_friendly = bool(any(w in desc_lower for w in ['pet-friendly','pet friendly','pets allowed','pets welcome']))
-        act = item.get('activationDate', 0)
-        # Use first_seen date (when WE first saw it) instead of platform date
         nb_url = 'https://www.nobroker.in' + item.get('detailUrl', '')
         if nb_url not in first_seen:
             first_seen[nb_url] = today
-        try:
-            fs_date = date.fromisoformat(first_seen[nb_url])
-            days_ago = (date.today() - fs_date).days
-        except (ValueError, TypeError):
-            days_ago = 0
+        days_ago = compute_days_ago(item.get('activationDate', 0), first_seen.get(nb_url), date.today())
         key = (round(lat, 4), round(lng, 4))
         soc_title = (society + ' ' + item.get('propertyTitle', '')).lower()
 
@@ -201,14 +196,6 @@ for f in sorted(glob.glob('data/raw/*.json')):
 mb_dir = Path("data/raw_mb")
 if mb_dir.exists() and any(mb_dir.glob("*.json")):
     from rental_lookup.magicbricks import normalize_listing as mb_normalize, dedupe_cross_platform
-    def _mb_first_seen_days(url):
-        if url not in first_seen:
-            first_seen[url] = today
-        try:
-            fs_date = date.fromisoformat(first_seen[url])
-            return (date.today() - fs_date).days
-        except (ValueError, TypeError):
-            return 0
     from rental_lookup.models import Listing
 
     mb_raw = []
@@ -282,7 +269,7 @@ if mb_dir.exists() and any(mb_dir.glob("*.json")):
             'fake': False,
             'rated': False,
             'pr': {},
-            'daysAgo': _mb_first_seen_days(listing.url),
+            'daysAgo': compute_days_ago_mb(raw.get('postDateT'), first_seen.setdefault(listing.url, today), date.today()),
             'delisted': False,
             'img': imgs[0] if imgs else (raw.get('image', '') or ''),
             'imgs': imgs,
