@@ -258,46 +258,89 @@ try {
     var ld = JSON.parse(localStorage.getItem('rental_dismissed') || '{}');
     for (var k in ld) _dismissed[k] = ld[k];
 } catch(e) {}
-// Also load from cloud and merge
-fetch('https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f', {headers: {'Accept': 'application/json'}})
-    .then(function(r) { return r.json(); })
+// Also load from cloud and merge (highest abs() wins per key)
+fetch(JSONBLOB_URL, {headers: {'Accept': 'application/json'}})
+    .then(function(r) { return r.ok ? r.json() : {}; })
     .then(function(cloud) {
-        if (cloud.starred) Object.assign(_starred, cloud.starred);
-        if (cloud.dismissed) Object.assign(_dismissed, cloud.dismissed);
-        localStorage.setItem('rental_starred', JSON.stringify(_starred));
-        localStorage.setItem('rental_dismissed', JSON.stringify(_dismissed));
+        if (!cloud || typeof cloud !== 'object') return;
+        ['starred','dismissed'].forEach(function(field) {
+            var entries = cloud[field] || {};
+            for (var k in entries) {
+                var v = entries[k];
+                if (typeof v !== 'number') continue;
+                var existing = (field === 'starred' ? _starred : _dismissed)[k];
+                if (existing === undefined || Math.abs(v) > Math.abs(existing)) {
+                    if (field === 'starred') _starred[k] = v; else _dismissed[k] = v;
+                }
+            }
+        });
+        _saveLocal();
         applyAll();
     }).catch(function(){});
-localStorage.setItem('rental_starred', JSON.stringify(_starred));
-localStorage.setItem('rental_dismissed', JSON.stringify(_dismissed));
-function autoSave() {
-    var payload = JSON.stringify({starred: _starred, dismissed: _dismissed, savedAt: new Date().toISOString()});
-    // Save to localhost server (if running)
-    fetch('/save_stars', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: payload
-    }).catch(function(){});
-    // Save to cloud (jsonblob)
-    fetch('https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f', {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
-        body: payload
-    }).catch(function(){});
-}
-function isStarred(url) { return !!_starred[url]; }
-function isDismissed(url) { return !!_dismissed[url]; }
-function toggleStar(url) {
-    if (_starred[url]) {
-        delete _starred[url];
-        _saveUndo('unstar', [url]);
-    } else {
-        _starred[url] = Date.now(); delete _dismissed[url];
-        _saveUndo('star', [url]);
-    }
+_saveLocal();
+var _saveTimer = null;
+var JSONBLOB_URL = 'https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f';
+function _saveLocal() {
     localStorage.setItem('rental_starred', JSON.stringify(_starred));
     localStorage.setItem('rental_dismissed', JSON.stringify(_dismissed));
-    autoSave();
+}
+function _scheduleCloudSync() {
+    // Debounce: wait 2s after last action before syncing to cloud
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(_cloudSync, 2000);
+}
+function _cloudSync() {
+    // Save to localhost server (if running)
+    var localPayload = JSON.stringify({starred: _starred, dismissed: _dismissed, savedAt: new Date().toISOString()});
+    fetch('/save_stars', {method:'POST', headers:{'Content-Type':'application/json'}, body:localPayload}).catch(function(){});
+    // Read-merge-write to jsonblob
+    fetch(JSONBLOB_URL, {headers:{'Accept':'application/json'}})
+        .then(function(r) { return r.ok ? r.json() : {}; })
+        .then(function(cloud) {
+            if (!cloud || typeof cloud !== 'object') cloud = {};
+            // Merge: cloud + current local. For each key, highest abs() wins.
+            var merged = {starred:{}, dismissed:{}};
+            [cloud, {starred:_starred, dismissed:_dismissed}].forEach(function(src) {
+                ['starred','dismissed'].forEach(function(field) {
+                    var entries = src[field] || {};
+                    for (var k in entries) {
+                        var v = entries[k];
+                        if (typeof v !== 'number') continue;
+                        var existing = merged[field][k];
+                        if (existing === undefined || Math.abs(v) > Math.abs(existing)) merged[field][k] = v;
+                    }
+                });
+            });
+            // Strip tombstones for the PUT (negative values)
+            var clean = {starred:{}, dismissed:{}};
+            for (var k in merged.starred) if (merged.starred[k] > 0) clean.starred[k] = merged.starred[k];
+            for (var k in merged.dismissed) if (merged.dismissed[k] > 0) clean.dismissed[k] = merged.dismissed[k];
+            // Positive star wins over positive dismiss
+            for (var k in clean.starred) delete clean.dismissed[k];
+            clean.savedAt = new Date().toISOString();
+            // Update local state with anything new from cloud
+            for (var k in clean.starred) if (!_starred[k] || _starred[k] < clean.starred[k]) _starred[k] = clean.starred[k];
+            for (var k in clean.dismissed) if (!_dismissed[k] || _dismissed[k] < clean.dismissed[k]) _dismissed[k] = clean.dismissed[k];
+            _saveLocal();
+            // PUT merged result
+            fetch(JSONBLOB_URL, {method:'PUT', headers:{'Content-Type':'application/json','Accept':'application/json'}, body:JSON.stringify(clean)}).catch(function(){});
+        }).catch(function(){
+            // Cloud unavailable — just save locally, will sync next time
+        });
+}
+function isStarred(url) { return _starred[url] > 0; }
+function isDismissed(url) { return _dismissed[url] > 0; }
+function toggleStar(url) {
+    if (_starred[url] > 0) {
+        _starred[url] = -Date.now(); // tombstone
+        _saveUndo('unstar', [url]);
+    } else {
+        _starred[url] = Date.now();
+        _dismissed[url] = -Date.now(); // tombstone dismiss
+        _saveUndo('star', [url]);
+    }
+    _saveLocal();
+    _scheduleCloudSync();
     applyAll();
 }
 var _undoStack = [];
@@ -310,27 +353,30 @@ function undo() {
     var last = _undoStack.pop();
     last.urls.forEach(function(url) {
         if (last.action === 'dismiss') {
-            delete _dismissed[url];
+            _dismissed[url] = -Date.now(); // tombstone
         } else if (last.action === 'star') {
-            delete _starred[url];
+            _starred[url] = -Date.now(); // tombstone
         } else if (last.action === 'unstar') {
             _starred[url] = Date.now();
+        } else if (last.action === 'undismiss') {
+            _dismissed[url] = Date.now();
         }
     });
-    localStorage.setItem('rental_dismissed', JSON.stringify(_dismissed));
-    localStorage.setItem('rental_starred', JSON.stringify(_starred));
+    _saveLocal();
+    _scheduleCloudSync();
     applyAll();
 }
 function toggleDismiss(url) {
-    if (_dismissed[url]) {
-        delete _dismissed[url];
+    if (_dismissed[url] > 0) {
+        _dismissed[url] = -Date.now(); // tombstone
         _saveUndo('undismiss', [url]);
     } else {
-        _dismissed[url] = Date.now(); delete _starred[url];
+        _dismissed[url] = Date.now();
+        _starred[url] = -Date.now(); // tombstone star
         _saveUndo('dismiss', [url]);
     }
-    localStorage.setItem('rental_dismissed', JSON.stringify(_dismissed));
-    localStorage.setItem('rental_starred', JSON.stringify(_starred));
+    _saveLocal();
+    _scheduleCloudSync();
     applyAll();
 }
 function getStarredCount() { return Object.keys(_starred).length; }
