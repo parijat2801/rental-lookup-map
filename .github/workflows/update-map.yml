@@ -56,7 +56,7 @@ jobs:
           mkdir -p data/cache
 
           # Fetch from external sources (may return garbage — star_merge handles it)
-          curl -s -H "Accept: application/json" "https://jsonblob.com/api/jsonBlob/019db961-f929-7e5f-9491-a3423fdbf60f" -o /tmp/stars_jsonblob.json 2>/dev/null || echo '' > /tmp/stars_jsonblob.json
+          curl -s -H "Accept: application/json" "https://jsonblob.com/api/jsonBlob/019e06a6-922d-7985-8e5c-f8d976db841c" -o /tmp/stars_jsonblob.json 2>/dev/null || echo '' > /tmp/stars_jsonblob.json
           curl -s "https://gist.githubusercontent.com/parijat2801/2281d52dbd169be5a240adc381fae28d/raw/stars_and_dismissals.json" -o /tmp/stars_gist.json 2>/dev/null || echo '' > /tmp/stars_gist.json
           cp data/cache/stars_and_dismissals.json /tmp/stars_embedded.json 2>/dev/null || echo '' > /tmp/stars_embedded.json
 
