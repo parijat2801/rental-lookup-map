@@ -92,10 +92,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           cp output/map.html /tmp/map.html
+          cp data/cache/stars_and_dismissals.json /tmp/stars.json
           git stash --include-untracked || true
           git checkout gh-pages
           git reset --hard origin/gh-pages
           cp /tmp/map.html index.html
-          git add index.html
+          cp /tmp/stars.json stars.json
+          git add index.html stars.json
           git commit -m "Update map $(date -u +%Y-%m-%d)" || echo "No changes"
           git push origin gh-pages
