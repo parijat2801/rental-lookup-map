@@ -49,16 +49,14 @@ jobs:
           mkdir -p data/raw_mb
           python3 -m rental_lookup.magicbricks
 
-      - name: Sync stars (jsonblob + Gist + repo → merge → Gist)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Sync stars (published stars.json + repo cache → merge)
         run: |
           mkdir -p data/cache
 
-          # Fetch from external sources (may return garbage — star_merge handles it)
-          curl -s -H "Accept: application/json" "https://jsonblob.com/api/jsonBlob/019e06a6-922d-7985-8e5c-f8d976db841c" -o /tmp/stars_jsonblob.json 2>/dev/null || echo '' > /tmp/stars_jsonblob.json
-          curl -s "https://gist.githubusercontent.com/parijat2801/2281d52dbd169be5a240adc381fae28d/raw/stars_and_dismissals.json" -o /tmp/stars_gist.json 2>/dev/null || echo '' > /tmp/stars_gist.json
-          cp data/cache/stars_and_dismissals.json /tmp/stars_embedded.json 2>/dev/null || echo '' > /tmp/stars_embedded.json
+          # Published stars.json on gh-pages is the canonical shared copy — it is
+          # what the deployed page reads, and the Deploy step below republishes it.
+          curl -sf "https://parijat2801.github.io/rental-lookup-map/stars.json" -o /tmp/stars_published.json || echo '' > /tmp/stars_published.json
+          cp data/cache/stars_and_dismissals.json /tmp/stars_cached.json 2>/dev/null || echo '' > /tmp/stars_cached.json
 
           # Merge using tested module (handles corrupted JSON safely)
           python3 -c "
@@ -66,21 +64,21 @@ jobs:
           from rental_lookup.star_merge import load_json_safe, merge_stars
 
           sources = []
-          for f in ['/tmp/stars_jsonblob.json', '/tmp/stars_gist.json', '/tmp/stars_embedded.json']:
+          for f in ['/tmp/stars_published.json', '/tmp/stars_cached.json']:
               try:
                   sources.append(load_json_safe(open(f).read()))
               except FileNotFoundError:
                   sources.append({})
 
           merged = merge_stars(sources)
+          if not merged['starred'] and not merged['dismissed']:
+              raise SystemExit('Refusing to publish empty stars — all sources were unreadable')
+
           with open('data/cache/stars_and_dismissals.json', 'w') as f:
               json.dump(merged, f, indent=2)
 
           print(f'Merged: {len(merged[\"starred\"])} starred, {len(merged[\"dismissed\"])} dismissed')
           "
-
-          # Write merged back to Gist
-          GH_TOKEN=${{ secrets.GH_PAT }} gh gist edit 2281d52dbd169be5a240adc381fae28d -f stars_and_dismissals.json data/cache/stars_and_dismissals.json
 
       - name: Build map
         run: |
