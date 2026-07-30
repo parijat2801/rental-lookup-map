@@ -7,7 +7,13 @@
 body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
 #map{flex:1;min-width:0}
 #sidebar{width:420px;display:flex;flex-direction:column;border-left:1px solid #ddd;background:#f8f8f8}
-#controls{padding:12px;border-bottom:1px solid #ddd;background:white;overflow-y:auto;max-height:55vh}
+#tabs{display:flex;background:white;border-bottom:1px solid #ddd;flex-shrink:0}
+#tabs .tab{flex:1;padding:16px 8px;font-size:15px;font-weight:600;color:#666;background:white;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:inherit}
+#tabs .tab:hover{background:#f9fafb;color:#333}
+#tabs .tab.on{color:#2563eb;border-bottom-color:#2563eb}
+#tabs .tab .badge{display:inline-block;background:#2563eb;color:white;border-radius:10px;padding:1px 8px;font-size:11px;margin-left:6px;vertical-align:1px}
+#controls{padding:12px;background:white;overflow-y:auto;flex:1;min-height:0}
+#controls.hidden,#list-wrap.hidden{display:none}
 #controls h3{font-size:14px;margin-bottom:8px;color:#333}
 #controls label{display:block;font-size:12px;color:#555;margin-top:6px}
 #controls input[type=range]{width:100%}
@@ -15,9 +21,13 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
 #controls .row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
 #controls .chip{padding:2px 7px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid #ccc;background:white;user-select:none}
 #controls .chip.on{background:#2563eb;color:white;border-color:#2563eb}
+#controls .scorebox{margin-top:10px;padding:8px 10px 10px;border:1px solid #d5dae0;border-radius:8px;background:#fbfcfd}
+#controls .rankpill{flex:1;text-align:center;padding:9px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #ccc;background:white;color:#555;user-select:none}
+#controls .rankpill:hover{border-color:#2563eb;color:#2563eb}
+#controls .rankpill.on{background:#2563eb;color:white;border-color:#2563eb}
 #controls textarea{width:100%;height:120px;font-family:'SF Mono',Menlo,monospace;font-size:11px;border:1px solid #ccc;border-radius:6px;padding:8px;margin-top:6px;resize:vertical;line-height:1.4}
 #controls button{margin-top:8px;padding:6px 16px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
-#controls .stats{font-size:14px;color:#111;margin-top:10px;font-weight:600;background:#e0f2fe;padding:6px 10px;border-radius:6px;text-align:center}
+.stats{font-size:13px;color:#111;font-weight:600;background:#e0f2fe;padding:6px 10px;text-align:center;position:sticky;top:0;z-index:5;border-bottom:1px solid #bae6fd}
 #list-wrap{flex:1;overflow-y:auto}
 #list{padding:8px}
 .lc{display:flex;gap:8px;padding:8px;margin-bottom:6px;background:white;border-radius:8px;cursor:pointer;border:2px solid transparent;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
@@ -53,6 +63,10 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
 </style></head><body>
 <div id="map"></div>
 <div id="sidebar">
+<div id="tabs">
+  <button class="tab" id="tab-list" onclick="setTab('list')">Listings<span class="badge" id="tab-count">0</span></button>
+  <button class="tab on" id="tab-filters" onclick="setTab('filters')">Filters<span class="badge" id="tab-active" style="display:none">0</span></button>
+</div>
 <div id="controls">
   <h3>Filters & Scoring</h3>
   <label>Total Cost (rent+maint): <span class="rv" id="rv-cost">25K - 80K</span></label>
@@ -64,8 +78,16 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
   <input type="range" id="f-photos" min="0" max="20" step="1" value="0" oninput="applyAll()">
   <label>Max deposit multiplier: <span class="rv" id="rv-dep">20x</span></label>
   <input type="range" id="f-dep" min="2" max="20" step="1" value="20" oninput="applyAll()">
-  <label>Min <span id="score-label">score</span>: <span class="rv" id="rv-score">0</span></label>
-  <input type="range" id="f-score" min="0" max="100" step="5" value="0" oninput="applyAll()">
+  <div class="scorebox">
+    <div class="row" style="margin-top:0">
+      <span class="rankpill on" id="btn-quality" onclick="setRankMode('quality')">Quality</span>
+      <span class="rankpill" id="btn-value" onclick="setRankMode('value')">Value</span>
+      <span class="rankpill" id="btn-vibe" onclick="setRankMode('vibe')">Villa Vibe</span>
+      <span class="rankpill" id="btn-deal" onclick="setRankMode('deal')">Best Deals</span>
+    </div>
+    <label style="margin-top:8px">Min <span id="score-label">score</span>: <span class="rv" id="rv-score">0</span></label>
+    <input type="range" id="f-score" min="0" max="100" step="5" value="0" oninput="applyAll()">
+  </div>
   <label>Max days since posted: <span class="rv" id="rv-days">Any</span></label>
   <input type="range" id="f-days" min="0" max="90" step="1" value="90" oninput="applyAll()">
   <div class="row" style="margin-top:8px">
@@ -87,19 +109,16 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
     <span class="chip on" data-f="hideDismissed" onclick="toggleChip(this)">❌ Hide Dismissed</span>
   </div>
   <small style="color:#999;display:block;margin-top:4px">Blue = active filter. Click to toggle.<br>Click = select, C = star, X = dismiss, Enter = open, Esc = close. Shift+drag = rectangle select</small>
-  <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
-    <div style="display:flex;justify-content:space-between;align-items:center"><label style="margin:0;font-weight:600;font-size:13px">Rank by:</label><button onclick="exportStarred()" style="padding:3px 8px;border-radius:6px;border:1px solid #eab308;background:#fef3c7;color:#92400e;cursor:pointer;font-size:11px">Copy ⭐</button>
-    <button onclick="backupState()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">💾 Backup</button>
-    <button onclick="restoreState()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">📂 Restore</button></div>
-    <button id="btn-quality" onclick="setRankMode('quality')" style="padding:4px 12px;border-radius:6px;border:1px solid #2563eb;background:#2563eb;color:white;cursor:pointer;font-size:12px">Quality</button>
-    <button id="btn-value" onclick="setRankMode('value')" style="padding:4px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:12px">Value</button>
-    <button id="btn-vibe" onclick="setRankMode('vibe')" style="padding:4px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:12px">Villa Vibe</button>
-    <button id="btn-deal" onclick="setRankMode('deal')" style="padding:4px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:12px">Best Deals</button>
-  </div>
-  
-  <div class="stats" id="stats"></div>
+  <details style="margin-top:10px">
+    <summary style="font-size:12px;color:#555;cursor:pointer;user-select:none">Saved state</summary>
+    <div class="row" style="margin-top:6px">
+      <button onclick="exportStarred()" style="padding:3px 8px;border-radius:6px;border:1px solid #eab308;background:#fef3c7;color:#92400e;cursor:pointer;font-size:11px">Copy ⭐</button>
+      <button onclick="backupState()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">💾 Backup</button>
+      <button onclick="restoreState()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">📂 Restore</button>
+    </div>
+  </details>
 </div>
-<div id="list-wrap"><div id="list"></div></div>
+<div id="list-wrap" class="hidden"><div class="stats" id="stats"></div><div id="list"></div></div>
 </div>
 <div id="hc"><div class="carousel" id="hc-carousel">
 <button class="nav nav-left" onclick="carouselNav(-1)">&lt;</button>
@@ -130,23 +149,39 @@ var currentFiltered = [];
 var rankMode = 'quality';
 function setRankMode(mode) {
     rankMode = mode;
-    document.getElementById('btn-quality').style.background = mode === 'quality' ? '#2563eb' : 'white';
-    document.getElementById('btn-quality').style.color = mode === 'quality' ? 'white' : '#333';
-    document.getElementById('btn-quality').style.borderColor = mode === 'quality' ? '#2563eb' : '#ccc';
-    document.getElementById('btn-value').style.background = mode === 'value' ? '#2563eb' : 'white';
-    document.getElementById('btn-vibe').style.background = mode === 'vibe' ? '#2563eb' : 'white';
-    document.getElementById('btn-vibe').style.color = mode === 'vibe' ? 'white' : '#333';
-    document.getElementById('btn-vibe').style.borderColor = mode === 'vibe' ? '#2563eb' : '#ccc';
-    document.getElementById('btn-deal').style.background = mode === 'deal' ? '#2563eb' : 'white';
-    document.getElementById('btn-deal').style.color = mode === 'deal' ? 'white' : '#333';
-    document.getElementById('btn-deal').style.borderColor = mode === 'deal' ? '#2563eb' : '#ccc';
-    document.getElementById('btn-value').style.color = mode === 'value' ? 'white' : '#333';
-    document.getElementById('btn-value').style.borderColor = mode === 'value' ? '#2563eb' : '#ccc';
+    var modes = {quality:'btn-quality', value:'btn-value', vibe:'btn-vibe', deal:'btn-deal'};
+    for (var m in modes) {
+        document.getElementById(modes[m]).classList.toggle('on', m === mode);
+    }
     applyAll();
 }
 var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true};
 
 function toggleChip(el) { chipState[el.dataset.f] = !chipState[el.dataset.f]; el.classList.toggle('on'); applyAll(); }
+
+var _chipDefaults = JSON.parse(JSON.stringify(chipState));
+function setTab(t) {
+    var isList = t === 'list';
+    document.getElementById('controls').classList.toggle('hidden', isList);
+    document.getElementById('list-wrap').classList.toggle('hidden', !isList);
+    document.getElementById('tab-list').classList.toggle('on', isList);
+    document.getElementById('tab-filters').classList.toggle('on', !isList);
+}
+function updateFilterBadge() {
+    var n = 0;
+    for (var k in _chipDefaults) { if (chipState[k] !== _chipDefaults[k]) n++; }
+    // Sliders count as active only when moved off their default
+    if (+document.getElementById('f-cost-min').value !== 0) n++;
+    if (+document.getElementById('f-cost-max').value !== 150000) n++;
+    if (+document.getElementById('f-sqft').value !== 700) n++;
+    if (+document.getElementById('f-photos').value !== 0) n++;
+    if (+document.getElementById('f-dep').value !== 20) n++;
+    if (+document.getElementById('f-score').value !== 0) n++;
+    if (+document.getElementById('f-days').value !== 90) n++;
+    var b = document.getElementById('tab-active');
+    b.textContent = n;
+    b.style.display = n > 0 ? 'inline-block' : 'none';
+}
 var _vThresholds = null;
 function computeValueThresholds(filtered) {
     var vals = filtered.map(function(d){return d._value;}).sort(function(a,b){return a-b;});
@@ -446,6 +481,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 function applyAll() {
+    updateFilterBadge();
     var costMin = +document.getElementById('f-cost-min').value;
     var costMax = +document.getElementById('f-cost-max').value;
     var minSqft = +document.getElementById('f-sqft').value;
@@ -639,7 +675,11 @@ function showHC(e, d) {
 function updateList() {
     var bounds = map.getBounds();
     var visible = currentFiltered.filter(function(d) { return bounds.contains([d.lat, d.lng]); });
-    var html = '<div style="padding:6px 12px;font-size:12px;color:#888">' + visible.length + ' in view</div>';
+    var html = '';
+    document.getElementById('tab-count').textContent = visible.length;
+    if (_multiSelected.length === 0) {
+        document.getElementById('stats').textContent = visible.length + ' in view';
+    }
     visible.slice(0, 100).forEach(function(d) {
         var perks = [];
         if (d.pool) perks.push('Pool'); if (d.gym) perks.push('Gym'); if (d.club) perks.push('Club');
