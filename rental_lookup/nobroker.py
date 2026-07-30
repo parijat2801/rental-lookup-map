@@ -42,6 +42,14 @@ NEIGHBORHOODS = {
     "Langford Town": {"lat": 12.9550, "lon": 77.5950, "placeId": ""},
     "Lalbagh": {"lat": 12.9507, "lon": 77.5848, "placeId": ""},
     "Hombegowda Nagar": {"lat": 12.9400, "lon": 77.6050, "placeId": ""},
+    # Purple Line corridor east of Indiranagar (Baiyappanahalli -> Kadugodi).
+    # Anchors sit on locality centroids, not stations, so each covers 2-3 stops.
+    "Baiyappanahalli": {"lat": 12.9908, "lon": 77.6524, "placeId": ""},
+    "Hoodi": {"lat": 12.9925, "lon": 77.7130, "placeId": ""},
+    "Kundalahalli": {"lat": 12.9790, "lon": 77.7160, "placeId": ""},
+    "Brookefield": {"lat": 12.9660, "lon": 77.7170, "placeId": ""},
+    "Nallurhalli": {"lat": 12.9760, "lon": 77.7280, "placeId": ""},
+    "Kadugodi": {"lat": 12.9955, "lon": 77.7690, "placeId": ""},
 }
 
 
