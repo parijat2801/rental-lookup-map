@@ -68,19 +68,6 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
   <input type="range" id="f-score" min="0" max="100" step="5" value="0" oninput="applyAll()">
   <label>Max days since posted: <span class="rv" id="rv-days">Any</span></label>
   <input type="range" id="f-days" min="0" max="90" step="1" value="90" oninput="applyAll()">
-  <label>Photo AI filters (rated listings only):</label>
-  <div class="row" style="margin-top:4px">
-    <span class="chip" data-f="prLight" onclick="toggleChip(this)">☀️ Well Lit</span>
-    <span class="chip" data-f="prTrees" onclick="toggleChip(this)">🌳 Trees</span>
-    <span class="chip" data-f="prView" onclick="toggleChip(this)">🏞️ Open View</span>
-    <span class="chip" data-f="prWalls" onclick="toggleChip(this)">⬜ Light Walls</span>
-    <span class="chip" data-f="prKitchen" onclick="toggleChip(this)">🍳 Modular Kitchen</span>
-    <span class="chip" data-f="prBalcony" onclick="toggleChip(this)">🪟 Balcony</span>
-    <span class="chip" data-f="prSpacious" onclick="toggleChip(this)">📐 Spacious</span>
-    <span class="chip" data-f="prCat" onclick="toggleChip(this)">🐱 Cat Spot</span>
-    <span class="chip" data-f="prClean" onclick="toggleChip(this)">✨ No Damage</span>
-    <span class="chip" data-f="prVisit" onclick="toggleChip(this)">👍 Would Visit</span>
-  </div>
   <div class="row" style="margin-top:8px">
     <span class="chip on" data-f="noWest" onclick="toggleChip(this)">No W/NW</span>
     <span class="chip on" data-f="hasBalc" onclick="toggleChip(this)">Has Balcony</span>
@@ -157,7 +144,7 @@ function setRankMode(mode) {
     document.getElementById('btn-value').style.borderColor = mode === 'value' ? '#2563eb' : '#ccc';
     applyAll();
 }
-var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true,prLight:false,prTrees:false,prView:false,prWalls:false,prKitchen:false,prBalcony:false,prSpacious:false,prCat:false,prClean:false,prVisit:false};
+var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true};
 
 function toggleChip(el) { chipState[el.dataset.f] = !chipState[el.dataset.f]; el.classList.toggle('on'); applyAll(); }
 var _vThresholds = null;
@@ -496,7 +483,7 @@ function applyAll() {
             // Villa Vibe: central, spacious houses/villas OR really spacious apartments
             var soc = (d.society || '').toLowerCase();
             var isVillaType = d.bt === 'IH' || /villa|duplex|row.?house|townhouse|bungalow|penthouse/.test(soc);
-            var isSpacApt = d.bt === 'AP' && d.sqft >= 1500 && d.rated && d.pr && d.pr.rooms_feel_spacious;
+            var isSpacApt = d.bt === 'AP' && d.sqft >= 1500;
             if (!isVillaType && !isSpacApt) return false;
             if (d.sqft < 1000) return false;
             if (d.totalCost < 40000 || d.totalCost > 75000) return false;
@@ -521,25 +508,10 @@ function applyAll() {
         return d._score >= minScore;
     });
     if (maxDays < 90) { filtered = filtered.filter(function(d) { return d.daysAgo >= 0 && d.daysAgo <= maxDays; }); }
-    if (chipState.prLight) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.well_lit; }); }
-    if (chipState.prTrees) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.trees_or_greenery_outside; }); }
-    if (chipState.prView) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.open_view_not_blocked; }); }
-    if (chipState.prWalls) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.light_colored_walls; }); }
-    if (chipState.prKitchen) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.modular_kitchen; }); }
-    if (chipState.prBalcony) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.balcony_usable_size; }); }
-    if (chipState.prSpacious) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.rooms_feel_spacious; }); }
-    if (chipState.prCat) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.cat_could_sit_at_window; }); }
-    if (chipState.prClean) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.no_visible_damage; }); }
-    if (chipState.prVisit) { filtered = filtered.filter(function(d) { return d.rated && d.pr && d.pr.overall_impression === 'would visit'; }); }
     filtered.forEach(function(d) {
         d._value = d.totalCost > 0 ? Math.round(d._score / d.totalCost * 100000) : 0;
-        // Deal score: combines photo AI + amenities + brand + location, divided by cost
+        // Deal score: combines amenities + brand + location, divided by cost
         var q = 0;
-        if (d.rated && d.pr) {
-            var yes = 0; for (var k in d.pr) { if (d.pr[k] === true) yes++; }
-            q += yes * 2.5;
-            if (d.pr.overall_impression === 'would skip') q -= 20;
-        }
         if (d.pool) q += 6; if (d.gym) q += 4; if (d.club) q += 4;
         if (d.gp) q += 3; if (d.sec) q += 3;
         if (d.isBrand) q += 8;
@@ -564,21 +536,10 @@ function applyAll() {
         // House/villa/duplex bonus (max 20)
         if (d.bt === 'IH') vb += 20;
         else if (d.society && d.society.toLowerCase().match(/villa|duplex|row house|townhouse|bungalow/)) vb += 15;
-        // Light + view from photos (max 20)
-        if (d.rated && d.pr) {
-            if (d.pr.well_lit) vb += 7;
-            if (d.pr.has_big_windows) vb += 5;
-            if (d.pr.trees_or_greenery_outside) vb += 4;
-            if (d.pr.open_view_not_blocked) vb += 4;
-        }
-        // Light walls (max 5)
-        if (d.rated && d.pr && d.pr.light_colored_walls) vb += 5;
         // Balconies / outdoor space (max 10)
         if (d.balconies >= 3) vb += 10;
         else if (d.balconies >= 2) vb += 7;
         else if (d.balconies >= 1) vb += 4;
-        // Cat friendly (max 5)
-        if (d.rated && d.pr && d.pr.cat_could_sit_at_window) vb += 5;
         // Central location bonus (max 10)
         var centralAreas = ['indiranagar','koramangala','hsr','btm','jayanagar','jp nagar','malleshwaram','domlur','frazer','ulsoor','halasuru','richmond','basavanagudi','wilson','rajajinagar','banashankari','sadashiv','cox town','benson','langford','cunningham','vasanth','shivaji','lalbagh','shanti nagar'];
         var loc2 = (d.locality + ' ' + d.society).toLowerCase();
