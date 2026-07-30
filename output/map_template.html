@@ -19,6 +19,7 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
 #controls input[type=range]{width:100%}
 #controls .rv{font-size:11px;color:#2563eb;float:right}
 #controls .row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+#controls .fgroup{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-top:10px}
 #controls .chip{padding:2px 7px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid #ccc;background:white;user-select:none}
 #controls .chip.on{background:#2563eb;color:white;border-color:#2563eb}
 #controls .scorebox{margin-top:10px;padding:8px 10px 10px;border:1px solid #d5dae0;border-radius:8px;background:#fbfcfd}
@@ -90,18 +91,36 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
   </div>
   <label>Max days since posted: <span class="rv" id="rv-days">Any</span></label>
   <input type="range" id="f-days" min="0" max="90" step="1" value="90" oninput="applyAll()">
-  <div class="row" style="margin-top:8px">
-    <span class="chip on" data-f="noWest" onclick="toggleChip(this)">No W/NW</span>
-    <span class="chip on" data-f="hasBalc" onclick="toggleChip(this)">Has Balcony</span>
+  <div class="fgroup">Size &amp; type</div>
+  <div class="row">
+    <span class="chip" data-f="bhk2" onclick="toggleChip(this)">2 BHK</span>
+    <span class="chip" data-f="bhk3" onclick="toggleChip(this)">3 BHK</span>
     <span class="chip" data-f="noStandalone" onclick="toggleChip(this)">No Standalone</span>
     <span class="chip" data-f="noIH" onclick="toggleChip(this)">No Ind.House</span>
+  </div>
+  <div class="fgroup">Must have</div>
+  <div class="row">
+    <span class="chip on" data-f="hasBalc" onclick="toggleChip(this)">Balcony</span>
+    <span class="chip" data-f="hasLift" onclick="toggleChip(this)">Lift</span>
+    <span class="chip" data-f="carPark" onclick="toggleChip(this)">Car Parking</span>
+    <span class="chip" data-f="anyPark" onclick="toggleChip(this)">Any Parking</span>
+    <span class="chip on" data-f="noWest" onclick="toggleChip(this)">No W/NW</span>
+    <span class="chip" data-f="petOnly" onclick="toggleChip(this)">Pet Friendly</span>
+    <span class="chip" data-f="poolOnly" onclick="toggleChip(this)">Pool</span>
+  </div>
+  <div class="fgroup">Listing quality</div>
+  <div class="row">
     <span class="chip on" data-f="realPhoto" onclick="toggleChip(this)">Real Photo</span>
-    <span class="chip" data-f="petOnly" onclick="toggleChip(this)">Pet Friendly Only</span>
-    <span class="chip" data-f="poolOnly" onclick="toggleChip(this)">Pool Only</span>
-    <span class="chip" data-f="brandOnly" onclick="toggleChip(this)">Brand Only</span>
     <span class="chip" data-f="noFake" onclick="toggleChip(this)">No Fake Location</span>
+    <span class="chip" data-f="brandOnly" onclick="toggleChip(this)">Brand Builder</span>
+  </div>
+  <div class="fgroup">Source</div>
+  <div class="row">
     <span class="chip" data-f="nbOnly" onclick="toggleChip(this)">NoBroker Only</span>
     <span class="chip" data-f="mbOnly" onclick="toggleChip(this)">MagicBricks Only</span>
+  </div>
+  <div class="fgroup">Presets &amp; personal</div>
+  <div class="row">
     <span class="chip" data-f="vibeOnly" onclick="toggleChip(this)">🏡 Villa Vibe</span>
     <span class="chip" data-f="penthouse" onclick="toggleChip(this)">🏙️ Penthouse</span>
     <span class="chip" data-f="newToday" onclick="toggleChip(this)">🆕 New Today</span>
@@ -155,7 +174,7 @@ function setRankMode(mode) {
     }
     applyAll();
 }
-var chipState = {noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true};
+var chipState = {bhk2:false,bhk3:false,hasLift:false,carPark:false,anyPark:false,noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true};
 
 function toggleChip(el) { chipState[el.dataset.f] = !chipState[el.dataset.f]; el.classList.toggle('on'); applyAll(); }
 
@@ -504,6 +523,13 @@ function applyAll() {
         if (d.sqft < minSqft) return false;
         if (d.photoCount < minPhotos) return false;
         if (d.rent > 0 && d.deposit / d.rent > maxDep) return false;
+        // BHK chips are an OR-set: none selected = show all
+        if (chipState.bhk2 || chipState.bhk3) {
+            if (!((chipState.bhk2 && d.bhk === 'BHK2') || (chipState.bhk3 && d.bhk === 'BHK3'))) return false;
+        }
+        if (chipState.hasLift && !d.lift) return false;
+        if (chipState.carPark && !(d.parking === 'FOUR_WHEELER' || d.parking === 'BOTH')) return false;
+        if (chipState.anyPark && (!d.parking || d.parking === 'NONE')) return false;
         if (chipState.noWest && ['W','NW'].includes(d.facing)) return false;
         if (chipState.hasBalc && d.balconies === 0) return false;
         if (chipState.noStandalone) { var s=d.society.toLowerCase().trim(); if(['standalone building','standalone','stand alone','none',''].includes(s)) return false; }
