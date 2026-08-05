@@ -361,6 +361,15 @@ start = template.index('var ALL = ') + len('var ALL = ')
 end = template.index(';\nvar map =')
 html = template[:start] + data_json + template[end:]
 
+# Refresh metro overlay data (regenerate with scripts/fetch_metro_lines.py)
+metro_path = Path('data/metro_lines.json')
+if metro_path.exists() and 'var METRO = ' in html:
+    with open(metro_path) as f:
+        metro_json = f.read().strip()
+    mstart = html.index('var METRO = ') + len('var METRO = ')
+    mend = html.index(';\n', mstart)  # data is single-line JSON
+    html = html[:mstart] + metro_json + html[mend:]
+
 with open('output/map.html', 'w') as f:
     f.write(html)
 
