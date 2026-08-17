@@ -93,6 +93,7 @@ body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;ov
   <input type="range" id="f-days" min="0" max="90" step="1" value="90" oninput="applyAll()">
   <div class="fgroup">Size &amp; type</div>
   <div class="row">
+    <span class="chip" data-f="bhk1" onclick="toggleChip(this)">1 BHK</span>
     <span class="chip" data-f="bhk2" onclick="toggleChip(this)">2 BHK</span>
     <span class="chip" data-f="bhk3" onclick="toggleChip(this)">3 BHK</span>
     <span class="chip" data-f="noStandalone" onclick="toggleChip(this)">No Standalone</span>
@@ -205,7 +206,7 @@ function setRankMode(mode) {
     }
     applyAll();
 }
-var chipState = {bhk2:false,bhk3:false,hasLift:false,carPark:false,anyPark:false,noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true};
+var chipState = {bhk1:false,bhk2:false,bhk3:false,hasLift:false,carPark:false,anyPark:false,noWest:true,hasBalc:true,noStandalone:false,noIH:false,realPhoto:true,petOnly:false,poolOnly:false,brandOnly:false,noFake:false,nbOnly:false,mbOnly:false,vibeOnly:false,penthouse:false,newToday:false,starredOnly:false,hideDismissed:true};
 
 function toggleChip(el) { chipState[el.dataset.f] = !chipState[el.dataset.f]; el.classList.toggle('on'); applyAll(); }
 
@@ -555,8 +556,8 @@ function applyAll() {
         if (d.photoCount < minPhotos) return false;
         if (d.rent > 0 && d.deposit / d.rent > maxDep) return false;
         // BHK chips are an OR-set: none selected = show all
-        if (chipState.bhk2 || chipState.bhk3) {
-            if (!((chipState.bhk2 && d.bhk === 'BHK2') || (chipState.bhk3 && d.bhk === 'BHK3'))) return false;
+        if (chipState.bhk1 || chipState.bhk2 || chipState.bhk3) {
+            if (!((chipState.bhk1 && d.bhk === 'BHK1') || (chipState.bhk2 && d.bhk === 'BHK2') || (chipState.bhk3 && d.bhk === 'BHK3'))) return false;
         }
         if (chipState.hasLift && !d.lift) return false;
         if (chipState.carPark && !(d.parking === 'FOUR_WHEELER' || d.parking === 'BOTH')) return false;

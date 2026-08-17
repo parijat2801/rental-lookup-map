@@ -16,8 +16,8 @@ MB_API = "https://www.magicbricks.com/mbsrp/propertySearch.html"
 CITY = "Bangalore"
 PAGE_SIZE = 30
 
-# MagicBricks bedroom codes: just use "2,3"
-BHK_TYPES = "2,3"
+# MagicBricks bedroom codes: just use "1,2,3"
+BHK_TYPES = "1,2,3"
 # Property types: 10002=Apartment, 10003=Builder Floor, 10021=Penthouse, 10022=Studio
 PROP_TYPES = "10002,10003,10021,10022"
 

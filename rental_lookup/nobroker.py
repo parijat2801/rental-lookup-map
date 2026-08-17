@@ -11,7 +11,7 @@ from rental_lookup.models import Listing
 NOBROKER_API = "https://www.nobroker.in/api/v3/multi/property/RENT/filter"
 CITY = "bangalore"
 RENT_RANGE = "0,150000"
-BHK_TYPES = "BHK2,BHK3"
+BHK_TYPES = "BHK1,BHK2,BHK3"
 
 NEIGHBORHOODS = {
     "Indiranagar": {"lat": 12.9716, "lon": 77.6412, "placeId": "ChIJbTDDCWAXujYRZyFs0FD4KFI"},
