@@ -26,10 +26,18 @@ publishes it to GitHub Pages.
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
   balcony, pool, pet-friendly, branded builder, source and more.
 - Star / dismiss listings with undo, bulk-select with shift + drag, and keyboard
-  shortcuts (`C` star, `X` dismiss, `Enter` open, `←`/`→` photos, `Ctrl+Z` undo).
+  shortcuts (`C` star, `X` dismiss, `Enter` open, `←`/`→` photos, `Ctrl+Z` undo,
+  `Esc` close); press `?` for the full list.
 - Hover cards with photos, costs, amenities and an optional AI photo checklist.
+  A selected listing's card stays pinned to its marker as the map pans, and the
+  marker pulses so it's easy to spot.
+- Resizable sidebar (drag its edge, double-click to reset) that can be collapsed
+  to give the map the full width; both settings are remembered per browser.
+- "Show my location" button that puts a live blue dot on the map (needs browser
+  location permission).
 - Namma Metro line overlay; listings delisted since the last run shown in grey;
   listings sharing a suspicious coordinate shown dashed.
+- Subtle animations via GSAP, switched off when the OS asks for reduced motion.
 
 **CLI ranking** (`output/results.csv`): NoBroker listings within a budget, scored
 0–100+ on pet-friendliness, space, light, freshness, amenities and distance to the
