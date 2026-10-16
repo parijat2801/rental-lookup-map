@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Rental Lookup — Bangalore</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+#map{flex:1;min-width:0}
+#sidebar{width:420px;display:flex;flex-direction:column;border-left:1px solid #ddd;background:#f8f8f8}
+#tabs{display:flex;background:white;border-bottom:1px solid #ddd;flex-shrink:0}
+#tabs .tab{flex:1;padding:16px 8px;font-size:15px;font-weight:600;color:#666;background:white;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:inherit}
+#tabs .tab:hover{background:#f9fafb;color:#333}
+#tabs .tab.on{color:#2563eb;border-bottom-color:#2563eb}
+#tabs .tab .badge{display:inline-block;background:#2563eb;color:white;border-radius:10px;padding:1px 8px;font-size:11px;margin-left:6px;vertical-align:1px}
+#filters-panel{padding:12px;background:white;overflow-y:auto;flex:1;min-height:0}
+#filters-panel.hidden,#listings-panel.hidden{display:none}
+#filters-panel h3{font-size:14px;margin-bottom:8px;color:#333}
+#filters-panel label{display:block;font-size:12px;color:#555;margin-top:6px}
+#filters-panel input[type=range]{width:100%}
+#filters-panel .slider-value{font-size:11px;color:#2563eb;float:right}
+#filters-panel .row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+#filters-panel .chip-group-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-top:10px}
+#filters-panel .chip{padding:2px 7px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid #ccc;background:white;user-select:none}
+#filters-panel .chip.on{background:#2563eb;color:white;border-color:#2563eb}
+#filters-panel .score-box{margin-top:10px;padding:8px 10px 10px;border:1px solid #d5dae0;border-radius:8px;background:#fbfcfd}
+#filters-panel .rank-pill{flex:1;text-align:center;padding:9px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #ccc;background:white;color:#555;user-select:none}
+#filters-panel .rank-pill:hover{border-color:#2563eb;color:#2563eb}
+#filters-panel .rank-pill.on{background:#2563eb;color:white;border-color:#2563eb}
+#filters-panel textarea{width:100%;height:120px;font-family:'SF Mono',Menlo,monospace;font-size:11px;border:1px solid #ccc;border-radius:6px;padding:8px;margin-top:6px;resize:vertical;line-height:1.4}
+#filters-panel button{margin-top:8px;padding:6px 16px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
+.stats{font-size:13px;color:#111;font-weight:600;background:#e0f2fe;padding:6px 10px;text-align:center;position:sticky;top:0;z-index:5;border-bottom:1px solid #bae6fd}
+#listings-panel{flex:1;overflow-y:auto}
+#list{padding:8px}
+.listing-card{display:flex;gap:8px;padding:8px;margin-bottom:6px;background:white;border-radius:8px;cursor:pointer;border:2px solid transparent;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+.listing-card:hover{border-color:#2563eb}
+.listing-card.active{border-color:#dc2626;background:#fef2f2}
+.listing-card img{width:80px;height:60px;object-fit:cover;border-radius:5px;flex-shrink:0}
+.listing-card .info{flex:1;min-width:0;font-size:12px}
+.listing-card .name{font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listing-card .details-line{color:#555;margin-top:1px}
+.listing-card .perks{color:#059669;font-size:10px;margin-top:1px}
+.listing-card .star-toggle{float:right;cursor:pointer;font-size:16px;margin-right:4px;user-select:none}
+.listing-card .star-toggle:hover{transform:scale(1.3)}
+.listing-card .score-badge{float:right;background:#2563eb;color:white;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:bold}
+.listing-card .pet-badge{background:#f59e0b;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;margin-left:4px}
+.listing-card .maintenance-note{color:#dc2626;font-size:10px}
+#detail-card{display:none;position:fixed;z-index:10000;width:320px;background:white;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.25);overflow:hidden;pointer-events:none;cursor:default}
+#detail-card .actions{display:flex;gap:6px;margin-top:8px}
+#detail-card .actions button{padding:4px 10px;border-radius:6px;border:1px solid #ccc;cursor:pointer;font-size:12px;background:white}
+#detail-card .actions button:hover{background:#f3f4f6}
+#detail-card .shortcut{font-size:10px;color:#999;margin-top:4px}
+#detail-card img{width:100%;height:150px;object-fit:cover;display:block}
+#detail-card .carousel{position:relative}
+#detail-card .carousel .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:white;border:none;padding:8px 12px;cursor:pointer;font-size:18px;border-radius:4px;z-index:1}
+#detail-card .carousel .nav:hover{background:rgba(0,0,0,0.8)}
+#detail-card .carousel .nav-left{left:4px}
+#detail-card .carousel .nav-right{right:4px}
+#detail-card .carousel .counter{position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.6);color:white;padding:2px 8px;border-radius:10px;font-size:11px}
+#detail-card .body{padding:10px;font-size:12px}
+#detail-card .title{font-size:15px;font-weight:600;margin:4px 0 2px}
+#detail-card .location{color:#666;margin-bottom:6px}
+#detail-card .details{line-height:1.5;color:#333}
+#detail-card .extras{font-size:11px;color:#666;margin-top:6px;max-height:60px;overflow:hidden}
+</style></head><body>
+<div id="map"></div>
+<div id="sidebar">
+<div id="tabs">
+  <button class="tab" id="tab-listings" onclick="showTab('listings')">Listings<span class="badge" id="listings-count">0</span></button>
+  <button class="tab on" id="tab-filters" onclick="showTab('filters')">Filters<span class="badge" id="active-filter-count" style="display:none">0</span></button>
+</div>
+<div id="filters-panel">
+  <h3>Filters & Scoring</h3>
+  <label>Total Cost (rent+maint): <span class="slider-value" id="value-cost">25K - 80K</span></label>
+  <input type="range" id="filter-cost-min" min="0" max="150000" step="5000" value="0" oninput="refreshMap()">
+  <input type="range" id="filter-cost-max" min="0" max="150000" step="5000" value="150000" oninput="refreshMap()">
+  <label>Min sqft: <span class="slider-value" id="value-sqft">700</span></label>
+  <input type="range" id="filter-sqft" min="500" max="2000" step="50" value="700" oninput="refreshMap()">
+  <label>Min photos: <span class="slider-value" id="value-photos">0</span></label>
+  <input type="range" id="filter-photos" min="0" max="20" step="1" value="0" oninput="refreshMap()">
+  <label>Max deposit multiplier: <span class="slider-value" id="value-deposit">20x</span></label>
+  <input type="range" id="filter-deposit" min="2" max="20" step="1" value="20" oninput="refreshMap()">
+  <div class="score-box">
+    <div class="row" style="margin-top:0">
+      <span class="rank-pill on" id="rank-quality" onclick="setRankMode('quality')">Quality</span>
+      <span class="rank-pill" id="rank-value" onclick="setRankMode('value')">Value</span>
+      <span class="rank-pill" id="rank-vibe" onclick="setRankMode('vibe')">Villa Vibe</span>
+      <span class="rank-pill" id="rank-deal" onclick="setRankMode('deal')">Best Deals</span>
+    </div>
+    <label style="margin-top:8px">Min <span id="score-label">score</span>: <span class="slider-value" id="value-score">0</span></label>
+    <input type="range" id="filter-score" min="0" max="100" step="5" value="0" oninput="refreshMap()">
+  </div>
+  <label>Max days since posted: <span class="slider-value" id="value-days">Any</span></label>
+  <input type="range" id="filter-days" min="0" max="90" step="1" value="90" oninput="refreshMap()">
+  <div class="chip-group-title">Size &amp; type</div>
+  <div class="row">
+    <span class="chip" data-filter="bhk1" onclick="toggleChip(this)">1 BHK</span>
+    <span class="chip" data-filter="bhk2" onclick="toggleChip(this)">2 BHK</span>
+    <span class="chip" data-filter="bhk3" onclick="toggleChip(this)">3 BHK</span>
+    <span class="chip" data-filter="excludeStandalone" onclick="toggleChip(this)">No Standalone</span>
+    <span class="chip" data-filter="excludeIndependentHouses" onclick="toggleChip(this)">No Ind.House</span>
+  </div>
+  <div class="chip-group-title">Must have</div>
+  <div class="row">
+    <span class="chip on" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</span>
+    <span class="chip" data-filter="requireLift" onclick="toggleChip(this)">Lift</span>
+    <span class="chip" data-filter="requireCarParking" onclick="toggleChip(this)">Car Parking</span>
+    <span class="chip" data-filter="requireAnyParking" onclick="toggleChip(this)">Any Parking</span>
+    <span class="chip on" data-filter="excludeWestFacing" onclick="toggleChip(this)">No W/NW</span>
+    <span class="chip" data-filter="petFriendlyOnly" onclick="toggleChip(this)">Pet Friendly</span>
+    <span class="chip" data-filter="poolOnly" onclick="toggleChip(this)">Pool</span>
+  </div>
+  <div class="chip-group-title">Listing quality</div>
+  <div class="row">
+    <span class="chip on" data-filter="requireRealPhoto" onclick="toggleChip(this)">Real Photo</span>
+    <span class="chip" data-filter="excludeFakeLocations" onclick="toggleChip(this)">No Fake Location</span>
+    <span class="chip" data-filter="brandedBuilderOnly" onclick="toggleChip(this)">Brand Builder</span>
+  </div>
+  <div class="chip-group-title">Source</div>
+  <div class="row">
+    <span class="chip" data-filter="nobrokerOnly" onclick="toggleChip(this)">NoBroker Only</span>
+    <span class="chip" data-filter="magicbricksOnly" onclick="toggleChip(this)">MagicBricks Only</span>
+  </div>
+  <div class="chip-group-title">Presets &amp; personal</div>
+  <div class="row">
+    <span class="chip" data-filter="villaVibeOnly" onclick="toggleChip(this)">🏡 Villa Vibe</span>
+    <span class="chip" data-filter="penthouseOnly" onclick="toggleChip(this)">🏙️ Penthouse</span>
+    <span class="chip" data-filter="newTodayOnly" onclick="toggleChip(this)">🆕 New Today</span>
+    <span class="chip" data-filter="starredOnly" onclick="toggleChip(this)">⭐ Starred Only</span>
+    <span class="chip on" data-filter="hideDismissed" onclick="toggleChip(this)">❌ Hide Dismissed</span>
+  </div>
+  <small style="color:#999;display:block;margin-top:4px">Blue = active filter. Click to toggle.<br>Click = select, C = star, X = dismiss, Enter = open, Esc = close. Shift+drag = rectangle select</small>
+  <details style="margin-top:10px">
+    <summary style="font-size:12px;color:#555;cursor:pointer;user-select:none">Saved state</summary>
+    <div class="row" style="margin-top:6px">
+      <button onclick="copyStarredToClipboard()" style="padding:3px 8px;border-radius:6px;border:1px solid #eab308;background:#fef3c7;color:#92400e;cursor:pointer;font-size:11px">Copy ⭐</button>
+      <button onclick="downloadStarsBackup()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">💾 Backup</button>
+      <button onclick="restoreStarsBackup()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">📂 Restore</button>
+    </div>
+  </details>
+</div>
+<div id="listings-panel" class="hidden"><div class="stats" id="stats"></div><div id="list"></div></div>
+</div>
+<div id="detail-card"><div class="carousel" id="card-carousel">
+<button class="nav nav-left" onclick="stepPhoto(-1)">&lt;</button>
+<img id="card-photo" src="" onerror="this.style.display='none'" onload="this.style.display='block'">
+<button class="nav nav-right" onclick="stepPhoto(1)">&gt;</button>
+<span class="counter" id="card-photo-counter"></span>
+</div>
+<div class="body"><div class="title" id="card-title"></div><div class="location" id="card-location"></div>
+<div class="details" id="card-details"></div><div class="extras" id="card-extras"></div></div></div>
+<script>
+// ===========================================================================
+// Data. rental_lookup/webmap/builder.py replaces these declarations, so keep
+// each on a single line. Record fields are documented in builder.py.
+// ===========================================================================
+var LISTINGS = [];
+var METRO_LINES = {};
+var CARTO_KEY = '';
+
+// ===========================================================================
+// Helpers
+// ===========================================================================
+function byId(id) { return document.getElementById(id); }
+var HTML_ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
+// Escape scraped text before putting it into innerHTML.
+function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return HTML_ESCAPES[c]; }); }
+function mentionsAnyArea(d, areas) {
+    var text = ((d.locality || '') + ' ' + (d.society || '')).toLowerCase();
+    return areas.some(function(area) { return text.indexOf(area) >= 0; });
+}
+
+// Locality keyword lists (substring match on locality + society).
+var CENTRAL_AREAS = ['indiranagar','koramangala','hsr','btm','jayanagar','jp nagar','malleshwaram','domlur','frazer','ulsoor','halasuru','richmond','basavanagudi','wilson','rajajinagar','banashankari'];
+var CENTRAL_AREAS_EXTENDED = CENTRAL_AREAS.concat(['sadashiv','cox town','benson','langford','cunningham','vasanth','shivaji','lalbagh','shanti nagar']);
+var VILLA_VIBE_AREAS = CENTRAL_AREAS_EXTENDED.concat(['adugodi','hombegowda']);
+var GOOD_FACING = ['E','SE','S','NE'];
+var CAR_PARKING_TYPES = ['FOUR_WHEELER','BOTH'];
+var RELIABLE_WATER = ['CORPORATION','BOREWELL_AND_CORPORATION','CORP_BORE'];
+var STANDALONE_SOCIETIES = ['standalone building','standalone','stand alone','none',''];
+
+// ===========================================================================
+// Map, metro overlay and marker jitter
+// ===========================================================================
+var map = L.map('map').setView([12.9716, 77.60], 12);
+// CARTO serves "API key required" watermark tiles without a key, so fall back to Esri's keyless light canvas.
+if (CARTO_KEY) {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=' + encodeURIComponent(CARTO_KEY), {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
+} else {
+    var ESRI_CANVAS = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
+    L.tileLayer(ESRI_CANVAS + 'World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19, maxNativeZoom: 16,
+        attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    L.tileLayer(ESRI_CANVAS + 'World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom: 19, maxNativeZoom: 16}).addTo(map);
+}
+
+map.createPane('metro');
+map.getPane('metro').style.zIndex = 640;
+var metroLayer = L.layerGroup();
+var METRO_LINE_NAMES = {purple: 'Purple Line', green: 'Green Line', yellow: 'Yellow Line'};
+Object.keys(METRO_LINES).forEach(function(lineId) {
+    var line = METRO_LINES[lineId];
+    L.polyline(line.path, {pane: 'metro', color: line.color, weight: 3, opacity: 0.8, interactive: false}).addTo(metroLayer);
+    line.stations.forEach(function(station) {
+        L.circleMarker([station.lat, station.lng], {pane: 'metro', radius: 3, color: line.color, weight: 1.5, fillColor: '#fff', fillOpacity: 1})
+            .bindTooltip(station.name + ' \u00b7 ' + METRO_LINE_NAMES[lineId], {direction: 'top'})
+            .addTo(metroLayer);
+    });
+});
+metroLayer.addTo(map);
+
+// Top-left button toggling the metro overlay.
+var metroToggle = L.control({position: 'topleft'});
+metroToggle.onAdd = function() {
+    var container = L.DomUtil.create('div', 'leaflet-bar');
+    var button = L.DomUtil.create('a', '', container);
+    button.href = '#';
+    button.title = 'Toggle metro lines';
+    button.innerHTML = '\ud83d\ude87';
+    button.style.background = '#2563eb';
+    button.onclick = function(e) {
+        e.preventDefault();
+        if (map.hasLayer(metroLayer)) { map.removeLayer(metroLayer); button.style.background = ''; }
+        else { metroLayer.addTo(map); button.style.background = '#2563eb'; }
+    };
+    return container;
+};
+metroToggle.addTo(map);
+
+// Listings sharing a (likely fake) coordinate get a deterministic pseudo-random
+// offset (~±200m) so they don't hide each other.
+LISTINGS.forEach(function(d, i) {
+    if (d.isStacked) {
+        var r1 = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+        var r2 = Math.sin(i * 269.5 + 183.3) * 43758.5453;
+        d.mapLat = d.lat + (r1 - Math.floor(r1) - 0.5) * 0.004;
+        d.mapLng = d.lng + (r2 - Math.floor(r2) - 0.5) * 0.004;
+    } else {
+        d.mapLat = d.lat;
+        d.mapLng = d.lng;
+    }
+});
+var markerLayer = L.layerGroup().addTo(map);
+var detailCard = byId('detail-card');  // hover / pinned listing details
+var filteredListings = [];  // result of the last refreshMap(), best-ranked first
+
+// ===========================================================================
+// Scoring. Every score depends only on the listing itself, so it is computed
+// once at load into d.scores; filters and colour tiers are applied per render.
+// ===========================================================================
+// Quality: general desirability (light, age, amenities, platform scores, ...).
+function qualityScore(d) {
+    var s = 0;
+    if (GOOD_FACING.includes(d.facing)) s += 10;
+    if (d.balconies > 0) s += Math.min(d.balconies * 4, 12);
+    if (d.ageYears <= 3) s += 10; else if (d.ageYears <= 7) s += 7; else if (d.ageYears <= 15) s += 3;
+    if (d.hasPowerBackup) s += 5; if (d.hasSecurity) s += 5; if (d.isGated) s += 4; if (d.hasFireSafety) s += 2;
+    if (d.hasPool) s += 8; if (d.hasGym) s += 5; if (d.hasClubhouse) s += 5;
+    if (d.hasPark) s += 3; if (d.hasIntercom) s += 2;
+    if (CAR_PARKING_TYPES.includes(d.parking)) s += 5;
+    if (d.nbTransit >= 8) s += 5; else if (d.nbTransit >= 7) s += 3;
+    if (d.nbLifestyle >= 8) s += 8; else if (d.nbLifestyle >= 6) s += 4;
+    if (RELIABLE_WATER.includes(d.waterSupply)) s += 5;
+    if (d.isNegotiable) s += 3;
+    if (d.photoCount >= 10) s += 5; else if (d.photoCount >= 5) s += 3;
+    if (d.isBrandedBuilder) s += 8;
+    if (d.sqft >= 1500) s += 5; else if (d.sqft >= 1200) s += 3;
+    if (d.isPetFriendly) s += 10;
+    if (d.cupboards >= 5) s += 5;
+    return s;
+}
+// Deal quality: amenities + brand + location + low deposit (squared / cost = deal score).
+function dealQualityScore(d) {
+    var q = 0;
+    if (d.hasPool) q += 6; if (d.hasGym) q += 4; if (d.hasClubhouse) q += 4;
+    if (d.isGated) q += 3; if (d.hasSecurity) q += 3;
+    if (d.isBrandedBuilder) q += 8;
+    if (d.nbLifestyle >= 8) q += 6; else if (d.nbLifestyle >= 6) q += 3;
+    if (d.nbTransit >= 8) q += 4; else if (d.nbTransit >= 7) q += 2;
+    if (d.sqft >= 1500) q += 5; else if (d.sqft >= 1200) q += 3;
+    if (mentionsAnyArea(d, CENTRAL_AREAS)) q += 10;
+    if (d.deposit > 0 && d.rent > 0 && d.deposit / d.rent <= 3) q += 5;
+    return q;
+}
+// Villa vibe: spacious, outdoorsy, central houses / villas / duplexes.
+function villaVibeScore(d) {
+    var v = 0;
+    var society = (d.society || '').toLowerCase();
+    // Space is king (max 30)
+    if (d.sqft >= 2000) v += 30; else if (d.sqft >= 1500) v += 25; else if (d.sqft >= 1200) v += 20;
+    else if (d.sqft >= 1000) v += 15; else v += 5;
+    // House/villa/duplex bonus (max 20)
+    if (d.buildingType === 'IH') v += 20; else if (/villa|duplex|row house|townhouse|bungalow/.test(society)) v += 15;
+    // Balconies / outdoor space (max 10)
+    if (d.balconies >= 3) v += 10; else if (d.balconies >= 2) v += 7; else if (d.balconies >= 1) v += 4;
+    // Central location (max 10)
+    if (mentionsAnyArea(d, CENTRAL_AREAS_EXTENDED)) v += 10;
+    return v;
+}
+function computeScores(d) {
+    try {
+        var quality = qualityScore(d), dealQuality = dealQualityScore(d);
+        d.scores = {
+            quality: quality,
+            value: d.totalCost > 0 ? Math.round(quality / d.totalCost * 100000) : 0,
+            dealQuality: dealQuality,
+            deal: d.totalCost > 0 ? Math.round(dealQuality * dealQuality / d.totalCost * 1000) : 0,
+            vibe: villaVibeScore(d)
+        };
+    } catch (e) {
+        d.scores = {quality: 0, value: 0, dealQuality: 0, deal: 0, vibe: 0};
+    }
+}
+LISTINGS.forEach(computeScores);
+
+// Rank modes: which d.scores entry drives the min-score slider, colours and sort order.
+var RANK_MODES = {
+    quality: {score: 'quality', label: 'score', sort: function(a, b) { return b.scores.quality - a.scores.quality || a.totalCost - b.totalCost; }},
+    value: {score: 'value', label: 'value', sort: function(a, b) { return b.scores.value - a.scores.value || b.scores.quality - a.scores.quality; }},
+    vibe: {score: 'vibe', label: 'vibe score', sort: function(a, b) { return b.scores.vibe - a.scores.vibe || b.sqft - a.sqft; }},
+    deal: {score: 'deal', label: 'deal score', sort: function(a, b) { return b.scores.deal - a.scores.deal || b.scores.dealQuality - a.scores.dealQuality; }}
+};
+var activeRankMode = 'quality';
+function setRankMode(mode) {
+    activeRankMode = mode;
+    for (var m in RANK_MODES) byId('rank-' + m).classList.toggle('on', m === mode);
+    refreshMap();
+}
+
+// Marker colours, red -> dark green. Quality uses fixed cut-offs; the other modes
+// use percentiles (50/65/80/90/95th) of the currently visible listings.
+var TIER_COLORS = ['#ef4444','#f97316','#eab308','#84cc16','#22c55e','#166534'];
+var QUALITY_TIERS = [55, 65, 75, 85, 95];
+function percentileTiers(values) {
+    values = values.slice().sort(function(a, b) { return a - b; });
+    var n = values.length;
+    if (n < 5) return [0, 0, 0, 0, 0];
+    return [0.5, 0.65, 0.8, 0.9, 0.95].map(function(p) { return values[Math.floor(n * p)]; });
+}
+function tierColor(value, tiers) {
+    var i = 0;
+    while (i < tiers.length && value >= tiers[i]) i++;
+    return TIER_COLORS[i];
+}
+
+// ===========================================================================
+// Filter chips, tabs and the active-filter badge
+// ===========================================================================
+// One entry per chip (its data-filter attribute); true = filter active.
+var filterChips = {bhk1:false,bhk2:false,bhk3:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:true,requireBalcony:true,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,villaVibeOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
+var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
+var SLIDER_IDS = ['filter-cost-min','filter-cost-max','filter-sqft','filter-photos','filter-deposit','filter-score','filter-days'];
+
+function toggleChip(chip) {
+    filterChips[chip.dataset.filter] = !filterChips[chip.dataset.filter];
+    chip.classList.toggle('on');
+    refreshMap();
+}
+function showTab(tab) {
+    var isListings = tab === 'listings';
+    byId('filters-panel').classList.toggle('hidden', isListings);
+    byId('listings-panel').classList.toggle('hidden', !isListings);
+    byId('tab-listings').classList.toggle('on', isListings);
+    byId('tab-filters').classList.toggle('on', !isListings);
+}
+// Count chips and sliders moved off their defaults (slider defaults = their HTML value attribute).
+function updateActiveFilterCount() {
+    var count = 0;
+    for (var name in DEFAULT_FILTER_CHIPS) { if (filterChips[name] !== DEFAULT_FILTER_CHIPS[name]) count++; }
+    SLIDER_IDS.forEach(function(id) { var slider = byId(id); if (+slider.value !== +slider.defaultValue) count++; });
+    var badge = byId('active-filter-count');
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+}
+
+// ===========================================================================
+// Stars & dismissals
+//   {url: epochMs}; a negative value is a tombstone (un-starred / un-dismissed
+//   at that time). Copies are merged so the most recent action wins, the same
+//   rule as rental_lookup/stars.py.
+// ===========================================================================
+var starredAt = {};
+var dismissedAt = {};
+function mergeLatest(target, entries) {
+    for (var url in entries || {}) {
+        var ts = entries[url];
+        if (typeof ts !== 'number') continue;
+        if (target[url] === undefined || Math.abs(ts) > Math.abs(target[url])) target[url] = ts;
+    }
+}
+// 1. Stars embedded at build time, 2. this browser's localStorage.
+LISTINGS.forEach(function(d) {
+    if (d.savedStarredAt) starredAt[d.url] = d.savedStarredAt;
+    if (d.savedDismissedAt) dismissedAt[d.url] = d.savedDismissedAt;
+});
+try {
+    mergeLatest(starredAt, JSON.parse(localStorage.getItem('rental_starred') || '{}'));
+    mergeLatest(dismissedAt, JSON.parse(localStorage.getItem('rental_dismissed') || '{}'));
+} catch (e) {}
+// 3. Shared stars.json published next to the page on GitHub Pages.
+fetch('stars.json').then(function(r) { return r.ok ? r.json() : {}; })
+    .then(function(shared) {
+        if (!shared || typeof shared !== 'object') return;
+        mergeLatest(starredAt, shared.starred);
+        mergeLatest(dismissedAt, shared.dismissed);
+        saveStars();
+        refreshMap();
+    }).catch(function() {});
+saveStars();
+
+// Persist to localStorage, and to disk when served by webmap/server.py (no-op elsewhere).
+function saveStars() {
+    try {
+        localStorage.setItem('rental_starred', JSON.stringify(starredAt));
+        localStorage.setItem('rental_dismissed', JSON.stringify(dismissedAt));
+    } catch (e) {}
+    var payload = JSON.stringify({starred: starredAt, dismissed: dismissedAt, savedAt: new Date().toISOString()});
+    fetch('/save_stars', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: payload}).catch(function() {});
+}
+function isStarred(url) { return starredAt[url] > 0; }
+function isDismissed(url) { return dismissedAt[url] > 0; }
+// Starring clears any dismissal and vice versa.
+function markStarred(url) { var now = Date.now(); starredAt[url] = now; dismissedAt[url] = -now; }
+function markDismissed(url) { var now = Date.now(); dismissedAt[url] = now; starredAt[url] = -now; }
+
+function toggleStar(url) {
+    if (isStarred(url)) { starredAt[url] = -Date.now(); recordUndo('unstar', [url]); }
+    else { markStarred(url); recordUndo('star', [url]); }
+    saveStars();
+    refreshMap();
+}
+function toggleDismiss(url) {
+    if (isDismissed(url)) { dismissedAt[url] = -Date.now(); recordUndo('undismiss', [url]); }
+    else { markDismissed(url); recordUndo('dismiss', [url]); }
+    saveStars();
+    refreshMap();
+}
+
+var undoHistory = [];
+function recordUndo(action, urls) {
+    undoHistory.push({action: action, urls: urls, time: Date.now()});
+    if (undoHistory.length > 50) undoHistory.shift();
+}
+function undo() {
+    var last = undoHistory.pop();
+    if (!last) return;
+    last.urls.forEach(function(url) {
+        var now = Date.now();
+        if (last.action === 'dismiss') dismissedAt[url] = -now;
+        else if (last.action === 'star') starredAt[url] = -now;
+        else if (last.action === 'unstar') starredAt[url] = now;
+        else if (last.action === 'undismiss') dismissedAt[url] = now;
+    });
+    saveStars();
+    refreshMap();
+}
+
+// "Saved state" panel
+function downloadStarsBackup() {
+    var state = {
+        starred: starredAt,
+        dismissed: dismissedAt,
+        exportedAt: new Date().toISOString(),
+        starredCount: Object.keys(starredAt).length,
+        dismissedCount: Object.keys(dismissedAt).length
+    };
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'}));
+    link.download = 'stars_and_dismissals.json';
+    link.click();
+    alert('Save this file to: data/cache/stars_and_dismissals.json. It will be embedded in the next map rebuild.');
+}
+// Restoring a backup overwrites current entries for the URLs it contains.
+function restoreStarsBackup() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            try {
+                var state = JSON.parse(ev.target.result);
+                Object.assign(starredAt, state.starred || {});
+                Object.assign(dismissedAt, state.dismissed || {});
+                saveStars();
+                refreshMap();
+                alert('Restored ' + (state.starredCount || 0) + ' stars and ' + (state.dismissedCount || 0) + ' dismissals');
+            } catch (err) {
+                alert('Invalid backup file');
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
+function copyStarredToClipboard() {
+    var starred = filteredListings.filter(function(d) { return isStarred(d.url); });
+    var text = starred.map(function(d, i) {
+        return (i + 1) + '. ' + d.society + ' | Rs.' + d.totalCost.toLocaleString() + '/mo | ' + d.sqft + 'sqft | ' + d.bhk + '\n   ' + d.url;
+    }).join('\n\n');
+    navigator.clipboard.writeText(text)
+        .then(function() { alert('Copied ' + starred.length + ' starred listings to clipboard!'); })
+        .catch(function() { prompt('Copy the starred listings:', text); });
+}
+
+// ===========================================================================
+// Selection, photo carousel and keyboard shortcuts
+// ===========================================================================
+var selectedListing = null;  // listing pinned in the detail card
+var boxSelection = [];  // listings picked with shift+drag
+var cardPhotos = [];
+var cardPhotoIndex = 0;
+
+function stepPhoto(direction) {
+    if (cardPhotos.length === 0) return;
+    cardPhotoIndex = (cardPhotoIndex + direction + cardPhotos.length) % cardPhotos.length;
+    byId('card-photo').src = cardPhotos[cardPhotoIndex];
+    byId('card-photo-counter').textContent = (cardPhotoIndex + 1) + '/' + cardPhotos.length;
+}
+function selectListing(d, e) {
+    selectedListing = d;
+    showDetailCard(e, d);
+    detailCard.style.display = 'block';
+    detailCard.style.pointerEvents = 'auto';
+    refreshMap();  // re-render to highlight the marker
+    var card = document.querySelector('.listing-card[data-url="' + CSS.escape(d.url) + '"]');
+    if (card) { card.scrollIntoView({block: 'nearest'}); card.classList.add('active'); }
+}
+function deselectListing() {
+    selectedListing = null;
+    detailCard.style.display = 'none';
+    detailCard.style.pointerEvents = 'none';
+    refreshMap();
+}
+
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {  // undo works in any state
+        e.preventDefault();
+        undo();
+        return;
+    }
+    var key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    var isDismissKey = key === 'x' || key === 'd', isStarKey = key === 'c' || key === 's';
+
+    if (boxSelection.length > 0 && !selectedListing) {
+        if (isDismissKey) { e.preventDefault(); dismissBoxSelection(); }
+        else if (isStarKey) { e.preventDefault(); starBoxSelection(); }
+        else if (key === 'Escape') { e.preventDefault(); clearBoxSelection(); }
+        return;
+    }
+
+    if (!selectedListing) return;
+    if (isDismissKey) { e.preventDefault(); toggleDismiss(selectedListing.url); deselectListing(); }
+    else if (isStarKey) { e.preventDefault(); toggleStar(selectedListing.url); }
+    else if (key === 'Enter' || key === 'v') { e.preventDefault(); window.open(selectedListing.url, '_blank'); }
+    else if (key === 'ArrowLeft') { e.preventDefault(); stepPhoto(-1); }
+    else if (key === 'ArrowRight') { e.preventDefault(); stepPhoto(1); }
+    else if (key === 'Escape') { e.preventDefault(); deselectListing(); }
+});
+
+// ===========================================================================
+// Filtering and rendering
+// ===========================================================================
+function readSliders() {
+    return {
+        costMin: +byId('filter-cost-min').value, costMax: +byId('filter-cost-max').value,
+        minSqft: +byId('filter-sqft').value, minPhotos: +byId('filter-photos').value,
+        maxDepositMonths: +byId('filter-deposit').value, minScore: +byId('filter-score').value,
+        maxDaysAgo: +byId('filter-days').value
+    };
+}
+function passesFilters(d, sliders) {
+    if (d.totalCost < sliders.costMin || d.totalCost > sliders.costMax) return false;
+    if (d.sqft < sliders.minSqft) return false;
+    if (d.photoCount < sliders.minPhotos) return false;
+    if (d.rent > 0 && d.deposit / d.rent > sliders.maxDepositMonths) return false;
+    // BHK chips are an OR-set: none selected = show all
+    if (filterChips.bhk1 || filterChips.bhk2 || filterChips.bhk3) {
+        if (!((filterChips.bhk1 && d.bhk === 'BHK1') || (filterChips.bhk2 && d.bhk === 'BHK2') || (filterChips.bhk3 && d.bhk === 'BHK3'))) return false;
+    }
+    if (filterChips.requireLift && !d.hasLift) return false;
+    if (filterChips.requireCarParking && !CAR_PARKING_TYPES.includes(d.parking)) return false;
+    if (filterChips.requireAnyParking && (!d.parking || d.parking === 'NONE')) return false;
+    if (filterChips.excludeWestFacing && ['W','NW'].includes(d.facing)) return false;
+    if (filterChips.requireBalcony && d.balconies === 0) return false;  // -1 (unknown) passes
+    if (filterChips.excludeStandalone && STANDALONE_SOCIETIES.includes((d.society || '').toLowerCase().trim())) return false;
+    if (filterChips.excludeIndependentHouses && d.buildingType === 'IH') return false;
+    if (filterChips.requireRealPhoto && !d.hasRealPhoto) return false;
+    if (filterChips.petFriendlyOnly && !d.isPetFriendly) return false;
+    if (filterChips.poolOnly && !d.hasPool) return false;
+    if (filterChips.brandedBuilderOnly && !d.isBrandedBuilder) return false;
+    if (filterChips.excludeFakeLocations && d.isFakeLocation) return false;
+    if (filterChips.nobrokerOnly && d.source !== 'nb') return false;
+    if (filterChips.magicbricksOnly && d.source !== 'mb') return false;
+    if (filterChips.villaVibeOnly) {
+        // Villa Vibe: central, mid-budget houses/villas (1000+ sqft) or really spacious apartments
+        var society = (d.society || '').toLowerCase();
+        var isVillaType = d.buildingType === 'IH' || /villa|duplex|row.?house|townhouse|bungalow|penthouse/.test(society);
+        var isSpaciousApartment = d.buildingType === 'AP' && d.sqft >= 1500;
+        if (!isVillaType && !isSpaciousApartment) return false;
+        if (d.sqft < 1000) return false;
+        if (d.totalCost < 40000 || d.totalCost > 75000) return false;
+        if (!mentionsAnyArea(d, VILLA_VIBE_AREAS)) return false;
+    }
+    if (filterChips.penthouseOnly && (d.totalFloors < 4 || d.floor !== d.totalFloors)) return false;  // top floor of 4+
+    if (filterChips.newTodayOnly && d.daysAgo !== 0) return false;
+    if (filterChips.starredOnly && !isStarred(d.url)) return false;
+    if (filterChips.hideDismissed && isDismissed(d.url)) return false;
+    return true;
+}
+
+// Re-apply filters and ranking, then redraw markers and the sidebar list.
+function refreshMap() {
+    updateActiveFilterCount();
+    var sliders = readSliders();
+    var mode = RANK_MODES[activeRankMode];
+
+    byId('value-cost').textContent = (sliders.costMin / 1000 | 0) + 'K - ' + (sliders.costMax / 1000 | 0) + 'K';
+    byId('value-sqft').textContent = sliders.minSqft;
+    byId('value-photos').textContent = sliders.minPhotos;
+    byId('value-deposit').textContent = sliders.maxDepositMonths + 'x';
+    byId('value-score').textContent = sliders.minScore;
+    byId('score-label').textContent = mode.label;
+    byId('value-days').textContent = sliders.maxDaysAgo >= 90 ? 'Any' : sliders.maxDaysAgo + ' days';
+
+    var matches = LISTINGS.filter(function(d) {
+        if (!passesFilters(d, sliders) || d.scores[mode.score] < sliders.minScore) return false;
+        // 90 = "Any"; otherwise listings with unknown age (delisted, -1) are hidden
+        return sliders.maxDaysAgo >= 90 || (d.daysAgo >= 0 && d.daysAgo <= sliders.maxDaysAgo);
+    });
+    var tiers = activeRankMode === 'quality' ? QUALITY_TIERS
+        : percentileTiers(matches.map(function(d) { return d.scores[mode.score]; }));
+    matches.sort(mode.sort);
+    filteredListings = matches;
+    renderMarkers(matches, tiers, mode.score);
+    renderSidebarList();
+}
+
+function renderMarkers(listings, tiers, scoreName) {
+    var boxSelectedUrls = new Set(boxSelection.map(function(d) { return d.url; }));
+    markerLayer.clearLayers();
+    listings.forEach(function(d, index) {
+        d.rank = index + 1;
+        var isSelected = selectedListing && selectedListing.url === d.url;
+        var isBoxSelected = boxSelectedUrls.has(d.url);
+        var fill = d.isDelisted ? '#d1d5db' : tierColor(d.scores[scoreName], tiers);
+        // Outline: selected > box-selected > starred > photo-rated > plain
+        var outline = isSelected ? '#dc2626' : isBoxSelected ? '#2563eb' : isStarred(d.url) ? '#eab308' : d.hasPhotoRating ? '#1e1b4b' : fill;
+        var outlineWidth = isSelected ? 6 : (isBoxSelected || isStarred(d.url)) ? 5 : d.hasPhotoRating ? 3 : 2;
+        var marker = L.circleMarker([d.mapLat, d.mapLng], {
+            radius: d.isDelisted ? 3 : Math.max(5, Math.min(18, d.sqft / 120)),  // size ~ sqft
+            color: outline, weight: outlineWidth, fillColor: fill,
+            fillOpacity: d.isDelisted ? 0.25 : (d.isStacked ? 0.4 : 0.65),
+            dashArray: d.isStacked ? '4 4' : null
+        });
+        marker.on('mouseover', function(e) { if (!selectedListing) showDetailCard(e, d); });
+        marker.on('mouseout', function() {
+            if (!selectedListing || selectedListing.url !== d.url) { detailCard.style.display = 'none'; detailCard.style.pointerEvents = 'none'; }
+        });
+        marker.on('click', function(e) { e.originalEvent.handledByMarker = true; selectListing(d, e); });
+        markerLayer.addLayer(marker);
+    });
+}
+
+function amenityLabels(d, powerBackupLabel) {
+    var labels = [];
+    if (d.hasPool) labels.push('Pool'); if (d.hasGym) labels.push('Gym'); if (d.hasClubhouse) labels.push('Club');
+    if (d.isGated) labels.push('Gated'); if (d.hasSecurity) labels.push('Sec'); if (d.hasPowerBackup) labels.push(powerBackupLabel);
+    return labels;
+}
+
+// AI photo-rating summary for the detail card (see rental_lookup/enrichment/photo_ratings.py).
+var RATING_ICONS = [
+    ['well_lit','☀️'], ['has_big_windows','🪟'], ['trees_or_greenery_outside','🌳'], ['open_view_not_blocked','🏞️'],
+    ['light_colored_walls','⬜'], ['modular_kitchen','🍳'], ['kitchen_has_chimney','🔥'], ['has_balcony','🏠'],
+    ['balcony_usable_size','💺'], ['rooms_feel_spacious','📐'], ['cat_could_sit_at_window','🐱'], ['has_wardrobes','🗄️']
+];
+function photoRatingHtml(rating) {
+    var yes = 0, answered = 0;
+    for (var question in rating) { if (typeof rating[question] === 'boolean') { answered++; if (rating[question]) yes++; } }
+    var icons = RATING_ICONS.filter(function(r) { return rating[r[0]]; }).map(function(r) { return r[1]; }).join('');
+    var warnings = (rating.walls_in_good_condition === false ? 'bad-walls ' : '') + (rating.no_visible_damage === false ? 'damage ' : '');
+    var verdict = rating.overall_impression === 'would visit' ? '👍' : rating.overall_impression === 'maybe' ? '🤔' : '👎';
+    return '<div style="margin-top:6px;padding:6px;background:#f0fdf4;border-radius:6px;font-size:11px">' +
+        verdict + ' <b>' + yes + '/' + answered + '</b> ' + icons +
+        (warnings ? '<br><span style="color:#dc2626">' + warnings + '</span>' : '') +
+        '<br><i>"' + escapeHtml(rating.one_line) + '"</i></div>';
+}
+
+// Fill and position the detail card for listing `d` near the mouse event `e`.
+function showDetailCard(e, d) {
+    cardPhotos = d.photos && d.photos.length > 0 ? d.photos : (d.coverPhoto ? [d.coverPhoto] : []);
+    cardPhotoIndex = 0;
+    var hasSeveralPhotos = cardPhotos.length > 1;
+    byId('card-photo').src = cardPhotos[0] || '';
+    byId('card-photo').style.display = d.coverPhoto ? 'block' : 'none';
+    byId('card-photo-counter').textContent = hasSeveralPhotos ? '1/' + cardPhotos.length : '';
+    byId('card-carousel').querySelectorAll('.nav').forEach(function(b) { b.style.display = hasSeveralPhotos ? 'block' : 'none'; });
+
+    var scoreText = 'Score ' + d.scores.quality +
+        (activeRankMode === 'value' ? ' | Value ' + d.scores.value : '') +
+        (activeRankMode === 'vibe' ? ' | Vibe ' + d.scores.vibe
+            : activeRankMode === 'deal' ? ' | Deal ' + d.scores.deal + ' Q:' + d.scores.dealQuality : '');
+    byId('card-title').textContent = (isStarred(d.url) ? '\u2B50 ' : '') +
+        (d.isDelisted ? '[DELISTED] ' : d.isFakeLocation ? '[FAKE LOCATION] ' : '#' + d.rank + ' — ') + d.society + ' (' + scoreText + ')';
+    byId('card-location').textContent = (d.source === 'mb' ? '[MagicBricks] ' : '') + (d.locality || '').substring(0, 50);
+
+    var costHtml = d.maintenance > 0
+        ? 'Rs.' + d.rent.toLocaleString() + ' + ' + d.maintenance.toLocaleString() + ' maint = <b>Rs.' + d.totalCost.toLocaleString() + '</b>/mo'
+        : '<b>Rs.' + d.rent.toLocaleString() + '</b>/mo';
+    var amenities = amenityLabels(d, 'Power');
+    if (d.isPetFriendly) amenities.push('PET FRIENDLY');
+    byId('card-details').innerHTML = costHtml + '<br>' +
+        '<b>' + d.sqft + '</b>sqft · ' + escapeHtml((d.bhk || '').replace('BHK', '')) + 'BHK · ' +
+        escapeHtml(d.facing || '?') + ' · ' + (d.balconies >= 0 ? d.balconies : '?') + 'balc · ' + d.ageYears + 'yr · Fl ' + d.floor + '/' + d.totalFloors +
+        (d.cupboards > 0 ? ' · ' + d.cupboards + ' cupboards' : '') +
+        (d.availableFrom ? '<br>Available: ' + escapeHtml(d.availableFrom) : '') +
+        (d.street ? '<br><span style="color:#888;font-size:10px">' + escapeHtml(d.street) + '</span>' : '') +
+        '<br><span style="color:#059669">' + amenities.join(' · ') + '</span>' +
+        '<br><span style="color:#999">NB: ' + d.nbTransit + '/' + d.nbLifestyle + (d.propertyCode ? ' · ' + escapeHtml(d.propertyCode) : '') + '</span>';
+
+    var actionsHtml = selectedListing && selectedListing.url === d.url ?
+        '<div class="actions">' +
+        '<button onclick="toggleStar(selectedListing.url)">' + (isStarred(d.url) ? 'Unstar ⭐' : 'Star ☆') + '</button>' +
+        '<button onclick="toggleDismiss(selectedListing.url);deselectListing();">Dismiss ❌</button>' +
+        '<button onclick="window.open(selectedListing.url,\'_blank\');">Open ↗</button></div>' +
+        '<div class="shortcut">C = star · X = dismiss · V/Enter = open · ←→ = photos · Ctrl+Z = undo · Esc = close</div>' : '';
+    byId('card-extras').innerHTML = (d.hasPhotoRating && d.photoRating ? photoRatingHtml(d.photoRating) : '') +
+        (d.description ? '<div style="color:#666;font-size:10px;margin-top:4px">' + escapeHtml(d.description) + '</div>' : '') + actionsHtml;
+
+    // Keep the card on screen and clear of the 420px sidebar.
+    var x = e.originalEvent.clientX + 20, y = e.originalEvent.clientY - 120;
+    if (x + 330 > window.innerWidth - 420) x = e.originalEvent.clientX - 340;
+    if (y < 10) y = 10;
+    if (y + 400 > window.innerHeight) y = window.innerHeight - 400;
+    detailCard.style.left = x + 'px'; detailCard.style.top = y + 'px'; detailCard.style.display = 'block';
+}
+
+// Sidebar list: the first 100 filtered listings inside the current map view.
+function renderSidebarList() {
+    var bounds = map.getBounds();
+    var inView = filteredListings.filter(function(d) { return bounds.contains([d.lat, d.lng]); });
+    byId('listings-count').textContent = inView.length;
+    if (boxSelection.length === 0) byId('stats').textContent = inView.length + ' in view';
+
+    byId('list').innerHTML = inView.slice(0, 100).map(function(d) {
+        var amenities = amenityLabels(d, 'Pwr');
+        if (d.isBrandedBuilder) amenities.push('Brand');
+        var costHtml = d.maintenance > 0
+            ? 'Rs.' + d.rent.toLocaleString() + ' <span class="maintenance-note">+' + d.maintenance.toLocaleString() + ' maint</span>'
+            : 'Rs.' + d.totalCost.toLocaleString();
+        var rating = d.photoRating;
+        var ratingIcons = d.hasPhotoRating && rating ? ' · <span style="color:#166534">' + (rating.overall_impression === 'would visit' ? '👍' : '🤔') +
+            (rating.well_lit ? '☀️' : '') + (rating.trees_or_greenery_outside ? '🌳' : '') +
+            (rating.modular_kitchen ? '🍳' : '') + (rating.cat_could_sit_at_window ? '🐱' : '') + '</span>' : '';
+        return '<div class="listing-card" data-url="' + escapeHtml(d.url) + '">' +
+            '<img src="' + escapeHtml(d.coverPhoto) + '" onerror="this.style.display=\'none\'">' +
+            '<div class="info"><span class="star-toggle">' + (isStarred(d.url) ? '\u2B50' : '\u2606') + '</span>' +
+            '<span class="score-badge">' + d.scores.quality + '</span>' + (d.isPetFriendly ? '<span class="pet-badge">PET OK</span>' : '') +
+            '<div class="name">#' + d.rank + ' ' + (d.source === 'mb' ? '● ' : '') + escapeHtml(d.society) + '</div>' +
+            '<div class="details-line">' + costHtml + ' · ' + d.sqft + 'sqft · ' + escapeHtml((d.bhk || '').replace('BHK', '')) + 'BHK · ' + escapeHtml(d.facing || '?') + '</div>' +
+            '<div class="details-line">' + d.ageYears + 'yr · Fl ' + d.floor + '/' + d.totalFloors + ' · ' + d.photoCount + 'ph' +
+            (d.availableFrom ? ' · Avail: ' + escapeHtml(d.availableFrom) : '') + (d.daysAgo >= 0 ? ' · ' + d.daysAgo + 'd ago' : '') + '</div>' +
+            '<div class="perks">' + amenities.join(' · ') + ratingIcons + '</div>' +
+            '</div></div>';
+    }).join('');
+}
+// List cards: the star toggles, anywhere else opens the listing.
+byId('list').addEventListener('click', function(e) {
+    var card = e.target.closest('.listing-card');
+    if (!card) return;
+    if (e.target.closest('.star-toggle')) toggleStar(card.dataset.url);
+    else window.open(card.dataset.url, '_blank');
+});
+
+map.on('click', function(e) {
+    if (e.originalEvent.handledByMarker) return;
+    boxSelection = [];
+    deselectListing();
+});
+
+// ===========================================================================
+// Box selection (shift + drag) and bulk actions
+// ===========================================================================
+var boxStart = null;
+var boxOutline = null;
+
+map.on('mousedown', function(e) {
+    if (!e.originalEvent.shiftKey) return;
+    boxStart = e.latlng;
+    map.dragging.disable();
+    if (boxOutline) map.removeLayer(boxOutline);
+});
+map.on('mousemove', function(e) {
+    if (!boxStart || !e.originalEvent.shiftKey) return;
+    if (boxOutline) map.removeLayer(boxOutline);
+    boxOutline = L.rectangle([boxStart, e.latlng], {color: '#2563eb', weight: 2, fillOpacity: 0.1, dashArray: '6 4'}).addTo(map);
+});
+map.on('mouseup', function(e) {
+    if (!boxStart) return;
+    map.dragging.enable();
+    var bounds = L.latLngBounds(boxStart, e.latlng);
+    if (boxOutline) map.removeLayer(boxOutline);
+    boxOutline = null;
+    boxStart = null;
+
+    boxSelection = filteredListings.filter(function(d) { return bounds.contains([d.mapLat, d.mapLng]); });
+    if (boxSelection.length === 0) return;
+    var count = boxSelection.length;
+    var alreadyStarred = boxSelection.filter(function(d) { return isStarred(d.url); }).length;
+    byId('stats').innerHTML =
+        '<b>' + count + ' selected</b> — ' +
+        '<a href="#" onclick="starBoxSelection();return false;" style="color:#166534">Star all (' + (count - alreadyStarred) + ')</a> · ' +
+        '<a href="#" onclick="dismissBoxSelection();return false;" style="color:#dc2626">Dismiss all</a> · ' +
+        '<a href="#" onclick="clearBoxSelection();return false;" style="color:#666">Clear</a>';
+    refreshMap();  // highlight the selection
+});
+
+function starBoxSelection() {
+    var urls = boxSelection.filter(function(d) { return !isStarred(d.url); }).map(function(d) { return d.url; });
+    urls.forEach(markStarred);
+    recordUndo('star', urls);
+    clearBoxSelection();
+    saveStars();
+}
+function dismissBoxSelection() {
+    var urls = boxSelection.map(function(d) { return d.url; });
+    urls.forEach(markDismissed);
+    recordUndo('dismiss', urls);
+    clearBoxSelection();
+    saveStars();
+}
+function clearBoxSelection() {
+    boxSelection = [];
+    refreshMap();
+}
+
+// ===========================================================================
+// Boot
+// ===========================================================================
+map.on('moveend', renderSidebarList);
+map.on('zoomend', renderSidebarList);
+refreshMap();
+setTimeout(function() { map.invalidateSize(); }, 500);
+</script></body></html>

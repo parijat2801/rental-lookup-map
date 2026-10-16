@@ -1,19 +1,27 @@
+# Python / tooling
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+.DS_Store
+.env
+
+# Scraped data (re-fetched every run)
 data/raw/
 data/raw_mb/
 data/raw_prev/
 data/raw_v1/
 data/raw_v2/
+data/fb/
 data/sample_photos/
-output/*
-!output/map_template.html
-__pycache__/
-*.egg-info/
-.venv/
 
-# Cache - track these for GitHub Actions
-!data/cache/
+# HTTP caches: osmnx writes ./cache/, scripts/fetch_metro_lines.py writes op_cache_*.json
+/cache/
+op_cache_*.json
+
+# Build output (map.html, results.csv); the source template lives in rental_lookup/webmap/
+output/
+
+# data/cache: tracked JSON state used by CI; generated GeoPackages are not
 data/cache/*.gpkg
-!data/cache/photo_ratings.json
-!data/cache/stars_and_dismissals.json
-!data/cache/fake_location_ids.json
-!data/cache/detail_enrichment.json
+data/cache/*.tmp

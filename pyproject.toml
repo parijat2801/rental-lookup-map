@@ -1,22 +1,35 @@
 [project]
 name = "rental-lookup"
 version = "0.1.0"
+description = "Scrape, score and map Bangalore rental listings (NoBroker + MagicBricks)."
 requires-python = ">=3.9"
 dependencies = [
     "httpx>=0.27",
     "osmnx>=2.0",
     "geopandas>=1.0",
-    "geopy>=2.4",
-    "pandas>=2.0",
-    "tqdm>=4.66",
+    "pyproj>=3.6",
     "shapely>=2.0",
+    "tqdm>=4.66",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+# Only for the experimental rental_lookup.sources.facebook
+facebook = ["facebook-scraper>=0.2.59"]
 
 [tool.setuptools.packages.find]
 include = ["rental_lookup*"]
+
+[tool.setuptools.package-data]
+"rental_lookup.webmap" = ["template.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "error::DeprecationWarning:rental_lookup",
+    # pyproj 3.6 (the last release for Python 3.9) + numpy 2; fixed in pyproj 3.7
+    "ignore:Conversion of an array with ndim > 0 to a scalar:DeprecationWarning:pyproj",
+]
 
 [build-system]
 requires = ["setuptools>=68"]

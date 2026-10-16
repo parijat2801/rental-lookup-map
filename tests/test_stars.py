@@ -1,56 +1,46 @@
 """Tests for star merge logic used by CI to combine stars from multiple sources."""
 import json
+
 import pytest
-from pathlib import Path
+
+from rental_lookup.stars import main, merge_stars, parse_json_object
 
 
-def merge_stars(sources: list) -> dict:
-    """Import the function under test."""
-    from rental_lookup.star_merge import merge_stars as _merge
-    return _merge(sources)
-
-
-def load_json_safe(text: str) -> dict:
-    """Import the function under test."""
-    from rental_lookup.star_merge import load_json_safe as _load
-    return _load(text)
-
-
-# --- load_json_safe tests ---
+# --- parse_json_object tests ---
 
 def test_load_valid_json():
-    data = load_json_safe('{"starred": {"url1": 123}, "dismissed": {}}')
+    data = parse_json_object('{"starred": {"url1": 123}, "dismissed": {}}')
     assert data["starred"]["url1"] == 123
 
 
 def test_load_corrupted_json_returns_empty():
     """Corrupted JSON (unquoted keys) should return empty dict, not crash."""
     corrupted = '{\n  dismissed:\n  {\n    https://example.com: int,\n  }\n}'
-    data = load_json_safe(corrupted)
+    data = parse_json_object(corrupted)
     assert data == {}
 
 
 def test_load_empty_string_returns_empty():
-    assert load_json_safe("") == {}
+    assert parse_json_object("") == {}
 
 
 def test_load_html_error_page_returns_empty():
     """jsonblob sometimes returns HTML error pages."""
-    assert load_json_safe("<html><body>404</body></html>") == {}
+    assert parse_json_object("<html><body>404</body></html>") == {}
 
 
 def test_load_json_error_object_returns_empty():
     """jsonblob returns {error: string} with unquoted keys when expired."""
-    assert load_json_safe('{\n  error: string\n}') == {}
+    assert parse_json_object('{\n  error: string\n}') == {}
 
 
 def test_load_null_returns_empty():
-    assert load_json_safe("null") == {}
+    assert parse_json_object("null") == {}
 
 
 def test_load_valid_but_not_dict_returns_empty():
     """A JSON array is valid JSON but not a stars dict."""
-    assert load_json_safe("[1, 2, 3]") == {}
+    assert parse_json_object("[1, 2, 3]") == {}
 
 
 # --- merge_stars tests ---
@@ -193,6 +183,36 @@ def test_tombstone_multi_user_unstar_scenario():
     result = merge_stars([cloud, user_a, user_b])
     assert "X" not in result["starred"]
     assert result["starred"]["Y"] == 150
+
+
+def test_keep_tombstones_preserves_deletions():
+    """serve_map.py keeps tombstones on disk so a later merge still sees the un-star."""
+    disk = {"starred": {"X": 100, "Y": 150}, "dismissed": {}}
+    browser = {"starred": {"X": -200}, "dismissed": {}}
+    result = merge_stars([disk, browser], keep_tombstones=True)
+    assert result["starred"] == {"X": -200, "Y": 150}
+    # Merging again with an older positive star must not resurrect X.
+    assert "X" not in merge_stars([result, {"starred": {"X": 100}}])["starred"]
+
+
+def test_empty_browser_state_does_not_wipe_disk():
+    disk = {"starred": {"a": 1}, "dismissed": {"b": 2}}
+    assert merge_stars([disk, {"starred": {}, "dismissed": {}}], keep_tombstones=True) == disk
+
+
+def test_merge_ignores_non_dict_fields_and_bools():
+    result = merge_stars([{"starred": ["not", "a", "dict"], "dismissed": {"a": True, "b": 5}}])
+    assert result == {"starred": {}, "dismissed": {"b": 5}}
+
+
+def test_cli_merges_files_and_refuses_empty(tmp_path):
+    a, b, out = tmp_path / "a.json", tmp_path / "b.json", tmp_path / "out.json"
+    a.write_text('{"starred": {"u1": 10}}')
+    b.write_text("<html>404</html>")
+    main([str(out), str(a), str(b), str(tmp_path / "missing.json")])
+    assert json.loads(out.read_text()) == {"starred": {"u1": 10}, "dismissed": {}}
+    with pytest.raises(SystemExit):
+        main([str(out), str(b)])
 
 
 def test_existing_positive_stars_unaffected():

@@ -1,10 +1,8 @@
 """BHK coverage: scrapers must request 1, 2 and 3 BHK from both sources."""
 import re
-from pathlib import Path
 
-from rental_lookup import magicbricks, nobroker
-
-TEMPLATE = Path(__file__).resolve().parents[1] / "output" / "map_template.html"
+from rental_lookup.paths import MAP_TEMPLATE_PATH
+from rental_lookup.sources import magicbricks, nobroker
 
 
 def test_nobroker_requests_1bhk():
@@ -31,23 +29,23 @@ def test_magicbricks_normalizes_1bhk():
 
 
 def test_map_template_has_1bhk_chip():
-    html = TEMPLATE.read_text()
-    assert 'data-f="bhk1"' in html, "map template is missing the 1 BHK filter chip"
+    html = MAP_TEMPLATE_PATH.read_text()
+    assert 'data-filter="bhk1"' in html, "map template is missing the 1 BHK filter chip"
 
 
-def test_map_template_chipstate_has_bhk1_off_by_default():
-    html = TEMPLATE.read_text()
-    state = re.search(r"var chipState = \{(.*?)\};", html, re.S).group(1)
+def test_map_template_bhk1_chip_off_by_default():
+    html = MAP_TEMPLATE_PATH.read_text()
+    state = re.search(r"var filterChips = \{(.*?)\};", html, re.S).group(1)
     assert "bhk1:false" in state.replace(" ", ""), (
         "bhk1 must default to false so 1 BHK listings show without hiding 2/3 BHK"
     )
 
 
 def test_map_template_filter_predicate_handles_bhk1():
-    html = TEMPLATE.read_text()
-    assert "chipState.bhk1 && d.bhk === 'BHK1'" in html, (
+    html = MAP_TEMPLATE_PATH.read_text()
+    assert "filterChips.bhk1 && d.bhk === 'BHK1'" in html, (
         "filter predicate must match BHK1 when the 1 BHK chip is on"
     )
-    assert "chipState.bhk1 || chipState.bhk2 || chipState.bhk3" in html, (
+    assert "filterChips.bhk1 || filterChips.bhk2 || filterChips.bhk3" in html, (
         "the OR-set guard must include bhk1"
     )

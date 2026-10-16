@@ -7,6 +7,11 @@ on:
     - cron: '30 2 * * *'  # 8am IST (2:30 UTC)
   workflow_dispatch:  # manual trigger from Actions tab
 
+# Never run two deploys at once (they would race on gh-pages).
+concurrency:
+  group: update-map
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -15,22 +20,32 @@ jobs:
       pages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: pip install httpx osmnx geopandas geopy pandas tqdm shapely
+        run: pip install -e '.[dev]'
+
+      - name: Run tests
+        run: pytest -q
+
+      # The cache restore below overwrites data/cache, so keep the committed stars for the merge.
+      - name: Keep repo stars
+        run: cp data/cache/stars_and_dismissals.json /tmp/stars_repo.json 2>/dev/null || true
 
       - name: Restore cached data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             data/cache
+            data/raw
             data/raw_prev
           key: rental-data-${{ github.run_number }}
           restore-keys: |
@@ -38,52 +53,33 @@ jobs:
 
       - name: Fetch NoBroker listings
         run: |
+          # Last run's listings become raw_prev, used to show delisted listings on the map.
+          if compgen -G "data/raw/*.json" > /dev/null; then
+            rm -rf data/raw_prev
+            mv data/raw data/raw_prev
+          fi
           rm -rf data/raw
           mkdir -p data/raw
-          python3 -m rental_lookup
+          python -m rental_lookup
 
       - name: Fetch MagicBricks listings
         run: |
-          mkdir -p data/raw_mb
           rm -rf data/raw_mb
-          mkdir -p data/raw_mb
-          python3 -m rental_lookup.magicbricks
+          python -m rental_lookup.sources.magicbricks
 
-      - name: Sync stars (published stars.json + repo cache → merge)
+      - name: Sync stars (published stars.json + cache + repo → merge)
         run: |
-          mkdir -p data/cache
-
           # Published stars.json on gh-pages is the canonical shared copy — it is
           # what the deployed page reads, and the Deploy step below republishes it.
-          curl -sf "https://parijat2801.github.io/rental-lookup-map/stars.json" -o /tmp/stars_published.json || echo '' > /tmp/stars_published.json
-          cp data/cache/stars_and_dismissals.json /tmp/stars_cached.json 2>/dev/null || echo '' > /tmp/stars_cached.json
-
-          # Merge using tested module (handles corrupted JSON safely)
-          python3 -c "
-          import json
-          from rental_lookup.star_merge import load_json_safe, merge_stars
-
-          sources = []
-          for f in ['/tmp/stars_published.json', '/tmp/stars_cached.json']:
-              try:
-                  sources.append(load_json_safe(open(f).read()))
-              except FileNotFoundError:
-                  sources.append({})
-
-          merged = merge_stars(sources)
-          if not merged['starred'] and not merged['dismissed']:
-              raise SystemExit('Refusing to publish empty stars — all sources were unreadable')
-
-          with open('data/cache/stars_and_dismissals.json', 'w') as f:
-              json.dump(merged, f, indent=2)
-
-          print(f'Merged: {len(merged[\"starred\"])} starred, {len(merged[\"dismissed\"])} dismissed')
-          "
+          curl -sf "https://parijat2801.github.io/rental-lookup-map/stars.json" -o /tmp/stars_published.json || true
+          cp data/cache/stars_and_dismissals.json /tmp/stars_cached.json 2>/dev/null || true
+          python -m rental_lookup.stars data/cache/stars_and_dismissals.json \
+            /tmp/stars_published.json /tmp/stars_cached.json /tmp/stars_repo.json
 
       - name: Build map
-        run: |
-          mkdir -p output
-          python3 build_map.py
+        env:
+          CARTO_BASEMAPS_KEY: ${{ secrets.CARTO_BASEMAPS_KEY }}
+        run: python -m rental_lookup.webmap.builder
 
       - name: Deploy to GitHub Pages
         run: |

@@ -1,8 +1,8 @@
 import geopandas as gpd
 from shapely.geometry import Point, Polygon
 
-from rental_lookup.geo import nearest_distance_m, compute_location_scores
-from rental_lookup.models import LocationScore
+from rental_lookup.location import measure_nearby_distances, nearest_distance_m
+from rental_lookup.models import NearbyDistances
 
 
 def _make_point_gdf(coords):
@@ -52,8 +52,8 @@ def test_compute_location_scores():
     lakes = _make_point_gdf([(12.9600, 77.6400)])
     metro = _make_point_gdf([(12.9784, 77.6350)])
 
-    score = compute_location_scores(12.9784, 77.6408, parks, lakes, metro)
-    assert isinstance(score, LocationScore)
+    score = measure_nearby_distances(12.9784, 77.6408, parks, lakes, metro)
+    assert isinstance(score, NearbyDistances)
     assert score.nearest_park_m is not None
     assert 400 < score.nearest_park_m < 600
     assert score.nearest_lake_m is not None
@@ -64,7 +64,7 @@ def test_compute_location_scores():
 
 def test_compute_location_scores_no_data():
     empty = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-    score = compute_location_scores(12.97, 77.64, empty, empty, empty)
+    score = measure_nearby_distances(12.97, 77.64, empty, empty, empty)
     assert score.nearest_park_m is None
     assert score.nearest_lake_m is None
     assert score.nearest_metro_m is None
