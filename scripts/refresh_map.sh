@@ -13,19 +13,23 @@ if compgen -G "data/raw/*.json" > /dev/null; then
     mv data/raw data/raw_prev
 fi
 mkdir -p data/raw
+"$PY" -m rental_lookup.sources nobroker
+
+echo
+echo "=== Step 2: Fetch fresh from MagicBricks ==="
+rm -rf data/raw_mb
+"$PY" -m rental_lookup.sources magicbricks
+
+echo
+echo "=== Step 3: Rank NoBroker listings into output/results.csv ==="
 "$PY" -m rental_lookup
 
 echo
-echo "=== Step 2: Fetch MagicBricks listings ==="
-rm -rf data/raw_mb
-"$PY" -m rental_lookup.sources.magicbricks
-
-echo
-echo "=== Step 3: Fetch detail pages for the top 300 ==="
+echo "=== Step 4: Fetch detail pages for the top 300 ==="
 "$PY" -m rental_lookup.enrichment.listing_details 300
 
 echo
-echo "=== Step 4: Rebuild map ==="
+echo "=== Step 5: Rebuild map ==="
 "$PY" -m rental_lookup.webmap.builder
 
 echo

@@ -6,16 +6,20 @@ from pathlib import Path
 from typing import Optional
 
 import geopandas as gpd
+import pandas as pd
 from pyproj import CRS, Transformer
 from shapely.geometry import Point
 
 from rental_lookup.models import NearbyDistances
 
-# Central Bangalore bounding box as (west, south, east, north), osmnx 2.x order.
-CENTRAL_BANGALORE_BBOX = (77.50, 12.90, 77.70, 13.05)
+# Bounding box as (west, south, east, north), osmnx 2.x order. Must enclose every
+# NoBroker search anchor plus its ~2 km radius (Kadugodi east, Sarjapura south).
+BANGALORE_BBOX = (77.50, 12.83, 77.81, 13.05)
 LAT_LNG_CRS = "EPSG:4326"
 METRIC_CRS = "EPSG:32643"  # UTM zone 43N: metre-based CRS covering Bangalore
 
+# Bump when the fetch or post-filtering changes, to invalidate cached GeoPackages.
+OSM_CACHE_VERSION = 2
 OSM_FEATURE_TAGS = {
     "parks": {"leisure": ["park", "garden"], "landuse": "recreation_ground"},
     "lakes": {"water": "lake"},
@@ -63,15 +67,35 @@ def _empty_features() -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame(geometry=[], crs=LAT_LNG_CRS)
 
 
+def operating_stations(features: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Keep only open metro stations.
+
+    `network=Namma Metro` also matches track, platforms, entrances and stations
+    that are proposed or under construction, which would make every listing near
+    a future line look metro-adjacent.
+    """
+    def tag(name: str) -> pd.Series:
+        return features[name] if name in features else pd.Series(None, index=features.index, dtype=object)
+
+    is_station = (tag("railway") == "station") | (tag("public_transport") == "station")
+    for lifecycle_tag in ("construction", "proposed", "disused", "abandoned"):
+        is_station &= tag(lifecycle_tag).isna()
+    is_station &= ~tag("name").fillna("").astype(str).str.contains(r"u/c|proposed", case=False)
+    return features[is_station]
+
+
 def fetch_osm_features(
     cache_dir: Optional[Path] = None,
 ) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame, gpd.GeoDataFrame]:
-    """Bulk-fetch (parks, lakes, metro stations) for central Bangalore.
+    """Bulk-fetch (parks, lakes, metro stations) within BANGALORE_BBOX.
 
-    Cached as GeoPackages in `cache_dir` when given. A failed fetch yields an
-    empty frame, so scoring degrades gracefully instead of crashing.
+    Cached as GeoPackages in `cache_dir` when given, named after the bbox and
+    OSM_CACHE_VERSION so changing either forces a refetch. A failed fetch yields
+    an empty frame, so scoring degrades gracefully instead of crashing.
     """
-    cache_paths = {name: cache_dir / f"{name}.gpkg" for name in OSM_FEATURE_TAGS} if cache_dir else {}
+    bbox_tag = "_".join(f"{coordinate:.2f}" for coordinate in BANGALORE_BBOX)
+    cache_paths = ({name: cache_dir / f"{name}_{bbox_tag}_v{OSM_CACHE_VERSION}.gpkg" for name in OSM_FEATURE_TAGS}
+                   if cache_dir else {})
     if cache_paths and all(path.exists() for path in cache_paths.values()):
         print("  Loading cached OSM data...")
         return tuple(gpd.read_file(cache_paths[name]) for name in OSM_FEATURE_TAGS)
@@ -83,7 +107,9 @@ def fetch_osm_features(
         print(f"  Fetching {name} from OSM...")
         try:
             # Only geometry is used; OSM attribute columns (lists, mixed types) can break GPKG writes.
-            features = ox.features_from_bbox(bbox=CENTRAL_BANGALORE_BBOX, tags=tags)
+            features = ox.features_from_bbox(bbox=BANGALORE_BBOX, tags=tags)
+            if name == "metro":
+                features = operating_stations(features)
             layers[name] = features[["geometry"]].reset_index(drop=True)
         except Exception as e:  # osmnx raises a variety of network / "no data" errors
             print(f"  [!] {name.capitalize()} fetch failed: {e}")

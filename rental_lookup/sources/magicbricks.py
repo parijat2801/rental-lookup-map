@@ -13,7 +13,7 @@ from typing import Iterator, Optional
 import httpx
 
 from rental_lookup.models import CAR_PARKING_TYPES, Listing
-from rental_lookup.paths import MAGICBRICKS_PAGES_DIR
+from rental_lookup.sources.http import get_json
 
 SEARCH_API = "https://www.magicbricks.com/mbsrp/propertySearch.html"
 CITY = "Bangalore"
@@ -248,7 +248,7 @@ def fetch_page(client: httpx.Client, page_number: int = 1,
                budget_min: int = 0, budget_max: int = 150000) -> dict:
     """Fetch one results page; {} on any network/parse error."""
     try:
-        response = client.get(SEARCH_API, params={
+        return get_json(client, SEARCH_API, {
             "editSearch": "Y",
             "category": "R",
             "propertyType": PROPERTY_TYPES,
@@ -258,8 +258,6 @@ def fetch_page(client: httpx.Client, page_number: int = 1,
             "budgetMax": str(budget_max),
             "page": str(page_number),
         })
-        response.raise_for_status()
-        return response.json()
     except (httpx.HTTPError, ValueError) as e:
         print(f"  [!] Error page {page_number}: {e}")
         return {}
@@ -287,11 +285,3 @@ def fetch_all(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50
 
     print(f"  MagicBricks total: {len(raw_listings)} raw listings across {pages_fetched} pages")
     return raw_listings
-
-
-if __name__ == "__main__":
-    listings = parse_listings(fetch_all(pages_dir=MAGICBRICKS_PAGES_DIR))
-    print(f"\nParsed {len(listings)} MagicBricks listings")
-    for listing in listings[:5]:
-        print(f"  Rs.{listing.rent:,} | {listing.sqft}sqft | {listing.bhk} | {listing.society} | {listing.locality}")
-        print(f"    {listing.url[:80]}")

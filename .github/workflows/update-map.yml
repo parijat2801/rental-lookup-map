@@ -60,12 +60,12 @@ jobs:
           fi
           rm -rf data/raw
           mkdir -p data/raw
-          python -m rental_lookup
+          python -m rental_lookup.sources nobroker
 
       - name: Fetch MagicBricks listings
         run: |
           rm -rf data/raw_mb
-          python -m rental_lookup.sources.magicbricks
+          python -m rental_lookup.sources magicbricks
 
       - name: Sync stars (published stars.json + cache + repo → merge)
         run: |

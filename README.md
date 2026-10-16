@@ -57,13 +57,17 @@ every star and dismissal auto-save to `data/cache/stars_and_dismissals.json`.
 
 ### Build / run commands
 
-Installing the package adds three commands (each also works as `python -m ...`):
+Installing the package adds these commands:
 
-| Command | What it does |
-| --- | --- |
-| `rental-map-dev [PORT]` | Build the map, serve it, and watch for changes: edits to the code, the template or the data files trigger a rebuild, and the open page reloads itself. A failed build keeps serving the previous map. |
-| `rental-map-build` | Build `output/map.html` once. |
-| `rental-map-serve [PORT]` | Serve the map without the watcher. |
+| Command | Same as | What it does |
+| --- | --- | --- |
+| `rental-map-fetch SOURCE` | `python -m rental_lookup.sources SOURCE` | Fetch listings from `nobroker`, `magicbricks` or `all` into `data/`. |
+| `rental-map-rank` | `python -m rental_lookup` | Score NoBroker listings into `output/results.csv`. |
+| `rental-map-build` | `python -m rental_lookup.webmap.builder` | Build `output/map.html` once. |
+| `rental-map-serve [PORT]` | `python -m rental_lookup.webmap.server` | Serve the map without the watcher. |
+| `rental-map-dev [PORT]` | `python -m rental_lookup.webmap.dev` | Build the map, serve it, and watch for changes: edits to the code, the template or the data files trigger a rebuild, and the open page reloads itself. A failed build keeps serving the previous map. |
+
+`rental-map-fetch` and `rental-map-rank` take `--cookie COOKIE` and `--help`.
 
 In Cursor / VS Code, the same commands are set up as tasks in `.vscode/`:
 **Run Build Task** (`Cmd/Ctrl+Shift+B`) starts the dev watcher, **Run Test Task**
@@ -76,8 +80,10 @@ Each step can also be run on its own, from the repository root:
 
 | Step | Command |
 | --- | --- |
-| Fetch NoBroker listings and write the ranked CSV | `python -m rental_lookup [COOKIE]` |
-| Fetch MagicBricks listings | `python -m rental_lookup.sources.magicbricks` |
+| Fetch NoBroker listings | `rental-map-fetch nobroker [--cookie COOKIE]` |
+| Fetch MagicBricks listings | `rental-map-fetch magicbricks` |
+| Fetch from every source | `rental-map-fetch all [--cookie COOKIE]` |
+| Rank NoBroker listings into `output/results.csv` | `rental-map-rank [--cookie COOKIE]` |
 | Fetch detail pages for the top N NoBroker listings | `python -m rental_lookup.enrichment.listing_details [N]` |
 | Rate listing photos with a vision model | `python -m rental_lookup.enrichment.photo_ratings [N]` |
 | Build `output/map.html` from saved data | `rental-map-build` |

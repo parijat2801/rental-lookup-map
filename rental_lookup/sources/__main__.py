@@ -1,0 +1,52 @@
+"""Fetch listings from one source, or all of them, into data/.
+
+Run: rental-map-fetch SOURCE [--cookie COOKIE]
+ or: python -m rental_lookup.sources SOURCE [--cookie COOKIE]
+
+SOURCE is `nobroker`, `magicbricks` or `all`. Raw result pages are saved under
+data/raw/ (NoBroker) and data/raw_mb/ (MagicBricks) for the map builder.
+NoBroker reuses neighbourhoods already saved in data/raw/; empty it for a fresh
+fetch (scripts/refresh_map.sh does this, keeping the old pages in data/raw_prev/).
+"""
+from __future__ import annotations
+
+import argparse
+
+from rental_lookup.models import Listing
+from rental_lookup.paths import MAGICBRICKS_PAGES_DIR, NOBROKER_PAGES_DIR
+from rental_lookup.sources import magicbricks, nobroker
+
+
+def fetch_nobroker(cookie: str = "") -> list[Listing]:
+    return nobroker.fetch_all(cookie=cookie, pages_dir=NOBROKER_PAGES_DIR)
+
+
+def fetch_magicbricks(cookie: str = "") -> list[Listing]:
+    """`cookie` is accepted for a uniform interface; MagicBricks needs none."""
+    return magicbricks.parse_listings(magicbricks.fetch_all(pages_dir=MAGICBRICKS_PAGES_DIR))
+
+
+SOURCES = {"nobroker": fetch_nobroker, "magicbricks": fetch_magicbricks}
+
+
+def _print_summary(source: str, listings: list[Listing]) -> None:
+    print(f"\n{source}: {len(listings)} listings")
+    for listing in listings[:5]:
+        print(f"  Rs.{listing.rent:,} | {listing.sqft}sqft | {listing.bhk} | {listing.society} | {listing.locality}")
+        print(f"    {listing.url[:80]}")
+
+
+def main(argv: list | None = None) -> None:
+    parser = argparse.ArgumentParser(prog="rental-map-fetch", description="Fetch rental listings into data/.")
+    parser.add_argument("source", choices=[*SOURCES, "all"], help="which listing source to fetch")
+    parser.add_argument("--cookie", default="",
+                        help="Cookie header for NoBroker, only needed if requests get blocked")
+    args = parser.parse_args(argv)
+
+    for name in SOURCES if args.source == "all" else [args.source]:
+        print(f"=== Fetching {name} ===")
+        _print_summary(name, SOURCES[name](cookie=args.cookie))
+
+
+if __name__ == "__main__":
+    main()

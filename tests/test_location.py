@@ -68,3 +68,28 @@ def test_compute_location_scores_no_data():
     assert score.nearest_park_m is None
     assert score.nearest_lake_m is None
     assert score.nearest_metro_m is None
+
+
+def test_osm_bbox_covers_every_search_anchor():
+    from rental_lookup.location import BANGALORE_BBOX
+    from rental_lookup.sources.nobroker import NEIGHBORHOODS
+
+    west, south, east, north = BANGALORE_BBOX
+    margin = 0.018  # ~2 km, the NoBroker search radius
+    for name, anchor in NEIGHBORHOODS.items():
+        assert west + margin <= anchor["lon"] <= east - margin, name
+        assert south + margin <= anchor["lat"] <= north - margin, name
+
+
+def test_operating_stations_drops_track_and_unbuilt_stations():
+    from rental_lookup.location import operating_stations
+
+    features = gpd.GeoDataFrame({
+        "name": ["Indiranagar", "Prestige Bellandur (u/c)", "Kaikondrahalli", "Phase 2A", "Hoodi"],
+        "railway": ["station", None, None, "subway", None],
+        "public_transport": ["station", None, None, None, "station"],
+        "construction": [None, "station", None, None, None],
+        "proposed": [None, None, "station", None, None],
+    }, geometry=[Point(77.64, 12.97)] * 5, crs="EPSG:4326")
+
+    assert list(operating_stations(features)["name"]) == ["Indiranagar", "Hoodi"]

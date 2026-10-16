@@ -10,6 +10,7 @@ from typing import Iterator, Optional
 import httpx
 
 from rental_lookup.models import CAR_PARKING_TYPES, Listing, mentions_branded_builder, nobroker_platform_scores
+from rental_lookup.sources.http import get_json
 
 SEARCH_API = "https://www.nobroker.in/api/v3/multi/property/RENT/filter"
 PHOTO_CDN = "https://assets.nobroker.in/images"
@@ -60,6 +61,14 @@ NEIGHBORHOODS = {
     "Brookefield": {"lat": 12.9660, "lon": 77.7170},
     "Nallurhalli": {"lat": 12.9760, "lon": 77.7280},
     "Kadugodi": {"lat": 12.9955, "lon": 77.7690},
+    # ORR / Sarjapur Road belt. Results stop at ~2 km from an anchor, so these
+    # fill the gap between HSR Layout, Marathahalli and Domlur.
+    "Old Airport Road": {"lat": 12.9590, "lon": 77.6620},
+    "Bellandur": {"lat": 12.9300, "lon": 77.6780},
+    "Kaikondrahalli": {"lat": 12.9120, "lon": 77.6720},
+    "Doddakannelli": {"lat": 12.9030, "lon": 77.7000},
+    "Dommasandra": {"lat": 12.8800, "lon": 77.7400},
+    "Sarjapura": {"lat": 12.8590, "lon": 77.7860},
 }
 
 
@@ -180,9 +189,7 @@ def fetch_neighborhood(
         page_number = 1
         while True:
             try:
-                response = client.get(SEARCH_API, params={**params, "pageNo": str(page_number)})
-                response.raise_for_status()
-                page = response.json()
+                page = get_json(client, SEARCH_API, {**params, "pageNo": str(page_number)})
             except (httpx.HTTPError, ValueError) as e:
                 print(f"  [!] Error fetching {name} page {page_number}: {e}")
                 break

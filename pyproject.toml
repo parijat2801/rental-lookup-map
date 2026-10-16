@@ -28,6 +28,8 @@ dev = ["pytest>=8.0"]
 facebook = ["facebook-scraper>=0.2.59"]
 
 [project.scripts]
+rental-map-fetch = "rental_lookup.sources.__main__:main"
+rental-map-rank = "rental_lookup.__main__:main"
 rental-map-build = "rental_lookup.webmap.builder:main"
 rental-map-serve = "rental_lookup.webmap.server:main"
 rental-map-dev = "rental_lookup.webmap.dev:main"

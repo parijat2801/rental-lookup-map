@@ -1,153 +1,394 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Rental Lookup — Bangalore</title>
+<html lang="en"><head><meta charset="utf-8"><title>Rentals — Bangalore</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/lucide@1.58.0/dist/umd/lucide.min.js"></script>
 <style>
+:root{
+  --bg:#fff;--surface:#fafafa;--hover:#f4f4f5;--border:#e4e4e7;--border-strong:#d4d4d8;
+  --text:#18181b;--muted:#71717a;--subtle:#a1a1aa;--accent:#18181b;
+  --star:#f59e0b;--danger:#e11d48;--success:#059669;
+  --radius:12px;--shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.16);--sidebar:400px;
+  /* Type scale: lg = headings, md = list price & section titles, base = body, sm = secondary, xs = labels & meta */
+  --fs-lg:16px;--fs-md:14px;--fs-base:13px;--fs-sm:12px;--fs-xs:11px;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
-#map{flex:1;min-width:0}
-#sidebar{width:420px;display:flex;flex-direction:column;border-left:1px solid #ddd;background:#f8f8f8}
-#tabs{display:flex;background:white;border-bottom:1px solid #ddd;flex-shrink:0}
-#tabs .tab{flex:1;padding:16px 8px;font-size:15px;font-weight:600;color:#666;background:white;border:none;border-bottom:3px solid transparent;cursor:pointer;font-family:inherit}
-#tabs .tab:hover{background:#f9fafb;color:#333}
-#tabs .tab.on{color:#2563eb;border-bottom-color:#2563eb}
-#tabs .tab .badge{display:inline-block;background:#2563eb;color:white;border-radius:10px;padding:1px 8px;font-size:11px;margin-left:6px;vertical-align:1px}
-#filters-panel{padding:12px;background:white;overflow-y:auto;flex:1;min-height:0}
-#filters-panel.hidden,#listings-panel.hidden{display:none}
-#filters-panel h3{font-size:14px;margin-bottom:8px;color:#333}
-#filters-panel label{display:block;font-size:12px;color:#555;margin-top:6px}
-#filters-panel input[type=range]{width:100%}
-#filters-panel .slider-value{font-size:11px;color:#2563eb;float:right}
-#filters-panel .row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
-#filters-panel .chip-group-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-top:10px}
-#filters-panel .chip{padding:2px 7px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid #ccc;background:white;user-select:none}
-#filters-panel .chip.on{background:#2563eb;color:white;border-color:#2563eb}
-#filters-panel .score-box{margin-top:10px;padding:8px 10px 10px;border:1px solid #d5dae0;border-radius:8px;background:#fbfcfd}
-#filters-panel .rank-pill{flex:1;text-align:center;padding:9px 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #ccc;background:white;color:#555;user-select:none}
-#filters-panel .rank-pill:hover{border-color:#2563eb;color:#2563eb}
-#filters-panel .rank-pill.on{background:#2563eb;color:white;border-color:#2563eb}
-#filters-panel textarea{width:100%;height:120px;font-family:'SF Mono',Menlo,monospace;font-size:11px;border:1px solid #ccc;border-radius:6px;padding:8px;margin-top:6px;resize:vertical;line-height:1.4}
-#filters-panel button{margin-top:8px;padding:6px 16px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
-.stats{font-size:13px;color:#111;font-weight:600;background:#e0f2fe;padding:6px 10px;text-align:center;position:sticky;top:0;z-index:5;border-bottom:1px solid #bae6fd}
-#listings-panel{flex:1;overflow-y:auto}
-#list{padding:8px}
-.listing-card{display:flex;gap:8px;padding:8px;margin-bottom:6px;background:white;border-radius:8px;cursor:pointer;border:2px solid transparent;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
-.listing-card:hover{border-color:#2563eb}
-.listing-card.active{border-color:#dc2626;background:#fef2f2}
-.listing-card img{width:80px;height:60px;object-fit:cover;border-radius:5px;flex-shrink:0}
-.listing-card .info{flex:1;min-width:0;font-size:12px}
-.listing-card .name{font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.listing-card .details-line{color:#555;margin-top:1px}
-.listing-card .perks{color:#059669;font-size:10px;margin-top:1px}
-.listing-card .star-toggle{float:right;cursor:pointer;font-size:16px;margin-right:4px;user-select:none}
-.listing-card .star-toggle:hover{transform:scale(1.3)}
-.listing-card .score-badge{float:right;background:#2563eb;color:white;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:bold}
-.listing-card .pet-badge{background:#f59e0b;color:white;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:bold;margin-left:4px}
-.listing-card .maintenance-note{color:#dc2626;font-size:10px}
-#detail-card{display:none;position:fixed;z-index:10000;width:320px;background:white;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.25);overflow:hidden;pointer-events:none;cursor:default}
-#detail-card .actions{display:flex;gap:6px;margin-top:8px}
-#detail-card .actions button{padding:4px 10px;border-radius:6px;border:1px solid #ccc;cursor:pointer;font-size:12px;background:white}
-#detail-card .actions button:hover{background:#f3f4f6}
-#detail-card .shortcut{font-size:10px;color:#999;margin-top:4px}
-#detail-card img{width:100%;height:150px;object-fit:cover;display:block}
-#detail-card .carousel{position:relative}
-#detail-card .carousel .nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);color:white;border:none;padding:8px 12px;cursor:pointer;font-size:18px;border-radius:4px;z-index:1}
-#detail-card .carousel .nav:hover{background:rgba(0,0,0,0.8)}
-#detail-card .carousel .nav-left{left:4px}
-#detail-card .carousel .nav-right{right:4px}
-#detail-card .carousel .counter{position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.6);color:white;padding:2px 8px;border-radius:10px;font-size:11px}
-#detail-card .body{padding:10px;font-size:12px}
-#detail-card .title{font-size:15px;font-weight:600;margin:4px 0 2px}
-#detail-card .location{color:#666;margin-bottom:6px}
-#detail-card .details{line-height:1.5;color:#333}
-#detail-card .extras{font-size:11px;color:#666;margin-top:6px;max-height:60px;overflow:hidden}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:var(--fs-base);line-height:1.45;color:var(--text);display:flex;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+svg.icon{width:16px;height:16px;flex-shrink:0;stroke-width:1.9}
+.muted{color:var(--muted)}
+.label{font-size:var(--fs-xs);font-weight:500;color:var(--subtle);text-transform:uppercase;letter-spacing:.05em}
+
+/* --- Map ------------------------------------------------------------------ */
+#map{flex:1;min-width:0;background:#f1f1ef}
+.leaflet-bar{border:none!important;box-shadow:var(--shadow)!important;border-radius:10px!important;overflow:hidden}
+.leaflet-bar a{width:34px!important;height:34px!important;line-height:34px!important;display:flex!important;align-items:center;justify-content:center;color:var(--text)!important;border-bottom-color:var(--border)!important}
+.leaflet-bar a.on{background:var(--accent)!important;color:#fff!important}
+.map-legend{background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-radius:10px;box-shadow:var(--shadow);padding:8px 10px;font-size:var(--fs-xs);color:var(--muted);min-width:170px}
+.map-legend summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
+.map-legend summary::-webkit-details-marker{display:none}
+.legend-ramp{display:flex;height:6px;border-radius:3px;overflow:hidden;flex:1}
+.legend-ramp span{flex:1}
+.legend-rows{margin-top:8px;display:grid;gap:5px}
+.legend-rows div{display:flex;align-items:center;gap:8px}
+.legend-dot{width:12px;height:12px;border-radius:50%;background:#84cc16;border:2.5px solid transparent;flex-shrink:0}
+
+/* --- Sidebar ---------------------------------------------------------------- */
+#sidebar{width:var(--sidebar);display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--border);position:relative;overflow:hidden;order:-1}
+.sidebar-header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 18px 12px}
+.sidebar-header h1{font-size:var(--fs-lg);font-weight:600;letter-spacing:-.01em}
+.sidebar-header .subtitle{font-size:var(--fs-sm);color:var(--muted);margin-top:2px}
+.header-actions{display:flex;gap:2px;position:relative}
+.icon-button{width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}
+.icon-button:hover{background:var(--hover);color:var(--text)}
+
+.popover{position:absolute;right:0;top:38px;z-index:20;width:260px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:6px}
+.popover[hidden]{display:none}
+.popover .menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;text-align:left}
+.popover .menu-item:hover{background:var(--hover)}
+.popover .menu-hint{padding:6px 10px 4px}
+.shortcut-list{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;padding:8px 10px;align-items:center}
+kbd{font-family:inherit;font-size:var(--fs-xs);font-weight:500;background:var(--hover);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 6px;min-width:22px;text-align:center;display:inline-block}
+
+.rank-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin:0 18px;padding:3px;background:var(--hover);border-radius:10px}
+.rank-tab{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 4px;border-radius:8px;font-size:var(--fs-sm);font-weight:500;color:var(--muted);white-space:nowrap}
+.rank-tab:hover{color:var(--text)}
+.rank-tab.on{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.rank-tab svg.icon{width:14px;height:14px}
+
+.quick-filters{display:flex;gap:6px;padding:12px 18px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:var(--fs-sm);font-weight:500;white-space:nowrap;user-select:none}
+.chip:hover{border-color:var(--border-strong);background:var(--surface)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip svg.icon{width:14px;height:14px}
+.filters-button{margin-left:auto}
+.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:var(--fs-xs);font-weight:600}
+.chip.on .count-badge{background:#fff;color:var(--accent)}
+.count-badge[hidden]{display:none}
+
+.list-meta{display:flex;justify-content:space-between;align-items:center;padding:10px 18px 4px;font-size:var(--fs-sm);color:var(--muted)}
+.list-meta b{color:var(--text);font-weight:600}
+#listings-panel{flex:1;overflow-y:auto;min-height:0}
+#list{padding:4px 10px 16px}
+.empty-state{padding:48px 24px;text-align:center;color:var(--muted)}
+.empty-state .hint{font-size:var(--fs-sm);color:var(--subtle);margin-top:4px}
+.empty-state svg.icon{width:28px;height:28px;color:var(--subtle);margin-bottom:10px}
+
+.listing-card{display:flex;gap:12px;padding:10px 8px;border-radius:var(--radius);cursor:pointer;position:relative;border:1px solid transparent}
+.listing-card:hover{background:var(--surface)}
+.listing-card.active{background:#fff7ed;border-color:#fed7aa}
+.listing-card img,.listing-card .thumb-placeholder{width:92px;height:72px;object-fit:cover;border-radius:10px;flex-shrink:0;background:var(--hover)}
+.listing-card .thumb-placeholder{display:flex;align-items:center;justify-content:center;color:var(--subtle)}
+.listing-card .info{flex:1;min-width:0}
+.listing-card .price-row{display:flex;align-items:baseline;gap:6px;padding-right:56px}
+.listing-card .price{font-size:var(--fs-md);font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.listing-card .maintenance-note{font-size:var(--fs-xs);color:var(--subtle)}
+.listing-card .name{font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listing-card .rank{color:var(--subtle);font-weight:400;margin-right:4px;font-variant-numeric:tabular-nums}
+.listing-card .details-line{color:var(--muted);font-size:var(--fs-sm);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listing-card .details-line.secondary{color:var(--subtle);margin-top:0}
+.listing-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font-size:var(--fs-xs);font-weight:500;padding:2px 7px;border-radius:6px;background:var(--hover);color:#52525b;display:inline-flex;align-items:center;gap:4px}
+.tag.positive{background:#ecfdf5;color:#047857}
+.tag.warning{background:#fff1f2;color:#be123c}
+.tag svg.icon{width:11px;height:11px}
+.listing-card .card-corner{position:absolute;top:8px;right:6px;display:flex;align-items:center;gap:2px}
+.score-badge{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-xs);font-weight:600;font-variant-numeric:tabular-nums;color:var(--pill-fg,var(--muted));background:var(--pill-bg,var(--hover));border-radius:999px;padding:2px 7px 2px 6px}
+.score-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--pill-dot,var(--subtle))}
+.star-toggle{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--subtle)}
+.star-toggle:hover{background:var(--hover);color:var(--text)}
+.star-toggle.on{color:var(--star)}
+.star-toggle.on svg{fill:var(--star)}
+
+/* --- Filters sheet ------------------------------------------------------------ */
+#filters-sheet{position:absolute;inset:0;z-index:15;background:var(--bg);display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .22s ease;visibility:hidden}
+#filters-sheet.open{transform:none;visibility:visible}
+.sheet-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+.sheet-header h2{font-size:var(--fs-lg);font-weight:600}
+.sheet-body{flex:1;overflow-y:auto;padding:4px 18px 18px}
+.sheet-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-top:1px solid var(--border)}
+.text-button{font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:8px 4px}
+.text-button:hover{color:var(--muted)}
+.primary-button{background:var(--accent);color:#fff;font-weight:600;padding:11px 18px;border-radius:10px}
+.primary-button:hover{background:#3f3f46}
+
+.filter-section{border-bottom:1px solid var(--border);padding:16px 0}
+.filter-section:last-child{border-bottom:none}
+.filter-section > summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:var(--fs-md);font-weight:600}
+.filter-section > summary::-webkit-details-marker{display:none}
+.filter-section > summary .chevron{margin-left:auto;color:var(--subtle);transition:transform .15s}
+.filter-section[open] > summary .chevron{transform:rotate(180deg)}
+.filter-section > summary .section-count{font-size:var(--fs-xs);font-weight:500;color:var(--muted)}
+.section-body{padding-top:14px;display:grid;gap:16px}
+.section-hint{font-size:var(--fs-sm);color:var(--muted);margin-top:-8px}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.field-label{display:flex;justify-content:space-between;align-items:baseline;font-size:var(--fs-sm);color:var(--muted);margin-bottom:8px}
+.field-label .slider-value{color:var(--text);font-weight:600}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;--fill:0%}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--accent) var(--fill),var(--border) var(--fill))}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--accent) var(--fill),var(--border) var(--fill))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-7px;border-radius:50%;background:#fff;border:1px solid var(--border-strong);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:grab}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid var(--border-strong);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:grab}
+.dual-range{position:relative;height:20px}
+.dual-range .track{position:absolute;left:0;right:0;top:8px;height:4px;border-radius:2px;background:var(--border)}
+.dual-range .track-fill{position:absolute;top:0;bottom:0;background:var(--accent);border-radius:2px}
+.dual-range input{position:absolute;inset:0;pointer-events:none}
+.dual-range input::-webkit-slider-runnable-track{background:transparent}
+.dual-range input::-moz-range-track{background:transparent}
+.dual-range input::-webkit-slider-thumb{pointer-events:auto}
+.dual-range input::-moz-range-thumb{pointer-events:auto}
+
+/* --- Floating selection bar and toast ------------------------------------------- */
+.floating-bar{position:fixed;left:calc((100vw + var(--sidebar)) / 2);bottom:24px;transform:translateX(-50%);z-index:1000;display:flex;align-items:center;gap:4px;background:var(--accent);color:#fff;padding:6px 6px 6px 16px;border-radius:999px;box-shadow:var(--shadow-lg);font-weight:500}
+.floating-bar[hidden]{display:none}
+.floating-bar button{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;color:#fff}
+.floating-bar button:hover{background:rgba(255,255,255,.14)}
+.floating-bar .divider{width:1px;height:18px;background:rgba(255,255,255,.2);margin:0 4px}
+#toast{position:fixed;left:16px;right:16px;bottom:24px;margin:0 auto;width:fit-content;max-width:420px;transform:translateY(16px);opacity:0;visibility:hidden;z-index:2000;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;box-shadow:var(--shadow-lg);transition:all .2s;pointer-events:none;text-align:center}
+#toast.show{opacity:1;visibility:visible;transform:none}
+
+/* --- Detail card ---------------------------------------------------------------- */
+#detail-card{display:none;position:fixed;z-index:10000;width:340px;max-height:calc(100vh - 20px);overflow-y:auto;scrollbar-width:none;background:var(--bg);border-radius:16px;box-shadow:var(--shadow-lg);pointer-events:none;cursor:default}
+#detail-card .carousel{position:relative;background:var(--hover);height:180px}
+#detail-card .carousel img{width:100%;height:180px;object-fit:cover;display:block}
+#detail-card .carousel .nav{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);color:var(--text);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);z-index:1}
+#detail-card .carousel .nav:hover{background:#fff}
+#detail-card .carousel .nav-left{left:10px}
+#detail-card .carousel .nav-right{right:10px}
+#detail-card .carousel .counter{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);color:#fff;padding:2px 8px;border-radius:999px;font-size:var(--fs-xs);font-weight:500}
+#detail-card .badges{position:absolute;top:10px;left:10px;display:flex;gap:4px}
+#detail-card .badges .tag{background:rgba(255,255,255,.94);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+#detail-card .badges .tag.warning{color:#be123c}
+#detail-card .body{padding:14px 16px 16px}
+#detail-card .eyebrow{display:flex;gap:8px;align-items:center}
+#detail-card .title{font-size:var(--fs-lg);font-weight:600;margin-top:6px;line-height:1.3;letter-spacing:-.01em}
+#detail-card .location{color:var(--muted);font-size:var(--fs-sm);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#detail-card .price{margin-top:10px;font-size:var(--fs-sm);color:var(--muted)}
+#detail-card .price .deposit{color:var(--subtle)}
+#detail-card .price b{font-size:var(--fs-lg);font-variant-numeric:tabular-nums;color:var(--text);font-weight:600;letter-spacing:-.01em}
+#detail-card .facts{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:12px;font-size:var(--fs-sm)}
+#detail-card .facts span{display:flex;align-items:center;gap:6px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#detail-card .facts svg.icon{width:14px;height:14px;color:var(--subtle)}
+#detail-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
+#detail-card .meta{font-size:var(--fs-xs);color:var(--subtle);margin-top:10px}
+#detail-card .description{font-size:var(--fs-sm);color:var(--muted);margin-top:10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#detail-card .photo-rating{margin-top:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:var(--fs-sm)}
+#detail-card .photo-rating .rating-head{display:flex;align-items:center;gap:6px;font-weight:600}
+#detail-card .photo-rating .rating-line{color:var(--muted);margin-top:4px;font-style:italic}
+#detail-card .actions{display:flex;gap:6px;margin-top:14px}
+#detail-card .actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:10px;border:1px solid var(--border);font-weight:500;font-size:var(--fs-sm)}
+#detail-card .actions button:hover{background:var(--hover)}
+#detail-card .actions button.on{color:#b45309;border-color:#fde68a;background:#fffbeb}
+#detail-card .actions button.on svg{fill:var(--star);color:var(--star)}
+#detail-card .shortcut{font-size:var(--fs-xs);color:var(--subtle);margin-top:8px;text-align:center}
+
+@media (max-width: 820px){
+  body{flex-direction:column}
+  #map{flex:none;height:50vh}
+  #sidebar{width:100%;flex:1;min-height:0;border-right:none;border-top:1px solid var(--border);order:0}
+  .floating-bar{left:50%;bottom:calc(50vh + 16px);max-width:calc(100vw - 16px)}
+  #detail-card{left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto}
+}
 </style></head><body>
 <div id="map"></div>
-<div id="sidebar">
-<div id="tabs">
-  <button class="tab" id="tab-listings" onclick="showTab('listings')">Listings<span class="badge" id="listings-count">0</span></button>
-  <button class="tab on" id="tab-filters" onclick="showTab('filters')">Filters<span class="badge" id="active-filter-count" style="display:none">0</span></button>
-</div>
-<div id="filters-panel">
-  <h3>Filters & Scoring</h3>
-  <label>Total Cost (rent+maint): <span class="slider-value" id="value-cost">25K - 80K</span></label>
-  <input type="range" id="filter-cost-min" min="0" max="150000" step="5000" value="0" oninput="refreshMap()">
-  <input type="range" id="filter-cost-max" min="0" max="150000" step="5000" value="150000" oninput="refreshMap()">
-  <label>Min sqft: <span class="slider-value" id="value-sqft">700</span></label>
-  <input type="range" id="filter-sqft" min="500" max="2000" step="50" value="700" oninput="refreshMap()">
-  <label>Min photos: <span class="slider-value" id="value-photos">0</span></label>
-  <input type="range" id="filter-photos" min="0" max="20" step="1" value="0" oninput="refreshMap()">
-  <label>Max deposit multiplier: <span class="slider-value" id="value-deposit">20x</span></label>
-  <input type="range" id="filter-deposit" min="2" max="20" step="1" value="20" oninput="refreshMap()">
-  <div class="score-box">
-    <div class="row" style="margin-top:0">
-      <span class="rank-pill on" id="rank-quality" onclick="setRankMode('quality')">Quality</span>
-      <span class="rank-pill" id="rank-value" onclick="setRankMode('value')">Value</span>
-      <span class="rank-pill" id="rank-vibe" onclick="setRankMode('vibe')">Villa Vibe</span>
-      <span class="rank-pill" id="rank-deal" onclick="setRankMode('deal')">Best Deals</span>
+<aside id="sidebar">
+  <header class="sidebar-header">
+    <div>
+      <h1>Rentals in Bangalore</h1>
+      <p class="subtitle" id="result-summary">&nbsp;</p>
     </div>
-    <label style="margin-top:8px">Min <span id="score-label">score</span>: <span class="slider-value" id="value-score">0</span></label>
-    <input type="range" id="filter-score" min="0" max="100" step="5" value="0" oninput="refreshMap()">
-  </div>
-  <label>Max days since posted: <span class="slider-value" id="value-days">Any</span></label>
-  <input type="range" id="filter-days" min="0" max="90" step="1" value="90" oninput="refreshMap()">
-  <div class="chip-group-title">Size &amp; type</div>
-  <div class="row">
-    <span class="chip" data-filter="bhk1" onclick="toggleChip(this)">1 BHK</span>
-    <span class="chip" data-filter="bhk2" onclick="toggleChip(this)">2 BHK</span>
-    <span class="chip" data-filter="bhk3" onclick="toggleChip(this)">3 BHK</span>
-    <span class="chip" data-filter="excludeStandalone" onclick="toggleChip(this)">No Standalone</span>
-    <span class="chip" data-filter="excludeIndependentHouses" onclick="toggleChip(this)">No Ind.House</span>
-  </div>
-  <div class="chip-group-title">Must have</div>
-  <div class="row">
-    <span class="chip on" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</span>
-    <span class="chip" data-filter="requireLift" onclick="toggleChip(this)">Lift</span>
-    <span class="chip" data-filter="requireCarParking" onclick="toggleChip(this)">Car Parking</span>
-    <span class="chip" data-filter="requireAnyParking" onclick="toggleChip(this)">Any Parking</span>
-    <span class="chip on" data-filter="excludeWestFacing" onclick="toggleChip(this)">No W/NW</span>
-    <span class="chip" data-filter="petFriendlyOnly" onclick="toggleChip(this)">Pet Friendly</span>
-    <span class="chip" data-filter="poolOnly" onclick="toggleChip(this)">Pool</span>
-  </div>
-  <div class="chip-group-title">Listing quality</div>
-  <div class="row">
-    <span class="chip on" data-filter="requireRealPhoto" onclick="toggleChip(this)">Real Photo</span>
-    <span class="chip" data-filter="excludeFakeLocations" onclick="toggleChip(this)">No Fake Location</span>
-    <span class="chip" data-filter="brandedBuilderOnly" onclick="toggleChip(this)">Brand Builder</span>
-  </div>
-  <div class="chip-group-title">Source</div>
-  <div class="row">
-    <span class="chip" data-filter="nobrokerOnly" onclick="toggleChip(this)">NoBroker Only</span>
-    <span class="chip" data-filter="magicbricksOnly" onclick="toggleChip(this)">MagicBricks Only</span>
-  </div>
-  <div class="chip-group-title">Presets &amp; personal</div>
-  <div class="row">
-    <span class="chip" data-filter="villaVibeOnly" onclick="toggleChip(this)">🏡 Villa Vibe</span>
-    <span class="chip" data-filter="penthouseOnly" onclick="toggleChip(this)">🏙️ Penthouse</span>
-    <span class="chip" data-filter="newTodayOnly" onclick="toggleChip(this)">🆕 New Today</span>
-    <span class="chip" data-filter="starredOnly" onclick="toggleChip(this)">⭐ Starred Only</span>
-    <span class="chip on" data-filter="hideDismissed" onclick="toggleChip(this)">❌ Hide Dismissed</span>
-  </div>
-  <small style="color:#999;display:block;margin-top:4px">Blue = active filter. Click to toggle.<br>Click = select, C = star, X = dismiss, Enter = open, Esc = close. Shift+drag = rectangle select</small>
-  <details style="margin-top:10px">
-    <summary style="font-size:12px;color:#555;cursor:pointer;user-select:none">Saved state</summary>
-    <div class="row" style="margin-top:6px">
-      <button onclick="copyStarredToClipboard()" style="padding:3px 8px;border-radius:6px;border:1px solid #eab308;background:#fef3c7;color:#92400e;cursor:pointer;font-size:11px">Copy ⭐</button>
-      <button onclick="downloadStarsBackup()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">💾 Backup</button>
-      <button onclick="restoreStarsBackup()" style="padding:3px 8px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;font-size:11px">📂 Restore</button>
+    <div class="header-actions">
+      <button class="icon-button" title="Keyboard shortcuts" aria-label="Keyboard shortcuts" onclick="toggleMenu('shortcuts-popover', event)"><span data-icon="keyboard"></span></button>
+      <button class="icon-button" title="Saved stars" aria-label="Saved stars" onclick="toggleMenu('saved-popover', event)"><span data-icon="ellipsis"></span></button>
+      <div class="popover" id="shortcuts-popover" hidden>
+        <div class="menu-hint label">Keyboard shortcuts</div>
+        <div class="shortcut-list">
+          <kbd>C</kbd><span>Star selected listing</span>
+          <kbd>X</kbd><span>Dismiss selected listing</span>
+          <kbd>Enter</kbd><span>Open listing</span>
+          <span><kbd>←</kbd> <kbd>→</kbd></span><span>Previous / next photo</span>
+          <kbd>Esc</kbd><span>Close card or filters</span>
+          <span><kbd>Ctrl</kbd> <kbd>Z</kbd></span><span>Undo</span>
+          <span><kbd>Shift</kbd>+drag</span><span>Select an area on the map</span>
+          <kbd>?</kbd><span>Show these shortcuts</span>
+        </div>
+      </div>
+      <div class="popover" id="saved-popover" hidden>
+        <div class="menu-hint label">Saved stars &amp; dismissals</div>
+        <button class="menu-item" onclick="copyStarredToClipboard()"><span data-icon="copy"></span>Copy starred listings</button>
+        <button class="menu-item" onclick="downloadStarsBackup()"><span data-icon="download"></span>Download backup</button>
+        <button class="menu-item" onclick="restoreStarsBackup()"><span data-icon="upload"></span>Restore from backup</button>
+      </div>
     </div>
-  </details>
+  </header>
+
+  <div class="rank-tabs" role="tablist" aria-label="Rank by">
+    <button class="rank-tab on" id="rank-quality" onclick="setRankMode('quality')" title="General desirability"><span data-icon="sparkles"></span>Quality</button>
+    <button class="rank-tab" id="rank-value" onclick="setRankMode('value')" title="Quality per rupee"><span data-icon="indian-rupee"></span>Value</button>
+    <button class="rank-tab" id="rank-vibe" onclick="setRankMode('vibe')" title="Spacious, outdoorsy, central homes"><span data-icon="trees"></span>Vibe</button>
+    <button class="rank-tab" id="rank-deal" onclick="setRankMode('deal')" title="Amenities and location for the cost"><span data-icon="badge-percent"></span>Deals</button>
+  </div>
+
+  <div class="quick-filters">
+    <button class="chip" data-filter="starredOnly" onclick="toggleChip(this)"><span data-icon="star"></span>Starred</button>
+    <button class="chip filters-button" id="filters-button" onclick="openFilters()"><span data-icon="sliders-horizontal"></span>Filters<span class="count-badge" id="active-filter-count" hidden>0</span></button>
+  </div>
+
+  <div class="list-meta"><span id="stats"></span><span id="sort-hint"></span></div>
+  <div id="listings-panel"><div id="list"></div></div>
+
+  <section id="filters-sheet" aria-label="Filters">
+    <div class="sheet-header">
+      <h2>Filters</h2>
+      <button class="icon-button" aria-label="Close filters" onclick="closeFilters()"><span data-icon="x"></span></button>
+    </div>
+    <div class="sheet-body">
+      <details class="filter-section" open>
+        <summary>Budget<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <div class="section-body">
+          <div>
+            <div class="field-label"><span>Monthly total (rent + maintenance)</span><span class="slider-value" id="value-cost"></span></div>
+            <div class="dual-range">
+              <div class="track"><div class="track-fill" id="cost-track-fill"></div></div>
+              <input type="range" id="filter-cost-min" min="0" max="150000" step="5000" value="30000" oninput="onCostInput(this)" aria-label="Minimum monthly cost">
+              <input type="range" id="filter-cost-max" min="0" max="150000" step="5000" value="55000" oninput="onCostInput(this)" aria-label="Maximum monthly cost">
+            </div>
+          </div>
+          <div>
+            <div class="field-label"><span>Max deposit</span><span class="slider-value" id="value-deposit"></span></div>
+            <input type="range" id="filter-deposit" min="2" max="20" step="1" value="5" oninput="refreshMap()">
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-section" open>
+        <summary>Space<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <div class="section-body">
+          <div class="chip-row">
+            <button class="chip" data-filter="bhk1" onclick="toggleChip(this)">1 BHK</button>
+            <button class="chip" data-filter="bhk2" onclick="toggleChip(this)">2 BHK</button>
+            <button class="chip" data-filter="bhk3" onclick="toggleChip(this)">3 BHK</button>
+          </div>
+          <div>
+            <div class="field-label"><span>Minimum area</span><span class="slider-value" id="value-sqft"></span></div>
+            <input type="range" id="filter-sqft" min="500" max="2000" step="50" value="800" oninput="refreshMap()">
+          </div>
+          <div class="chip-row">
+            <button class="chip" data-filter="excludeStandalone" onclick="toggleChip(this)">No standalone buildings</button>
+            <button class="chip" data-filter="excludeIndependentHouses" onclick="toggleChip(this)">No independent houses</button>
+            <button class="chip" data-filter="penthouseOnly" onclick="toggleChip(this)">Penthouse (top floor)</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-section">
+        <summary>Must-haves<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <div class="section-body">
+          <div class="chip-row">
+            <button class="chip on" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</button>
+            <button class="chip" data-filter="requireLift" onclick="toggleChip(this)">Lift</button>
+            <button class="chip" data-filter="requireCarParking" onclick="toggleChip(this)">Car parking</button>
+            <button class="chip" data-filter="requireAnyParking" onclick="toggleChip(this)">Any parking</button>
+            <button class="chip" data-filter="poolOnly" onclick="toggleChip(this)">Pool</button>
+            <button class="chip" data-filter="petFriendlyOnly" onclick="toggleChip(this)">Pet friendly</button>
+            <button class="chip on" data-filter="excludeWestFacing" onclick="toggleChip(this)">Not west-facing</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-section">
+        <summary>Listing quality<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <div class="section-body">
+          <div>
+            <div class="field-label"><span>Minimum <span id="score-label">score</span></span><span class="slider-value" id="value-score"></span></div>
+            <input type="range" id="filter-score" min="0" max="100" step="5" value="0" oninput="refreshMap()">
+          </div>
+          <div>
+            <div class="field-label"><span>Minimum photos</span><span class="slider-value" id="value-photos"></span></div>
+            <input type="range" id="filter-photos" min="0" max="20" step="1" value="0" oninput="refreshMap()">
+          </div>
+          <div class="chip-row">
+            <button class="chip on" data-filter="requireRealPhoto" onclick="toggleChip(this)">Real photos</button>
+            <button class="chip" data-filter="excludeFakeLocations" onclick="toggleChip(this)">Verified location</button>
+            <button class="chip" data-filter="brandedBuilderOnly" onclick="toggleChip(this)">Branded builder</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-section">
+        <summary>Freshness<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <div class="section-body">
+          <div>
+            <div class="field-label"><span>Posted within</span><span class="slider-value" id="value-days"></span></div>
+            <input type="range" id="filter-days" min="0" max="90" step="1" value="90" oninput="refreshMap()">
+          </div>
+          <div class="chip-row">
+            <button class="chip" data-filter="newTodayOnly" onclick="toggleChip(this)">New today</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="filter-section">
+        <summary>Source &amp; presets<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <div class="section-body">
+          <div class="chip-row">
+            <button class="chip" data-filter="nobrokerOnly" onclick="toggleChip(this)">NoBroker only</button>
+            <button class="chip" data-filter="magicbricksOnly" onclick="toggleChip(this)">MagicBricks only</button>
+          </div>
+          <div class="chip-row">
+            <button class="chip" data-filter="villaVibeOnly" onclick="toggleChip(this)"><span data-icon="house"></span>Villa vibe preset</button>
+          </div>
+          <p class="section-hint">Central houses, villas and spacious apartments between ₹40K and ₹75K.</p>
+        </div>
+      </details>
+
+      <details class="filter-section">
+        <summary>Your lists<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <div class="section-body">
+          <div class="chip-row">
+            <button class="chip on" data-filter="hideDismissed" onclick="toggleChip(this)">Hide dismissed</button>
+          </div>
+        </div>
+      </details>
+    </div>
+    <div class="sheet-footer">
+      <button class="text-button" onclick="resetFilters()">Reset all</button>
+      <button class="primary-button" id="show-results-button" onclick="closeFilters()">Show listings</button>
+    </div>
+  </section>
+</aside>
+
+<div class="floating-bar" id="selection-bar" hidden>
+  <span id="selection-count"></span>
+  <span class="divider"></span>
+  <button onclick="starBoxSelection()"><span data-icon="star"></span><span id="selection-star-label">Star all</span></button>
+  <button onclick="dismissBoxSelection()"><span data-icon="eye-off"></span>Dismiss all</button>
+  <button onclick="clearBoxSelection()" aria-label="Clear selection"><span data-icon="x"></span></button>
 </div>
-<div id="listings-panel" class="hidden"><div class="stats" id="stats"></div><div id="list"></div></div>
+<div id="toast" role="status"></div>
+
+<div id="detail-card">
+  <div class="carousel" id="card-carousel">
+    <img id="card-photo" src="" alt="" onerror="this.style.display='none'" onload="this.style.display='block'">
+    <div class="badges" id="card-badges"></div>
+    <button class="nav nav-left" onclick="stepPhoto(-1)" aria-label="Previous photo"><span data-icon="chevron-left"></span></button>
+    <button class="nav nav-right" onclick="stepPhoto(1)" aria-label="Next photo"><span data-icon="chevron-right"></span></button>
+    <span class="counter" id="card-photo-counter"></span>
+  </div>
+  <div class="body">
+    <div class="eyebrow" id="card-eyebrow"></div>
+    <div class="title" id="card-title"></div>
+    <div class="location" id="card-location"></div>
+    <div class="price" id="card-price"></div>
+    <div id="card-details"></div>
+    <div id="card-extras"></div>
+  </div>
 </div>
-<div id="detail-card"><div class="carousel" id="card-carousel">
-<button class="nav nav-left" onclick="stepPhoto(-1)">&lt;</button>
-<img id="card-photo" src="" onerror="this.style.display='none'" onload="this.style.display='block'">
-<button class="nav nav-right" onclick="stepPhoto(1)">&gt;</button>
-<span class="counter" id="card-photo-counter"></span>
-</div>
-<div class="body"><div class="title" id="card-title"></div><div class="location" id="card-location"></div>
-<div class="details" id="card-details"></div><div class="extras" id="card-extras"></div></div></div>
 <script>
 // ===========================================================================
 // Data. rental_lookup/webmap/builder.py replaces these declarations, so keep
@@ -168,6 +409,42 @@ function mentionsAnyArea(d, areas) {
     var text = ((d.locality || '') + ' ' + (d.society || '')).toLowerCase();
     return areas.some(function(area) { return text.indexOf(area) >= 0; });
 }
+function formatRupees(amount) { return '₹' + Math.round(amount).toLocaleString('en-IN'); }
+function formatRupeesShort(amount) {
+    if (amount >= 100000) return '₹' + (amount / 100000).toFixed(amount % 100000 ? 1 : 0) + 'L';
+    return '₹' + Math.round(amount / 1000) + 'K';
+}
+
+// Lucide icons as inline SVG strings, so re-rendered lists don't need a DOM rescan.
+var _iconCache = {};
+function icon(name) {
+    if (_iconCache[name]) return _iconCache[name];
+    var pascal = name.replace(/(^|-)(\w)/g, function(_, __, c) { return c.toUpperCase(); });
+    var node = window.lucide && lucide.icons[pascal];
+    if (!node) return '';
+    var inner = node.map(function(child) {
+        var attrs = Object.keys(child[1]).map(function(k) { return k + '="' + child[1][k] + '"'; }).join(' ');
+        return '<' + child[0] + ' ' + attrs + '/>';
+    }).join('');
+    return (_iconCache[name] = '<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>');
+}
+function renderStaticIcons(root) {
+    (root || document).querySelectorAll('[data-icon]').forEach(function(el) {
+        var svg = icon(el.dataset.icon);
+        el.outerHTML = el.className ? svg.replace('class="icon"', 'class="icon ' + el.className + '"') : svg;
+    });
+}
+renderStaticIcons();
+
+var _toastTimer = null;
+function toast(message) {
+    var el = byId('toast');
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function() { el.classList.remove('show'); }, 2600);
+}
 
 // Locality keyword lists (substring match on locality + society).
 var CENTRAL_AREAS = ['indiranagar','koramangala','hsr','btm','jayanagar','jp nagar','malleshwaram','domlur','frazer','ulsoor','halasuru','richmond','basavanagudi','wilson','rajajinagar','banashankari'];
@@ -177,11 +454,13 @@ var GOOD_FACING = ['E','SE','S','NE'];
 var CAR_PARKING_TYPES = ['FOUR_WHEELER','BOTH'];
 var RELIABLE_WATER = ['CORPORATION','BOREWELL_AND_CORPORATION','CORP_BORE'];
 var STANDALONE_SOCIETIES = ['standalone building','standalone','stand alone','none',''];
+var SIDEBAR_WIDTH = 400;
 
 // ===========================================================================
-// Map, metro overlay and marker jitter
+// Map, metro overlay, legend and marker jitter
 // ===========================================================================
-var map = L.map('map').setView([12.9716, 77.60], 12);
+var map = L.map('map', {zoomControl: false}).setView([12.9716, 77.60], 12);
+L.control.zoom({position: 'bottomright'}).addTo(map);
 // CARTO serves "API key required" watermark tiles without a key, so fall back to Esri's keyless light canvas.
 if (CARTO_KEY) {
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=' + encodeURIComponent(CARTO_KEY), {
@@ -212,23 +491,38 @@ Object.keys(METRO_LINES).forEach(function(lineId) {
 });
 metroLayer.addTo(map);
 
-// Top-left button toggling the metro overlay.
-var metroToggle = L.control({position: 'topleft'});
+// Button under the zoom controls toggling the metro overlay.
+var metroToggle = L.control({position: 'bottomright'});
 metroToggle.onAdd = function() {
     var container = L.DomUtil.create('div', 'leaflet-bar');
-    var button = L.DomUtil.create('a', '', container);
+    var button = L.DomUtil.create('a', 'on', container);
     button.href = '#';
     button.title = 'Toggle metro lines';
-    button.innerHTML = '\ud83d\ude87';
-    button.style.background = '#2563eb';
+    button.innerHTML = icon('train-front');
     button.onclick = function(e) {
         e.preventDefault();
-        if (map.hasLayer(metroLayer)) { map.removeLayer(metroLayer); button.style.background = ''; }
-        else { metroLayer.addTo(map); button.style.background = '#2563eb'; }
+        if (map.hasLayer(metroLayer)) map.removeLayer(metroLayer); else metroLayer.addTo(map);
+        button.classList.toggle('on', map.hasLayer(metroLayer));
     };
+    L.DomEvent.disableClickPropagation(container);
     return container;
 };
 metroToggle.addTo(map);
+
+// Bottom-left legend: colour ramp always visible, marker styles on demand.
+var legend = L.control({position: 'topright'});
+legend.onAdd = function() {
+    var container = L.DomUtil.create('details', 'map-legend');
+    container.innerHTML = '<summary><span>Low</span><span class="legend-ramp">' +
+        TIER_COLORS.map(function(c) { return '<span style="background:' + c + '"></span>'; }).join('') +
+        '</span><span>High</span></summary><div class="legend-rows">' +
+        '<div><span class="legend-dot" style="border-color:#eab308"></span>Starred</div>' +
+        '<div><span class="legend-dot" style="border-color:#1e1b4b"></span>Photos rated by AI</div>' +
+        '<div><span class="legend-dot" style="background:#d1d5db"></span>Delisted since last run</div>' +
+        '<div><span class="legend-dot" style="opacity:.5;border:2px dashed #65a30d"></span>Shared / approximate location</div></div>';
+    L.DomEvent.disableClickPropagation(container);
+    return container;
+};
 
 // Listings sharing a (likely fake) coordinate get a deterministic pseudo-random
 // offset (~±200m) so they don't hide each other.
@@ -318,10 +612,10 @@ LISTINGS.forEach(computeScores);
 
 // Rank modes: which d.scores entry drives the min-score slider, colours and sort order.
 var RANK_MODES = {
-    quality: {score: 'quality', label: 'score', sort: function(a, b) { return b.scores.quality - a.scores.quality || a.totalCost - b.totalCost; }},
-    value: {score: 'value', label: 'value', sort: function(a, b) { return b.scores.value - a.scores.value || b.scores.quality - a.scores.quality; }},
-    vibe: {score: 'vibe', label: 'vibe score', sort: function(a, b) { return b.scores.vibe - a.scores.vibe || b.sqft - a.sqft; }},
-    deal: {score: 'deal', label: 'deal score', sort: function(a, b) { return b.scores.deal - a.scores.deal || b.scores.dealQuality - a.scores.dealQuality; }}
+    quality: {score: 'quality', label: 'score', sortedBy: 'quality', sort: function(a, b) { return b.scores.quality - a.scores.quality || a.totalCost - b.totalCost; }},
+    value: {score: 'value', label: 'value', sortedBy: 'value for money', sort: function(a, b) { return b.scores.value - a.scores.value || b.scores.quality - a.scores.quality; }},
+    vibe: {score: 'vibe', label: 'vibe score', sortedBy: 'villa vibe', sort: function(a, b) { return b.scores.vibe - a.scores.vibe || b.sqft - a.sqft; }},
+    deal: {score: 'deal', label: 'deal score', sortedBy: 'best deal', sort: function(a, b) { return b.scores.deal - a.scores.deal || b.scores.dealQuality - a.scores.dealQuality; }}
 };
 var activeRankMode = 'quality';
 function setRankMode(mode) {
@@ -334,46 +628,112 @@ function setRankMode(mode) {
 // use percentiles (50/65/80/90/95th) of the currently visible listings.
 var TIER_COLORS = ['#ef4444','#f97316','#eab308','#84cc16','#22c55e','#166534'];
 var QUALITY_TIERS = [55, 65, 75, 85, 95];
+// Score pills: [background, text] tints matching TIER_COLORS.
+var TIER_PILLS = [['#fef2f2','#b91c1c'],['#fff7ed','#c2410c'],['#fefce8','#a16207'],['#f7fee7','#4d7c0f'],['#f0fdf4','#15803d'],['#dcfce7','#14532d']];
+var currentTiers = QUALITY_TIERS;
 function percentileTiers(values) {
     values = values.slice().sort(function(a, b) { return a - b; });
     var n = values.length;
     if (n < 5) return [0, 0, 0, 0, 0];
     return [0.5, 0.65, 0.8, 0.9, 0.95].map(function(p) { return values[Math.floor(n * p)]; });
 }
-function tierColor(value, tiers) {
+function tierIndex(value, tiers) {
     var i = 0;
     while (i < tiers.length && value >= tiers[i]) i++;
-    return TIER_COLORS[i];
+    return i;
 }
+function tierColor(value, tiers) { return TIER_COLORS[tierIndex(value, tiers)]; }
+// Pill showing listing d's score in the active rank mode, tinted like its marker.
+function scorePillHtml(d) {
+    var mode = RANK_MODES[activeRankMode], value = d.scores[mode.score];
+    if (d.isDelisted) return '<span class="score-badge" title="Delisted">' + value + '</span>';
+    var i = tierIndex(value, currentTiers), pill = TIER_PILLS[i];
+    return '<span class="score-badge" title="' + mode.label.charAt(0).toUpperCase() + mode.label.slice(1) + '" style="--pill-bg:' + pill[0] +
+        ';--pill-fg:' + pill[1] + ';--pill-dot:' + TIER_COLORS[i] + '">' + value + '</span>';
+}
+legend.addTo(map);
 
 // ===========================================================================
-// Filter chips, tabs and the active-filter badge
+// Filter chips, sliders, the filters sheet and active-filter counts
 // ===========================================================================
 // One entry per chip (its data-filter attribute); true = filter active.
 var filterChips = {bhk1:false,bhk2:false,bhk3:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:true,requireBalcony:true,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,villaVibeOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
 var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
 var SLIDER_IDS = ['filter-cost-min','filter-cost-max','filter-sqft','filter-photos','filter-deposit','filter-score','filter-days'];
+// Chips shown outside the sheet; they don't count towards the "Filters" badge.
+var QUICK_FILTERS = ['starredOnly'];
 
 function toggleChip(chip) {
     filterChips[chip.dataset.filter] = !filterChips[chip.dataset.filter];
-    chip.classList.toggle('on');
+    syncChips();
     refreshMap();
 }
-function showTab(tab) {
-    var isListings = tab === 'listings';
-    byId('filters-panel').classList.toggle('hidden', isListings);
-    byId('listings-panel').classList.toggle('hidden', !isListings);
-    byId('tab-listings').classList.toggle('on', isListings);
-    byId('tab-filters').classList.toggle('on', !isListings);
+function syncChips() {
+    document.querySelectorAll('[data-filter]').forEach(function(chip) {
+        var on = !!filterChips[chip.dataset.filter];
+        chip.classList.toggle('on', on);
+        chip.setAttribute('aria-pressed', on);
+    });
 }
-// Count chips and sliders moved off their defaults (slider defaults = their HTML value attribute).
+function resetFilters() {
+    Object.keys(DEFAULT_FILTER_CHIPS).forEach(function(name) {
+        if (QUICK_FILTERS.indexOf(name) < 0) filterChips[name] = DEFAULT_FILTER_CHIPS[name];
+    });
+    SLIDER_IDS.forEach(function(id) { byId(id).value = byId(id).defaultValue; });
+    syncChips();
+    refreshMap();
+}
+function openFilters() { byId('filters-sheet').classList.add('open'); }
+function closeFilters() { byId('filters-sheet').classList.remove('open'); }
+function filtersOpen() { return byId('filters-sheet').classList.contains('open'); }
+
+function onCostInput(slider) {
+    var low = byId('filter-cost-min'), high = byId('filter-cost-max');
+    if (+low.value > +high.value) slider.value = slider === low ? high.value : low.value;
+    refreshMap();
+}
+function paintSliders() {
+    document.querySelectorAll('#filters-sheet input[type=range]').forEach(function(el) {
+        el.style.setProperty('--fill', (el.value - el.min) / (el.max - el.min) * 100 + '%');
+    });
+    var low = byId('filter-cost-min'), high = byId('filter-cost-max'), max = +high.max;
+    var fill = byId('cost-track-fill');
+    fill.style.left = low.value / max * 100 + '%';
+    fill.style.right = 100 - high.value / max * 100 + '%';
+}
+
+function isNonDefault(el) {
+    if (el.dataset && el.dataset.filter) return filterChips[el.dataset.filter] !== DEFAULT_FILTER_CHIPS[el.dataset.filter];
+    return +el.value !== +el.defaultValue;
+}
+// Sliders that stop filtering at their max end; the rest stop filtering at their min end.
+var SLIDERS_OFF_AT_MAX = ['filter-cost-max', 'filter-deposit', 'filter-days'];
+function sliderApplied(id) {
+    var el = byId(id);
+    return SLIDERS_OFF_AT_MAX.indexOf(id) >= 0 ? +el.value < +el.max : +el.value > +el.min;
+}
+// Badge = filters currently narrowing results (the budget range counts once).
+// Button highlight and section counts = controls moved off their defaults (HTML value attribute).
 function updateActiveFilterCount() {
-    var count = 0;
-    for (var name in DEFAULT_FILTER_CHIPS) { if (filterChips[name] !== DEFAULT_FILTER_CHIPS[name]) count++; }
-    SLIDER_IDS.forEach(function(id) { var slider = byId(id); if (+slider.value !== +slider.defaultValue) count++; });
+    var applied = 0, changed = 0;
+    for (var name in DEFAULT_FILTER_CHIPS) {
+        if (QUICK_FILTERS.indexOf(name) >= 0) continue;
+        if (filterChips[name]) applied++;
+        if (filterChips[name] !== DEFAULT_FILTER_CHIPS[name]) changed++;
+    }
+    if (sliderApplied('filter-cost-min') || sliderApplied('filter-cost-max')) applied++;
+    SLIDER_IDS.forEach(function(id) {
+        if (id !== 'filter-cost-min' && id !== 'filter-cost-max' && sliderApplied(id)) applied++;
+        if (isNonDefault(byId(id))) changed++;
+    });
     var badge = byId('active-filter-count');
-    badge.textContent = count;
-    badge.style.display = count > 0 ? 'inline-block' : 'none';
+    badge.textContent = applied;
+    badge.hidden = applied === 0;
+    byId('filters-button').classList.toggle('on', changed > 0);
+    document.querySelectorAll('.filter-section').forEach(function(section) {
+        var changed = [].filter.call(section.querySelectorAll('[data-filter], input[type=range]'), isNonDefault).length;
+        section.querySelector('.section-count').textContent = changed ? '· ' + changed + ' changed' : '';
+    });
 }
 
 // ===========================================================================
@@ -434,7 +794,7 @@ function toggleStar(url) {
 }
 function toggleDismiss(url) {
     if (isDismissed(url)) { dismissedAt[url] = -Date.now(); recordUndo('undismiss', [url]); }
-    else { markDismissed(url); recordUndo('dismiss', [url]); }
+    else { markDismissed(url); recordUndo('dismiss', [url]); toast('Dismissed · Ctrl+Z to undo'); }
     saveStars();
     refreshMap();
 }
@@ -458,7 +818,14 @@ function undo() {
     refreshMap();
 }
 
-// "Saved state" panel
+// Header menus and the saved-state actions
+function toggleMenu(id, e) {
+    e.stopPropagation();
+    document.querySelectorAll('.popover').forEach(function(p) { p.hidden = p.id !== id || !p.hidden; });
+}
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.popover')) document.querySelectorAll('.popover').forEach(function(p) { p.hidden = true; });
+});
 function downloadStarsBackup() {
     var state = {
         starred: starredAt,
@@ -471,7 +838,7 @@ function downloadStarsBackup() {
     link.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'}));
     link.download = 'stars_and_dismissals.json';
     link.click();
-    alert('Save this file to: data/cache/stars_and_dismissals.json. It will be embedded in the next map rebuild.');
+    toast('Saved. Put it in data/cache/ to embed it in the next build.');
 }
 // Restoring a backup overwrites current entries for the URLs it contains.
 function restoreStarsBackup() {
@@ -489,9 +856,9 @@ function restoreStarsBackup() {
                 Object.assign(dismissedAt, state.dismissed || {});
                 saveStars();
                 refreshMap();
-                alert('Restored ' + (state.starredCount || 0) + ' stars and ' + (state.dismissedCount || 0) + ' dismissals');
+                toast('Restored ' + (state.starredCount || 0) + ' stars and ' + (state.dismissedCount || 0) + ' dismissals');
             } catch (err) {
-                alert('Invalid backup file');
+                toast('That file isn\'t a valid backup');
             }
         };
         reader.readAsText(file);
@@ -504,7 +871,7 @@ function copyStarredToClipboard() {
         return (i + 1) + '. ' + d.society + ' | Rs.' + d.totalCost.toLocaleString() + '/mo | ' + d.sqft + 'sqft | ' + d.bhk + '\n   ' + d.url;
     }).join('\n\n');
     navigator.clipboard.writeText(text)
-        .then(function() { alert('Copied ' + starred.length + ' starred listings to clipboard!'); })
+        .then(function() { toast('Copied ' + starred.length + ' starred listings'); })
         .catch(function() { prompt('Copy the starred listings:', text); });
 }
 
@@ -520,7 +887,7 @@ function stepPhoto(direction) {
     if (cardPhotos.length === 0) return;
     cardPhotoIndex = (cardPhotoIndex + direction + cardPhotos.length) % cardPhotos.length;
     byId('card-photo').src = cardPhotos[cardPhotoIndex];
-    byId('card-photo-counter').textContent = (cardPhotoIndex + 1) + '/' + cardPhotos.length;
+    byId('card-photo-counter').textContent = (cardPhotoIndex + 1) + ' / ' + cardPhotos.length;
 }
 function selectListing(d, e) {
     selectedListing = d;
@@ -545,6 +912,8 @@ document.addEventListener('keydown', function(e) {
         return;
     }
     var key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (key === 'Escape' && filtersOpen()) { e.preventDefault(); closeFilters(); return; }
+    if (key === '?' && !(e.target.closest && e.target.closest('input, textarea'))) { e.preventDefault(); toggleMenu('shortcuts-popover', e); return; }
     var isDismissKey = key === 'x' || key === 'd', isStarKey = key === 'c' || key === 's';
 
     if (boxSelection.length > 0 && !selectedListing) {
@@ -617,28 +986,36 @@ function passesFilters(d, sliders) {
 // Re-apply filters and ranking, then redraw markers and the sidebar list.
 function refreshMap() {
     updateActiveFilterCount();
+    paintSliders();
     var sliders = readSliders();
     var mode = RANK_MODES[activeRankMode];
 
-    byId('value-cost').textContent = (sliders.costMin / 1000 | 0) + 'K - ' + (sliders.costMax / 1000 | 0) + 'K';
-    byId('value-sqft').textContent = sliders.minSqft;
-    byId('value-photos').textContent = sliders.minPhotos;
-    byId('value-deposit').textContent = sliders.maxDepositMonths + 'x';
-    byId('value-score').textContent = sliders.minScore;
+    byId('value-cost').textContent = formatRupeesShort(sliders.costMin) + ' – ' + formatRupeesShort(sliders.costMax) +
+        (sliders.costMax >= +byId('filter-cost-max').max ? '+' : '');
+    byId('value-sqft').textContent = sliders.minSqft.toLocaleString() + ' sqft';
+    byId('value-photos').textContent = sliders.minPhotos || 'Any';
+    byId('value-deposit').textContent = sliders.maxDepositMonths >= 20 ? 'Any' : sliders.maxDepositMonths + '× rent';
+    byId('value-score').textContent = sliders.minScore || 'Any';
     byId('score-label').textContent = mode.label;
-    byId('value-days').textContent = sliders.maxDaysAgo >= 90 ? 'Any' : sliders.maxDaysAgo + ' days';
+    byId('value-days').textContent = sliders.maxDaysAgo >= 90 ? 'Any time' : sliders.maxDaysAgo === 0 ? 'Today' : sliders.maxDaysAgo + ' days';
 
     var matches = LISTINGS.filter(function(d) {
         if (!passesFilters(d, sliders) || d.scores[mode.score] < sliders.minScore) return false;
         // 90 = "Any"; otherwise listings with unknown age (delisted, -1) are hidden
         return sliders.maxDaysAgo >= 90 || (d.daysAgo >= 0 && d.daysAgo <= sliders.maxDaysAgo);
     });
-    var tiers = activeRankMode === 'quality' ? QUALITY_TIERS
+    var tiers = currentTiers = activeRankMode === 'quality' ? QUALITY_TIERS
         : percentileTiers(matches.map(function(d) { return d.scores[mode.score]; }));
     matches.sort(mode.sort);
     filteredListings = matches;
+
+    byId('result-summary').textContent = matches.length.toLocaleString() + ' of ' + LISTINGS.length.toLocaleString() + ' listings match';
+    byId('show-results-button').textContent = 'Show ' + matches.length.toLocaleString() + ' listings';
+    byId('sort-hint').textContent = 'Sorted by ' + mode.sortedBy;
     renderMarkers(matches, tiers, mode.score);
     renderSidebarList();
+    renderSelectionBar();
+    if (selectedListing) showDetailCard(null, selectedListing);
 }
 
 function renderMarkers(listings, tiers, scoreName) {
@@ -653,7 +1030,7 @@ function renderMarkers(listings, tiers, scoreName) {
         var outline = isSelected ? '#dc2626' : isBoxSelected ? '#2563eb' : isStarred(d.url) ? '#eab308' : d.hasPhotoRating ? '#1e1b4b' : fill;
         var outlineWidth = isSelected ? 6 : (isBoxSelected || isStarred(d.url)) ? 5 : d.hasPhotoRating ? 3 : 2;
         var marker = L.circleMarker([d.mapLat, d.mapLng], {
-            radius: d.isDelisted ? 3 : Math.max(5, Math.min(18, d.sqft / 120)),  // size ~ sqft
+            radius: 5,
             color: outline, weight: outlineWidth, fillColor: fill,
             fillOpacity: d.isDelisted ? 0.25 : (d.isStacked ? 0.4 : 0.65),
             dashArray: d.isStacked ? '4 4' : null
@@ -667,12 +1044,18 @@ function renderMarkers(listings, tiers, scoreName) {
     });
 }
 
-function amenityLabels(d, powerBackupLabel) {
+function amenityLabels(d) {
     var labels = [];
-    if (d.hasPool) labels.push('Pool'); if (d.hasGym) labels.push('Gym'); if (d.hasClubhouse) labels.push('Club');
-    if (d.isGated) labels.push('Gated'); if (d.hasSecurity) labels.push('Sec'); if (d.hasPowerBackup) labels.push(powerBackupLabel);
+    if (d.hasPool) labels.push('Pool'); if (d.hasGym) labels.push('Gym'); if (d.hasClubhouse) labels.push('Clubhouse');
+    if (d.isGated) labels.push('Gated'); if (d.hasSecurity) labels.push('Security'); if (d.hasPowerBackup) labels.push('Power backup');
     return labels;
 }
+function tagsHtml(labels, className) {
+    return labels.map(function(label) { return '<span class="tag ' + (className || '') + '">' + label + '</span>'; }).join('');
+}
+function bhkLabel(d) { return escapeHtml((d.bhk || '').replace('BHK', '')) + ' BHK'; }
+function floorLabel(d) { return 'Floor ' + d.floor + (d.totalFloors ? ' of ' + d.totalFloors : ''); }
+function ageLabel(d) { return d.ageYears >= 99 ? 'Age unknown' : d.ageYears <= 0 ? 'New' : d.ageYears + ' yr old'; }
 
 // AI photo-rating summary for the detail card (see rental_lookup/enrichment/photo_ratings.py).
 var RATING_ICONS = [
@@ -680,94 +1063,119 @@ var RATING_ICONS = [
     ['light_colored_walls','⬜'], ['modular_kitchen','🍳'], ['kitchen_has_chimney','🔥'], ['has_balcony','🏠'],
     ['balcony_usable_size','💺'], ['rooms_feel_spacious','📐'], ['cat_could_sit_at_window','🐱'], ['has_wardrobes','🗄️']
 ];
+var VERDICTS = {'would visit': ['thumbs-up', 'Worth a visit'], 'maybe': ['circle-help', 'Maybe'], 'would skip': ['thumbs-down', 'Probably skip']};
 function photoRatingHtml(rating) {
     var yes = 0, answered = 0;
     for (var question in rating) { if (typeof rating[question] === 'boolean') { answered++; if (rating[question]) yes++; } }
-    var icons = RATING_ICONS.filter(function(r) { return rating[r[0]]; }).map(function(r) { return r[1]; }).join('');
-    var warnings = (rating.walls_in_good_condition === false ? 'bad-walls ' : '') + (rating.no_visible_damage === false ? 'damage ' : '');
-    var verdict = rating.overall_impression === 'would visit' ? '👍' : rating.overall_impression === 'maybe' ? '🤔' : '👎';
-    return '<div style="margin-top:6px;padding:6px;background:#f0fdf4;border-radius:6px;font-size:11px">' +
-        verdict + ' <b>' + yes + '/' + answered + '</b> ' + icons +
-        (warnings ? '<br><span style="color:#dc2626">' + warnings + '</span>' : '') +
-        '<br><i>"' + escapeHtml(rating.one_line) + '"</i></div>';
+    var icons = RATING_ICONS.filter(function(r) { return rating[r[0]]; }).map(function(r) { return r[1]; }).join(' ');
+    var warnings = [];
+    if (rating.walls_in_good_condition === false) warnings.push('Wall damage');
+    if (rating.no_visible_damage === false) warnings.push('Visible damage');
+    var verdict = VERDICTS[rating.overall_impression] || VERDICTS['would skip'];
+    return '<div class="photo-rating"><div class="rating-head">' + icon(verdict[0]) + verdict[1] +
+        '<span class="muted" style="font-weight:500;margin-left:auto">' + yes + '/' + answered + ' checks</span></div>' +
+        '<div style="margin-top:6px">' + icons + '</div>' +
+        (warnings.length ? '<div class="tags">' + tagsHtml(warnings, 'warning') + '</div>' : '') +
+        (rating.one_line ? '<div class="rating-line">"' + escapeHtml(rating.one_line) + '"</div>' : '') + '</div>';
 }
 
-// Fill and position the detail card for listing `d` near the mouse event `e`.
+// Fill the detail card for listing `d` and position it near the mouse event `e`.
+// With e = null the card is only refreshed in place (photo position kept).
 function showDetailCard(e, d) {
-    cardPhotos = d.photos && d.photos.length > 0 ? d.photos : (d.coverPhoto ? [d.coverPhoto] : []);
-    cardPhotoIndex = 0;
-    var hasSeveralPhotos = cardPhotos.length > 1;
-    byId('card-photo').src = cardPhotos[0] || '';
-    byId('card-photo').style.display = d.coverPhoto ? 'block' : 'none';
-    byId('card-photo-counter').textContent = hasSeveralPhotos ? '1/' + cardPhotos.length : '';
-    byId('card-carousel').querySelectorAll('.nav').forEach(function(b) { b.style.display = hasSeveralPhotos ? 'block' : 'none'; });
+    if (e) {
+        cardPhotos = d.photos && d.photos.length > 0 ? d.photos : (d.coverPhoto ? [d.coverPhoto] : []);
+        cardPhotoIndex = 0;
+        var hasSeveralPhotos = cardPhotos.length > 1;
+        byId('card-photo').src = cardPhotos[0] || '';
+        byId('card-photo').style.display = d.coverPhoto ? 'block' : 'none';
+        byId('card-photo-counter').textContent = hasSeveralPhotos ? '1 / ' + cardPhotos.length : '';
+        byId('card-carousel').querySelectorAll('.nav').forEach(function(b) { b.style.display = hasSeveralPhotos ? 'flex' : 'none'; });
+    }
+    var badges = [];
+    if (isStarred(d.url)) badges.push('<span class="tag">' + icon('star') + 'Starred</span>');
+    if (d.isDelisted) badges.push('<span class="tag warning">Delisted</span>');
+    else if (d.isFakeLocation) badges.push('<span class="tag warning">Location unreliable</span>');
+    if (d.isPetFriendly) badges.push('<span class="tag">' + icon('paw-print') + 'Pet friendly</span>');
+    byId('card-badges').innerHTML = badges.join('');
 
-    var scoreText = 'Score ' + d.scores.quality +
-        (activeRankMode === 'value' ? ' | Value ' + d.scores.value : '') +
-        (activeRankMode === 'vibe' ? ' | Vibe ' + d.scores.vibe
-            : activeRankMode === 'deal' ? ' | Deal ' + d.scores.deal + ' Q:' + d.scores.dealQuality : '');
-    byId('card-title').textContent = (isStarred(d.url) ? '\u2B50 ' : '') +
-        (d.isDelisted ? '[DELISTED] ' : d.isFakeLocation ? '[FAKE LOCATION] ' : '#' + d.rank + ' — ') + d.society + ' (' + scoreText + ')';
-    byId('card-location').textContent = (d.source === 'mb' ? '[MagicBricks] ' : '') + (d.locality || '').substring(0, 50);
+    var eyebrow = [d.isDelisted ? '' : '#' + d.rank, d.source === 'mb' ? 'MagicBricks' : 'NoBroker',
+        activeRankMode === 'quality' ? '' : 'Quality ' + (activeRankMode === 'deal' ? d.scores.dealQuality : d.scores.quality)];
+    byId('card-eyebrow').innerHTML = scorePillHtml(d) + '<span class="label">' + eyebrow.filter(Boolean).join(' · ') + '</span>';
+    byId('card-title').textContent = d.society || 'Unnamed society';
+    byId('card-location').textContent = (d.locality || '').substring(0, 60);
+    byId('card-price').innerHTML = '<b>' + formatRupees(d.totalCost) + '</b> /month' +
+        (d.maintenance > 0 ? ' <span class="muted">· ' + formatRupees(d.rent) + ' rent + ' + formatRupees(d.maintenance) + ' maintenance</span>' : '') +
+        (d.deposit > 0 ? '<br><span class="deposit">' + formatRupees(d.deposit) + ' deposit</span>' : '');
 
-    var costHtml = d.maintenance > 0
-        ? 'Rs.' + d.rent.toLocaleString() + ' + ' + d.maintenance.toLocaleString() + ' maint = <b>Rs.' + d.totalCost.toLocaleString() + '</b>/mo'
-        : '<b>Rs.' + d.rent.toLocaleString() + '</b>/mo';
-    var amenities = amenityLabels(d, 'Power');
-    if (d.isPetFriendly) amenities.push('PET FRIENDLY');
-    byId('card-details').innerHTML = costHtml + '<br>' +
-        '<b>' + d.sqft + '</b>sqft · ' + escapeHtml((d.bhk || '').replace('BHK', '')) + 'BHK · ' +
-        escapeHtml(d.facing || '?') + ' · ' + (d.balconies >= 0 ? d.balconies : '?') + 'balc · ' + d.ageYears + 'yr · Fl ' + d.floor + '/' + d.totalFloors +
-        (d.cupboards > 0 ? ' · ' + d.cupboards + ' cupboards' : '') +
-        (d.availableFrom ? '<br>Available: ' + escapeHtml(d.availableFrom) : '') +
-        (d.street ? '<br><span style="color:#888;font-size:10px">' + escapeHtml(d.street) + '</span>' : '') +
-        '<br><span style="color:#059669">' + amenities.join(' · ') + '</span>' +
-        '<br><span style="color:#999">NB: ' + d.nbTransit + '/' + d.nbLifestyle + (d.propertyCode ? ' · ' + escapeHtml(d.propertyCode) : '') + '</span>';
+    var facts = [
+        ['bed-double', bhkLabel(d)], ['ruler', d.sqft.toLocaleString() + ' sqft'],
+        ['compass', d.facing ? escapeHtml(d.facing) + ' facing' : 'Facing unknown'],
+        ['fence', (d.balconies >= 0 ? d.balconies : '?') + ' balcon' + (d.balconies === 1 ? 'y' : 'ies')],
+        ['building-2', floorLabel(d)], ['calendar', ageLabel(d)]
+    ];
+    if (d.cupboards > 0) facts.push(['archive', d.cupboards + ' cupboards']);
+    if (d.availableFrom) facts.push(['calendar-check', 'From ' + escapeHtml(d.availableFrom)]);
+    var amenities = amenityLabels(d);
+    byId('card-details').innerHTML = '<div class="facts">' + facts.map(function(f) { return '<span>' + icon(f[0]) + f[1] + '</span>'; }).join('') + '</div>' +
+        (amenities.length ? '<div class="tags">' + tagsHtml(amenities, 'positive') + '</div>' : '') +
+        '<div class="meta">' + [d.street ? escapeHtml(d.street) : '', d.source === 'nb' ? 'NoBroker transit ' + d.nbTransit + ' · lifestyle ' + d.nbLifestyle : '',
+            d.propertyCode ? escapeHtml(d.propertyCode) : ''].filter(Boolean).join(' · ') + '</div>';
 
-    var actionsHtml = selectedListing && selectedListing.url === d.url ?
+    var isPinned = selectedListing && selectedListing.url === d.url;
+    var actionsHtml = isPinned ?
         '<div class="actions">' +
-        '<button onclick="toggleStar(selectedListing.url)">' + (isStarred(d.url) ? 'Unstar ⭐' : 'Star ☆') + '</button>' +
-        '<button onclick="toggleDismiss(selectedListing.url);deselectListing();">Dismiss ❌</button>' +
-        '<button onclick="window.open(selectedListing.url,\'_blank\');">Open ↗</button></div>' +
-        '<div class="shortcut">C = star · X = dismiss · V/Enter = open · ←→ = photos · Ctrl+Z = undo · Esc = close</div>' : '';
+        '<button class="' + (isStarred(d.url) ? 'on' : '') + '" onclick="toggleStar(selectedListing.url)">' + icon('star') + (isStarred(d.url) ? 'Starred' : 'Star') + '</button>' +
+        '<button onclick="toggleDismiss(selectedListing.url);deselectListing();">' + icon('eye-off') + 'Dismiss</button>' +
+        '<button onclick="window.open(selectedListing.url,\'_blank\');">' + icon('external-link') + 'Open</button></div>' +
+        '<div class="shortcut"><kbd>C</kbd> star · <kbd>X</kbd> dismiss · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close</div>' : '';
     byId('card-extras').innerHTML = (d.hasPhotoRating && d.photoRating ? photoRatingHtml(d.photoRating) : '') +
-        (d.description ? '<div style="color:#666;font-size:10px;margin-top:4px">' + escapeHtml(d.description) + '</div>' : '') + actionsHtml;
+        (d.description ? '<div class="description">' + escapeHtml(d.description) + '</div>' : '') + actionsHtml;
 
-    // Keep the card on screen and clear of the 420px sidebar.
+    if (!e) return;
+    // Keep the card on screen and clear of the sidebar.
     var x = e.originalEvent.clientX + 20, y = e.originalEvent.clientY - 120;
-    if (x + 330 > window.innerWidth - 420) x = e.originalEvent.clientX - 340;
-    if (y < 10) y = 10;
-    if (y + 400 > window.innerHeight) y = window.innerHeight - 400;
-    detailCard.style.left = x + 'px'; detailCard.style.top = y + 'px'; detailCard.style.display = 'block';
+    if (x + 350 > window.innerWidth) x = e.originalEvent.clientX - 360;
+    x = Math.max(x, SIDEBAR_WIDTH + 10);
+    detailCard.style.display = 'block';
+    y = Math.max(10, Math.min(y, window.innerHeight - detailCard.offsetHeight - 10));
+    detailCard.style.left = x + 'px'; detailCard.style.top = y + 'px';
 }
 
 // Sidebar list: the first 100 filtered listings inside the current map view.
 function renderSidebarList() {
     var bounds = map.getBounds();
     var inView = filteredListings.filter(function(d) { return bounds.contains([d.lat, d.lng]); });
-    byId('listings-count').textContent = inView.length;
-    if (boxSelection.length === 0) byId('stats').textContent = inView.length + ' in view';
+    byId('stats').innerHTML = '<b>' + inView.length.toLocaleString() + '</b> in view' + (inView.length > 100 ? ' · showing top 100' : '');
 
+    if (inView.length === 0) {
+        byId('list').innerHTML = '<div class="empty-state">' + icon('search-x') +
+            '<div>No listings here</div><div class="hint">Zoom out or loosen your filters.</div></div>';
+        return;
+    }
     byId('list').innerHTML = inView.slice(0, 100).map(function(d) {
-        var amenities = amenityLabels(d, 'Pwr');
-        if (d.isBrandedBuilder) amenities.push('Brand');
-        var costHtml = d.maintenance > 0
-            ? 'Rs.' + d.rent.toLocaleString() + ' <span class="maintenance-note">+' + d.maintenance.toLocaleString() + ' maint</span>'
-            : 'Rs.' + d.totalCost.toLocaleString();
+        var starred = isStarred(d.url);
+        var tags = amenityLabels(d).slice(0, 3);
+        if (d.isBrandedBuilder) tags.unshift('Branded');
         var rating = d.photoRating;
-        var ratingIcons = d.hasPhotoRating && rating ? ' · <span style="color:#166534">' + (rating.overall_impression === 'would visit' ? '👍' : '🤔') +
+        var ratingTag = d.hasPhotoRating && rating ? '<span class="tag">' + (rating.overall_impression === 'would visit' ? '👍' : '🤔') +
             (rating.well_lit ? '☀️' : '') + (rating.trees_or_greenery_outside ? '🌳' : '') +
             (rating.modular_kitchen ? '🍳' : '') + (rating.cat_could_sit_at_window ? '🐱' : '') + '</span>' : '';
-        return '<div class="listing-card" data-url="' + escapeHtml(d.url) + '">' +
-            '<img src="' + escapeHtml(d.coverPhoto) + '" onerror="this.style.display=\'none\'">' +
-            '<div class="info"><span class="star-toggle">' + (isStarred(d.url) ? '\u2B50' : '\u2606') + '</span>' +
-            '<span class="score-badge">' + d.scores.quality + '</span>' + (d.isPetFriendly ? '<span class="pet-badge">PET OK</span>' : '') +
-            '<div class="name">#' + d.rank + ' ' + (d.source === 'mb' ? '● ' : '') + escapeHtml(d.society) + '</div>' +
-            '<div class="details-line">' + costHtml + ' · ' + d.sqft + 'sqft · ' + escapeHtml((d.bhk || '').replace('BHK', '')) + 'BHK · ' + escapeHtml(d.facing || '?') + '</div>' +
-            '<div class="details-line">' + d.ageYears + 'yr · Fl ' + d.floor + '/' + d.totalFloors + ' · ' + d.photoCount + 'ph' +
-            (d.availableFrom ? ' · Avail: ' + escapeHtml(d.availableFrom) : '') + (d.daysAgo >= 0 ? ' · ' + d.daysAgo + 'd ago' : '') + '</div>' +
-            '<div class="perks">' + amenities.join(' · ') + ratingIcons + '</div>' +
-            '</div></div>';
+        var thumb = d.coverPhoto
+            ? '<img src="' + escapeHtml(d.coverPhoto) + '" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;thumb-placeholder&quot;></div>\'">'
+            : '<div class="thumb-placeholder">' + icon('image-off') + '</div>';
+        var freshness = [d.photoCount + ' photos', d.availableFrom ? 'Avail. ' + escapeHtml(d.availableFrom) : '',
+            d.daysAgo === 0 ? 'New today' : d.daysAgo > 0 ? d.daysAgo + 'd ago' : ''].filter(Boolean).join(' · ');
+        return '<div class="listing-card' + (selectedListing && selectedListing.url === d.url ? ' active' : '') + '" data-url="' + escapeHtml(d.url) + '">' + thumb +
+            '<div class="info">' +
+            '<div class="price-row"><span class="price">' + formatRupees(d.totalCost) + '</span>' +
+            (d.maintenance > 0 ? '<span class="maintenance-note">incl. ' + formatRupeesShort(d.maintenance) + ' maint.</span>' : '') + '</div>' +
+            '<div class="name"><span class="rank">#' + d.rank + '</span>' + escapeHtml(d.society) + '</div>' +
+            '<div class="details-line">' + bhkLabel(d) + ' · ' + d.sqft.toLocaleString() + ' sqft · ' + (d.facing ? escapeHtml(d.facing) + ' facing' : 'facing ?') + ' · ' + floorLabel(d) + '</div>' +
+            '<div class="details-line secondary">' + freshness + '</div>' +
+            '<div class="tags">' + (d.source === 'mb' ? '<span class="tag">MagicBricks</span>' : '') + (d.isPetFriendly ? '<span class="tag positive">' + icon('paw-print') + 'Pets OK</span>' : '') +
+            tagsHtml(tags) + ratingTag + '</div>' +
+            '</div><div class="card-corner">' + scorePillHtml(d) +
+            '<button class="star-toggle' + (starred ? ' on' : '') + '" aria-label="' + (starred ? 'Unstar' : 'Star') + '">' + icon('star') + '</button></div></div>';
     }).join('');
 }
 // List cards: the star toggles, anywhere else opens the listing.
@@ -799,7 +1207,7 @@ map.on('mousedown', function(e) {
 map.on('mousemove', function(e) {
     if (!boxStart || !e.originalEvent.shiftKey) return;
     if (boxOutline) map.removeLayer(boxOutline);
-    boxOutline = L.rectangle([boxStart, e.latlng], {color: '#2563eb', weight: 2, fillOpacity: 0.1, dashArray: '6 4'}).addTo(map);
+    boxOutline = L.rectangle([boxStart, e.latlng], {color: '#18181b', weight: 1.5, fillOpacity: 0.06, dashArray: '6 4'}).addTo(map);
 });
 map.on('mouseup', function(e) {
     if (!boxStart) return;
@@ -811,15 +1219,16 @@ map.on('mouseup', function(e) {
 
     boxSelection = filteredListings.filter(function(d) { return bounds.contains([d.mapLat, d.mapLng]); });
     if (boxSelection.length === 0) return;
-    var count = boxSelection.length;
-    var alreadyStarred = boxSelection.filter(function(d) { return isStarred(d.url); }).length;
-    byId('stats').innerHTML =
-        '<b>' + count + ' selected</b> — ' +
-        '<a href="#" onclick="starBoxSelection();return false;" style="color:#166534">Star all (' + (count - alreadyStarred) + ')</a> · ' +
-        '<a href="#" onclick="dismissBoxSelection();return false;" style="color:#dc2626">Dismiss all</a> · ' +
-        '<a href="#" onclick="clearBoxSelection();return false;" style="color:#666">Clear</a>';
     refreshMap();  // highlight the selection
 });
+function renderSelectionBar() {
+    var bar = byId('selection-bar');
+    bar.hidden = boxSelection.length === 0;
+    if (bar.hidden) return;
+    var unstarred = boxSelection.filter(function(d) { return !isStarred(d.url); }).length;
+    byId('selection-count').textContent = boxSelection.length + ' selected';
+    byId('selection-star-label').textContent = 'Star ' + unstarred;
+}
 
 function starBoxSelection() {
     var urls = boxSelection.filter(function(d) { return !isStarred(d.url); }).map(function(d) { return d.url; });
@@ -827,6 +1236,7 @@ function starBoxSelection() {
     recordUndo('star', urls);
     clearBoxSelection();
     saveStars();
+    toast(urls.length ? 'Starred ' + urls.length + ' listings' : 'Already starred');
 }
 function dismissBoxSelection() {
     var urls = boxSelection.map(function(d) { return d.url; });
@@ -834,6 +1244,7 @@ function dismissBoxSelection() {
     recordUndo('dismiss', urls);
     clearBoxSelection();
     saveStars();
+    toast('Dismissed ' + urls.length + ' listings · Ctrl+Z to undo');
 }
 function clearBoxSelection() {
     boxSelection = [];
@@ -845,6 +1256,7 @@ function clearBoxSelection() {
 // ===========================================================================
 map.on('moveend', renderSidebarList);
 map.on('zoomend', renderSidebarList);
+syncChips();
 refreshMap();
 setTimeout(function() { map.invalidateSize(); }, 500);
 </script></body></html>
