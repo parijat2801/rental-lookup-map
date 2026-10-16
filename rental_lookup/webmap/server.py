@@ -60,7 +60,8 @@ class MapRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
 
-def main(port: int = DEFAULT_PORT) -> None:
+def main() -> None:
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PORT
     print(f"Serving map at http://localhost:{port}/map.html")
     print(f"Stars auto-save to {STARS_PATH}")
     handler = partial(MapRequestHandler, directory=str(OUTPUT_DIR))
@@ -68,4 +69,4 @@ def main(port: int = DEFAULT_PORT) -> None:
 
 
 if __name__ == "__main__":
-    main(int(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_PORT)
+    main()

@@ -1,0 +1,189 @@
+# rental-map
+
+Find a flat in Bangalore without tabbing between rental portals.
+
+rental-map scrapes **NoBroker** and **MagicBricks**, de-duplicates listings across
+them, scores each one, and puts everything on a single interactive map with real
+filters, rankings and a shared star/dismiss list. It also produces a ranked CSV
+scored against distances to parks, lakes and metro stations from OpenStreetMap.
+
+Everything runs locally: listing data and your stars live in plain JSON files in
+this repo. An optional GitHub Actions workflow refreshes the map daily and
+publishes it to GitHub Pages.
+
+> **Heads-up:** the scrapers call undocumented internal APIs. They work today and
+> may break without notice when a portal changes. See [Disclaimer](#disclaimer).
+
+## Features
+
+**Interactive map** (`output/map.html`)
+
+- One marker per listing, sized by area and coloured by the active ranking.
+- Four rankings: **Quality** (light, age, amenities, platform scores, ...),
+  **Value** (quality per rupee), **Villa Vibe** (spacious, outdoorsy, central) and
+  **Best Deals** (amenities and location relative to cost).
+- Sliders for total cost (rent + maintenance), area, photo count, deposit
+  multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
+  balcony, pool, pet-friendly, branded builder, source and more.
+- Star / dismiss listings with undo, bulk-select with shift + drag, and keyboard
+  shortcuts (`C` star, `X` dismiss, `Enter` open, `←`/`→` photos, `Ctrl+Z` undo).
+- Hover cards with photos, costs, amenities and an optional AI photo checklist.
+- Namma Metro line overlay; listings delisted since the last run shown in grey;
+  listings sharing a suspicious coordinate shown dashed.
+
+**CLI ranking** (`output/results.csv`): NoBroker listings within a budget, scored
+0–100+ on pet-friendliness, space, light, freshness, amenities and distance to the
+nearest park, lake and metro station.
+
+## Requirements
+
+- Python 3.9+ (CI uses 3.13)
+- Network access to NoBroker, MagicBricks and the OpenStreetMap Overpass API
+
+## Quick start
+
+```bash
+git clone https://github.com/sarweshshah/rental-map.git
+cd rental-map
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e '.[dev]'
+
+scripts/refresh_map.sh   # fetch, enrich and build output/map.html (takes a while)
+rental-map-dev           # serve it at http://localhost:8765/map.html, rebuilding on changes
+```
+
+Serving the map through the bundled server (rather than opening the file) makes
+every star and dismissal auto-save to `data/cache/stars_and_dismissals.json`.
+
+### Build / run commands
+
+Installing the package adds three commands (each also works as `python -m ...`):
+
+| Command | What it does |
+| --- | --- |
+| `rental-map-dev [PORT]` | Build the map, serve it, and watch for changes: edits to the code, the template or the data files trigger a rebuild, and the open page reloads itself. A failed build keeps serving the previous map. |
+| `rental-map-build` | Build `output/map.html` once. |
+| `rental-map-serve [PORT]` | Serve the map without the watcher. |
+
+In Cursor / VS Code, the same commands are set up as tasks in `.vscode/`:
+**Run Build Task** (`Cmd/Ctrl+Shift+B`) starts the dev watcher, **Run Test Task**
+runs pytest, and the Run and Debug panel can launch the dev server under the
+debugger.
+
+## Usage
+
+Each step can also be run on its own, from the repository root:
+
+| Step | Command |
+| --- | --- |
+| Fetch NoBroker listings and write the ranked CSV | `python -m rental_lookup [COOKIE]` |
+| Fetch MagicBricks listings | `python -m rental_lookup.sources.magicbricks` |
+| Fetch detail pages for the top N NoBroker listings | `python -m rental_lookup.enrichment.listing_details [N]` |
+| Rate listing photos with a vision model | `python -m rental_lookup.enrichment.photo_ratings [N]` |
+| Build `output/map.html` from saved data | `rental-map-build` |
+| Serve the map with star auto-save | `rental-map-serve [PORT]` |
+| Serve, watch and rebuild on changes | `rental-map-dev [PORT]` |
+| Regenerate the metro overlay | `python scripts/fetch_metro_lines.py` |
+| Merge star files (used by CI) | `python -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` |
+
+Notes:
+
+- NoBroker pages already saved under `data/raw/` are reused; empty that folder (as
+  `scripts/refresh_map.sh` does) to force a fresh fetch. The previous run is moved
+  to `data/raw_prev/` so the map can show delisted listings.
+- `COOKIE` is an optional NoBroker `Cookie` header, only needed if requests start
+  getting blocked.
+- The map builder works with whatever data is present; every input except the
+  template is optional.
+
+### Configuration
+
+| Variable | Used by | Purpose |
+| --- | --- | --- |
+| `CARTO_BASEMAPS_KEY` | map builder | CARTO light basemap. Without it the map uses Esri's keyless light-grey tiles. Can also be set in a local `.env` (see `.env.example`). |
+| `OPENROUTER_API_KEY` | photo ratings | [OpenRouter](https://openrouter.ai) key for the vision model. Environment variable only. |
+
+Search areas, budgets and scoring weights are constants at the top of the
+relevant modules (`sources/nobroker.py`, `scoring.py`, `location.py`) and in the
+scoring functions of `webmap/template.html`.
+
+### Experimental: Facebook groups
+
+`rental_lookup.sources.facebook` parses rental posts from Facebook groups. It is
+not part of the map pipeline and needs an extra dependency and your cookies:
+
+```bash
+pip install -e '.[facebook]'
+python -m rental_lookup.sources.facebook cookies.txt
+```
+
+## Automated daily map (GitHub Actions)
+
+[`.github/workflows/update-map.yml`](.github/workflows/update-map.yml) runs on
+every push to `main`, daily at 08:00 IST and on demand. It runs the tests,
+fetches fresh listings, merges stars from the published `stars.json`, the CI cache
+and the repo, builds the map, and pushes `index.html` + `stars.json` to the
+`gh-pages` branch.
+
+To use it on your fork:
+
+1. Create a `gh-pages` branch and enable GitHub Pages for it.
+2. Optionally add a `CARTO_BASEMAPS_KEY` repository secret.
+3. Point the published `stars.json` URL in the "Sync stars" step at your own
+   Pages site.
+
+## Project layout
+
+```
+rental_lookup/
+  sources/          scrapers: nobroker, magicbricks, facebook (experimental)
+  enrichment/       slow per-listing extras: listing_details, photo_ratings
+  webmap/           builder (data -> output/map.html), template.html, server, dev watcher
+  models.py         normalised Listing and related dataclasses
+  location.py       OpenStreetMap parks / lakes / metro and distance lookups
+  scoring.py        CLI suitability score; ranking_report.py writes results.csv
+  listing_age.py    days since a listing was posted
+  stars.py          merging starred / dismissed listings across copies
+  paths.py          every data and output location in one place
+scripts/            refresh_map.sh, fetch_metro_lines.py
+tests/              pytest suite (no network needed)
+data/
+  raw/ raw_prev/ raw_mb/   saved API pages (gitignored, re-fetched each run)
+  cache/                   stars, first-seen dates, detail and photo caches (tracked)
+  metro_lines.json         metro overlay
+  spike/                   API contracts and sample responses
+docs/               design notes and API investigations
+output/             generated map.html and results.csv (gitignored)
+```
+
+## Stars and dismissals
+
+Stars are stored as `{"starred": {url: timestamp}, "dismissed": {url: timestamp}}`.
+A negative timestamp records an un-star / un-dismiss, and when copies are merged
+the most recent action for each URL wins. The map merges three copies on load:
+the stars embedded at build time, the browser's `localStorage`, and a `stars.json`
+published next to the page. The "Saved state" panel can back up and restore them
+as a file.
+
+## Development
+
+```bash
+pip install -e '.[dev]'
+pytest
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and how to add a new source.
+
+## Disclaimer
+
+This project is not affiliated with NoBroker, MagicBricks, Facebook or any other
+listing platform. The scrapers use undocumented endpoints that may change or be
+blocked at any time, and automated access may be against those sites' terms of
+service. You are responsible for how you use this software. Be polite: the
+scrapers already pause between requests, so please don't remove that.
+
+Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+
+## License
+
+[MIT](LICENSE) © The rental-map contributors
