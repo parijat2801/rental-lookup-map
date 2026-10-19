@@ -29,6 +29,14 @@ svg.icon{width:16px;height:16px;flex-shrink:0;stroke-width:1.9}
 .leaflet-bar{border:none!important;box-shadow:var(--shadow)!important;border-radius:10px!important;overflow:hidden}
 .leaflet-bar a{width:34px!important;height:34px!important;line-height:34px!important;display:flex!important;align-items:center;justify-content:center;color:var(--text)!important;border-bottom-color:var(--border)!important}
 .leaflet-bar a.on{background:var(--accent)!important;color:#fff!important}
+.layers-control{position:relative}
+.layers-panel{position:absolute;right:44px;bottom:0;min-width:180px;background:var(--bg);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:6px}
+.layers-panel[hidden]{display:none}
+.layer-option{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;text-align:left;font-size:var(--fs-base);white-space:nowrap}
+.layer-option:hover{background:var(--hover)}
+.layer-option span{flex:1}
+.layer-option svg.check{visibility:hidden;color:var(--text)}
+.layer-option.on svg.check{visibility:visible}
 .map-legend{background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-radius:10px;box-shadow:var(--shadow);padding:8px 10px;font-size:var(--fs-xs);color:var(--muted);min-width:170px}
 .map-legend summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none}
 .map-legend summary::-webkit-details-marker{display:none}
@@ -38,7 +46,15 @@ svg.icon{width:16px;height:16px;flex-shrink:0;stroke-width:1.9}
 .legend-rows div{display:flex;align-items:center;gap:8px}
 /* Pulsing rings around the selected listing's marker (animated with GSAP) */
 .pulse-marker{pointer-events:none}
-.pulse-marker span{position:absolute;left:0;top:0;border-radius:50%;border:2px solid #dc2626;opacity:0}
+.pulse-marker span{position:absolute;left:0;top:0;border-radius:50%;border:2px solid #eab308;opacity:0}
+.pulse-marker span svg{display:none}
+/* Star-shaped rings around a selected starred listing */
+.pulse-marker.pulse-star span{border:none;border-radius:0}
+.pulse-marker.pulse-star span svg{display:block;width:100%;height:100%;fill:none;color:#eab308;stroke-width:1.6}
+/* Starred listings: a star-shaped marker instead of a circle; pops in when starred */
+.star-marker svg.icon{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.4))}
+svg.star-mark{width:14px;height:14px;fill:var(--star);color:#fff;stroke-width:2}
+.star-marker .star-burst{pointer-events:none;position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid var(--star);opacity:0}
 /* The user's position: blue dot with a soft halo */
 .user-location{pointer-events:none}
 .user-location span{position:absolute;inset:0;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 6px rgba(37,99,235,.18),0 1px 4px rgba(0,0,0,.3)}
@@ -92,6 +108,12 @@ kbd{font-family:inherit;font-size:var(--fs-xs);font-weight:500;color:var(--text)
 .chip:hover{border-color:var(--border-strong);background:var(--surface)}
 .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .chip svg.icon{width:14px;height:14px}
+.search-box{flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:0 11px;border-radius:999px;border:1px solid var(--border);background:var(--bg);color:var(--subtle)}
+.search-box:focus-within{border-color:var(--border-strong);color:var(--text)}
+.search-box svg.icon{width:14px;height:14px}
+.search-box input{flex:1;min-width:0;border:none;outline:none;background:none;font:inherit;font-size:var(--fs-sm);color:var(--text)}
+.search-box input::placeholder{color:var(--subtle)}
+.search-box input::-webkit-search-cancel-button{cursor:pointer}
 .filters-button{margin-left:auto}
 .count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:var(--fs-xs);font-weight:600}
 .chip.on .count-badge{background:#fff;color:var(--accent)}
@@ -117,7 +139,6 @@ kbd{font-family:inherit;font-size:var(--fs-xs);font-weight:500;color:var(--text)
 .listing-card .price{font-size:var(--fs-md);font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .listing-card .maintenance-note{font-size:var(--fs-xs);color:var(--subtle)}
 .listing-card .name{font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.listing-card .rank{color:var(--subtle);font-weight:400;margin-right:4px;font-variant-numeric:tabular-nums}
 .listing-card .details-line{color:var(--muted);font-size:var(--fs-sm);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .listing-card .details-line.secondary{color:var(--subtle);margin-top:0}
 .listing-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
@@ -183,8 +204,8 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 
 /* --- Detail card ---------------------------------------------------------------- */
 #detail-card{display:none;position:fixed;z-index:10000;width:340px;max-height:calc(100vh - 20px);overflow-y:auto;scrollbar-width:none;background:var(--bg);border-radius:16px;box-shadow:var(--shadow-lg);pointer-events:none;cursor:default}
-#detail-card .carousel{position:relative;background:var(--hover);height:180px}
-#detail-card .carousel img{width:100%;height:180px;object-fit:cover;display:block}
+#detail-card .carousel{position:relative;background:var(--hover);height:240px}
+#detail-card .carousel img{width:100%;height:240px;object-fit:contain;display:block}
 #detail-card .carousel .nav{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);color:var(--text);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);z-index:1}
 #detail-card .carousel .nav:hover{background:#fff}
 #detail-card .carousel .nav-left{left:10px}
@@ -205,6 +226,9 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 #detail-card .facts svg.icon{width:14px;height:14px;color:var(--subtle)}
 #detail-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
 #detail-card .meta{font-size:var(--fs-xs);color:var(--subtle);margin-top:10px}
+#detail-card .maps-link{color:inherit;text-decoration:none}
+#detail-card .maps-link:hover{color:var(--text)}
+#detail-card .maps-link svg.icon{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
 #detail-card .description{font-size:var(--fs-sm);color:var(--muted);margin-top:10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 #detail-card .photo-rating{margin-top:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:var(--fs-sm)}
 #detail-card .photo-rating .rating-head{display:flex;align-items:center;gap:6px;font-weight:600}
@@ -252,8 +276,9 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   </div>
 
   <div class="quick-filters">
-    <button class="chip" data-filter="starredOnly" onclick="toggleChip(this)"><span data-icon="star"></span>Starred</button>
-    <button class="chip filters-button" id="filters-button" onclick="openFilters()"><span data-icon="sliders-horizontal"></span>Filters<span class="count-badge" id="active-filter-count" hidden>0</span></button>
+    <label class="search-box"><span data-icon="search"></span><input type="search" id="search-input" placeholder="Search society or locality" aria-label="Search listings" autocomplete="off" oninput="onSearchInput()"></label>
+    <button class="chip" data-filter="starredOnly" title="Starred only" aria-label="Starred only" onclick="toggleChip(this)"><span data-icon="star"></span></button>
+    <button class="chip filters-button" id="filters-button" title="Filters" aria-label="Filters" onclick="openFilters()"><span data-icon="sliders-horizontal"></span><span class="count-badge" id="active-filter-count" hidden>0</span></button>
   </div>
 
   <div class="list-meta"><span id="stats"></span><span id="sort-hint"></span></div>
@@ -290,6 +315,11 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             <button class="chip" data-filter="bhk1" onclick="toggleChip(this)">1 BHK</button>
             <button class="chip" data-filter="bhk2" onclick="toggleChip(this)">2 BHK</button>
             <button class="chip" data-filter="bhk3" onclick="toggleChip(this)">3 BHK</button>
+          </div>
+          <div class="chip-row">
+            <button class="chip" data-filter="furnishedFull" onclick="toggleChip(this)">Furnished</button>
+            <button class="chip" data-filter="furnishedSemi" onclick="toggleChip(this)">Semi-furnished</button>
+            <button class="chip" data-filter="furnishedNone" onclick="toggleChip(this)">Unfurnished</button>
           </div>
           <div>
             <div class="field-label"><span>Minimum area</span><span class="slider-value" id="value-sqft"></span></div>
@@ -469,6 +499,7 @@ function icon(name) {
     return (_iconCache[name] = '<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" ' +
         'stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>');
 }
+function starMarkIcon() { return icon('star').replace('class="icon"', 'class="icon star-mark"'); }
 function renderStaticIcons(root) {
     (root || document).querySelectorAll('[data-icon]').forEach(function(el) {
         var svg = icon(el.dataset.icon);
@@ -564,20 +595,29 @@ byId('sidebar').addEventListener('transitionend', function(e) { if (e.propertyNa
 // ===========================================================================
 var map = L.map('map', {zoomControl: false}).setView([12.9716, 77.60], 12);
 L.control.zoom({position: 'bottomright'}).addTo(map);
+var ESRI_SERVICES = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+var lightLayer = L.layerGroup();
 // CARTO serves "API key required" watermark tiles without a key, so fall back to Esri's keyless light canvas.
 if (CARTO_KEY) {
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=' + encodeURIComponent(CARTO_KEY), {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    }).addTo(map);
+    }).addTo(lightLayer);
 } else {
-    var ESRI_CANVAS = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
-    L.tileLayer(ESRI_CANVAS + 'World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    L.tileLayer(ESRI_SERVICES + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19, maxNativeZoom: 16,
         attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-    L.tileLayer(ESRI_CANVAS + 'World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom: 19, maxNativeZoom: 16}).addTo(map);
+    }).addTo(lightLayer);
+    L.tileLayer(ESRI_SERVICES + 'Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {maxZoom: 19, maxNativeZoom: 16}).addTo(lightLayer);
 }
+lightLayer.addTo(map);
+var satelliteLayer = L.layerGroup([
+    L.tileLayer(ESRI_SERVICES + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19, maxNativeZoom: 18,
+        attribution: 'Imagery &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics'
+    }),
+    L.tileLayer(ESRI_SERVICES + 'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {maxZoom: 19, maxNativeZoom: 18})
+]);
 
 map.createPane('metro');
 map.getPane('metro').style.zIndex = 640;
@@ -594,23 +634,42 @@ Object.keys(METRO_LINES).forEach(function(lineId) {
 });
 metroLayer.addTo(map);
 
-// Button under the zoom controls toggling the metro overlay.
-var metroToggle = L.control({position: 'bottomright'});
-metroToggle.onAdd = function() {
-    var container = L.DomUtil.create('div', 'leaflet-bar');
-    var button = L.DomUtil.create('a', 'on', container);
+// Button under the zoom controls opening a panel of map layers (satellite imagery, metro overlay).
+var layersControl = L.control({position: 'bottomright'});
+layersControl.onAdd = function() {
+    var container = L.DomUtil.create('div', 'layers-control');
+    var bar = L.DomUtil.create('div', 'leaflet-bar', container);
+    var button = L.DomUtil.create('a', '', bar);
     button.href = '#';
-    button.title = 'Toggle metro lines';
-    button.innerHTML = icon('train-front');
-    button.onclick = function(e) {
-        e.preventDefault();
-        if (map.hasLayer(metroLayer)) map.removeLayer(metroLayer); else metroLayer.addTo(map);
-        button.classList.toggle('on', map.hasLayer(metroLayer));
-    };
+    button.title = 'Map layers';
+    button.innerHTML = icon('layers');
+    var panel = L.DomUtil.create('div', 'layers-panel', container);
+    panel.hidden = true;
+    var options = [
+        {label: 'Satellite', iconName: 'satellite', isOn: function() { return map.hasLayer(satelliteLayer); },
+         toggle: function() {
+             if (map.hasLayer(satelliteLayer)) { map.removeLayer(satelliteLayer); lightLayer.addTo(map); }
+             else { map.removeLayer(lightLayer); satelliteLayer.addTo(map); }
+         }},
+        {label: 'Metro lines', iconName: 'train-front', isOn: function() { return map.hasLayer(metroLayer); },
+         toggle: function() { if (map.hasLayer(metroLayer)) map.removeLayer(metroLayer); else metroLayer.addTo(map); }}
+    ];
+    options.forEach(function(option) {
+        var row = L.DomUtil.create('button', 'layer-option', panel);
+        row.type = 'button';
+        row.innerHTML = icon(option.iconName) + '<span>' + option.label + '</span>' + icon('check').replace('class="', 'class="check ');
+        row.classList.toggle('on', option.isOn());
+        row.onclick = function() { option.toggle(); row.classList.toggle('on', option.isOn()); };
+    });
+    function setOpen(open) { panel.hidden = !open; button.classList.toggle('on', open); }
+    button.onclick = function(e) { e.preventDefault(); setOpen(panel.hidden); };
+    document.addEventListener('click', function(e) { if (!container.contains(e.target)) setOpen(false); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') setOpen(false); });
     L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
     return container;
 };
-metroToggle.addTo(map);
+layersControl.addTo(map);
 
 // Top-left button bringing a collapsed sidebar back.
 var sidebarToggle = L.control({position: 'topleft'});
@@ -627,7 +686,7 @@ sidebarToggle.onAdd = function() {
 sidebarToggle.addTo(map);
 
 // The user's position (browser geolocation): a blue dot plus an accuracy circle.
-// Tracking starts on load; the button above the metro toggle centres the map on it.
+// Tracking starts on load; the button above the layers button centres the map on it.
 var userLocation = null;
 var userMarker = L.marker([0, 0], {icon: L.divIcon({className: 'user-location', html: '<span></span>', iconSize: [18, 18]}), interactive: false, keyboard: false, zIndexOffset: 1000});
 var userAccuracy = L.circle([0, 0], {radius: 0, stroke: false, fillColor: '#2563eb', fillOpacity: 0.08, interactive: false});
@@ -680,7 +739,7 @@ legend.onAdd = function() {
     container.innerHTML = '<summary><span>Low</span><span class="legend-ramp">' +
         TIER_COLORS.map(function(c) { return '<span style="background:' + c + '"></span>'; }).join('') +
         '</span><span>High</span></summary><div class="legend-rows">' +
-        '<div><span class="legend-dot" style="border-color:#eab308"></span>Starred</div>' +
+        '<div>' + starMarkIcon() + 'Starred</div>' +
         '<div><span class="legend-dot" style="border-color:#1e1b4b"></span>Photos rated by AI</div>' +
         '<div><span class="legend-dot" style="background:#d1d5db"></span>Delisted since last run</div>' +
         '<div><span class="legend-dot" style="opacity:.5;border:2px dashed #65a30d"></span>Shared / approximate location</div></div>';
@@ -702,8 +761,41 @@ LISTINGS.forEach(function(d, i) {
     }
 });
 var markerLayer = L.layerGroup().addTo(map);
+// Starred listings are drawn as a star (filled with the tier colour) instead of a circle.
+var STAR_MARKER_SIZE = 18;
+var justStarredUrls = new Set();  // star markers to animate on the next render
+function starMarker(d, style) {
+    var svgStyle = 'fill:' + style.fillColor + ';fill-opacity:' + style.fillOpacity + ';color:' + style.color +
+        ';stroke-width:' + style.weight + (style.dashArray ? ';stroke-dasharray:3 3' : '');
+    var marker = L.marker([d.mapLat, d.mapLng], {
+        icon: L.divIcon({
+            className: 'star-marker', iconSize: [STAR_MARKER_SIZE, STAR_MARKER_SIZE],
+            html: '<span class="star-burst"></span>' + icon('star').replace('class="icon"', 'class="icon" style="' + svgStyle + '"')
+        }),
+        keyboard: false
+    });
+    if (justStarredUrls.has(d.url) && MOTION) marker.on('add', function() { popStarMarker(marker.getElement()); });
+    return marker;
+}
+function popStarMarker(el) {
+    var star = el.querySelector('svg'), burst = el.querySelector('.star-burst');
+    gsap.fromTo(star, {scale: 0, rotation: -120}, {scale: 1, rotation: 0, duration: 0.6, ease: 'back.out(3)'});
+    gsap.fromTo(star, {filter: 'drop-shadow(0 0 6px rgba(245,158,11,1))'}, {filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,.4))', duration: 0.9, ease: 'power2.out', clearProps: 'filter'});
+    gsap.fromTo(burst, {scale: 0.4, opacity: 1}, {scale: 3, opacity: 0, duration: 0.7, ease: 'power2.out'});
+}
+// Pops the star toggle buttons (list card, pinned detail card) for a freshly starred listing.
+function popStarButtons(url) {
+    if (!MOTION) return;
+    var buttons = [];
+    document.querySelectorAll('#list .listing-card').forEach(function(card) {
+        if (card.dataset.url === url) buttons.push(card.querySelector('.star-toggle svg'));
+    });
+    if (selectedListing && selectedListing.url === url) buttons.push(detailCard.querySelector('.actions button.on svg'));
+    buttons = buttons.filter(Boolean);
+    if (buttons.length) gsap.fromTo(buttons, {scale: 0.3, rotation: -90}, {scale: 1, rotation: 0, duration: 0.5, ease: 'back.out(3)'});
+}
 // Selected listing highlight: two expanding rings plus a blinking marker.
-var pulseMarker = L.marker([0, 0], {icon: L.divIcon({className: 'pulse-marker', html: '<span></span><span></span>', iconSize: [0, 0]}), interactive: false, keyboard: false});
+var pulseMarker = L.marker([0, 0], {icon: L.divIcon({className: 'pulse-marker', html: '<span>' + icon('star') + '</span><span>' + icon('star') + '</span>', iconSize: [0, 0]}), interactive: false, keyboard: false});
 var markerBlink = null, ringPulse = null;
 function highlightSelectedMarker(marker, d) {
     if (markerBlink) { markerBlink.kill(); markerBlink = null; }
@@ -714,7 +806,9 @@ function highlightSelectedMarker(marker, d) {
     }
     var isNew = !map.hasLayer(pulseMarker);
     pulseMarker.setLatLng([d.mapLat, d.mapLng]).addTo(map);
-    var size = 2 * (marker.getRadius() + 4);
+    var isStar = !marker.getRadius;
+    var size = 2 * ((isStar ? STAR_MARKER_SIZE / 2 : marker.getRadius()) + 4);
+    pulseMarker.getElement().classList.toggle('pulse-star', isStar);
     var rings = pulseMarker.getElement().querySelectorAll('span');
     rings.forEach(function(ring) {
         ring.style.width = ring.style.height = size + 'px';
@@ -843,7 +937,7 @@ legend.addTo(map);
 // Filter chips, sliders, the filters sheet and active-filter counts
 // ===========================================================================
 // One entry per chip (its data-filter attribute); true = filter active.
-var filterChips = {bhk1:false,bhk2:false,bhk3:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:true,requireBalcony:true,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,villaVibeOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
+var filterChips = {bhk1:false,bhk2:false,bhk3:false,furnishedFull:false,furnishedSemi:false,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:true,requireBalcony:true,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,villaVibeOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
 var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
 var SLIDER_IDS = ['filter-cost-min','filter-cost-max','filter-sqft','filter-photos','filter-deposit','filter-score','filter-days'];
 // Chips shown outside the sheet; they don't count towards the "Filters" badge.
@@ -977,9 +1071,10 @@ function markDismissed(url) { var now = Date.now(); dismissedAt[url] = now; star
 
 function toggleStar(url) {
     if (isStarred(url)) { starredAt[url] = -Date.now(); recordUndo('unstar', [url]); }
-    else { markStarred(url); recordUndo('star', [url]); }
+    else { markStarred(url); recordUndo('star', [url]); justStarredUrls.add(url); }
     saveStars();
     refreshMap();
+    if (isStarred(url)) popStarButtons(url);
 }
 function toggleDismiss(url) {
     if (isDismissed(url)) { dismissedAt[url] = -Date.now(); recordUndo('undismiss', [url]); }
@@ -1000,7 +1095,7 @@ function undo() {
         var now = Date.now();
         if (last.action === 'dismiss') dismissedAt[url] = -now;
         else if (last.action === 'star') starredAt[url] = -now;
-        else if (last.action === 'unstar') starredAt[url] = now;
+        else if (last.action === 'unstar') { starredAt[url] = now; justStarredUrls.add(url); }
         else if (last.action === 'undismiss') dismissedAt[url] = now;
     });
     saveStars();
@@ -1075,7 +1170,7 @@ function restoreStarsBackup() {
 function copyStarredToClipboard() {
     var starred = filteredListings.filter(function(d) { return isStarred(d.url); });
     var text = starred.map(function(d, i) {
-        return (i + 1) + '. ' + d.society + ' | Rs.' + d.totalCost.toLocaleString() + '/mo | ' + d.sqft + 'sqft | ' + d.bhk + '\n   ' + d.url;
+        return (i + 1) + '. ' + d.society + ' | Rs.' + d.totalCost.toLocaleString() + '/mo | ' + (FURNISHING_LABELS[d.furnishing] ? FURNISHING_LABELS[d.furnishing] + ' | ' : '') + d.sqft + 'sqft | ' + d.bhk + '\n   ' + d.url;
     }).join('\n\n');
     navigator.clipboard.writeText(text)
         .then(function() { toast('Copied ' + starred.length + ' starred listings'); })
@@ -1126,6 +1221,10 @@ document.addEventListener('keydown', function(e) {
         return;
     }
     var typing = e.target.closest && e.target.closest('input, textarea');
+    if (e.target.id === 'search-input') {
+        if (key === 'Escape') { e.preventDefault(); e.target.value = ''; e.target.blur(); refreshMap(); }
+        return;
+    }
     if (key === '?' && !typing) { e.preventDefault(); toggleShortcuts(true); return; }
     var isDismissKey = key === 'x' || key === 'd', isStarKey = key === 'c' || key === 's';
 
@@ -1153,10 +1252,20 @@ function readSliders() {
         costMin: +byId('filter-cost-min').value, costMax: +byId('filter-cost-max').value,
         minSqft: +byId('filter-sqft').value, minPhotos: +byId('filter-photos').value,
         maxDepositMonths: +byId('filter-deposit').value, minScore: +byId('filter-score').value,
-        maxDaysAgo: +byId('filter-days').value
+        maxDaysAgo: +byId('filter-days').value,
+        searchTerms: byId('search-input').value.toLowerCase().split(/\s+/).filter(Boolean)
     };
 }
+var searchDebounce;
+function onSearchInput() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(refreshMap, 150);
+}
 function passesFilters(d, sliders) {
+    if (sliders.searchTerms.length) {
+        var haystack = ((d.society || '') + ' ' + (d.locality || '')).toLowerCase();
+        if (!sliders.searchTerms.every(function(term) { return haystack.indexOf(term) >= 0; })) return false;
+    }
     if (d.totalCost < sliders.costMin || d.totalCost > sliders.costMax) return false;
     if (d.sqft < sliders.minSqft) return false;
     if (d.photoCount < sliders.minPhotos) return false;
@@ -1164,6 +1273,10 @@ function passesFilters(d, sliders) {
     // BHK chips are an OR-set: none selected = show all
     if (filterChips.bhk1 || filterChips.bhk2 || filterChips.bhk3) {
         if (!((filterChips.bhk1 && d.bhk === 'BHK1') || (filterChips.bhk2 && d.bhk === 'BHK2') || (filterChips.bhk3 && d.bhk === 'BHK3'))) return false;
+    }
+    // Furnishing chips are an OR-set too; unknown furnishing only passes when none are selected
+    if (filterChips.furnishedFull || filterChips.furnishedSemi || filterChips.furnishedNone) {
+        if (!((filterChips.furnishedFull && d.furnishing === 'FULL') || (filterChips.furnishedSemi && d.furnishing === 'SEMI') || (filterChips.furnishedNone && d.furnishing === 'NONE'))) return false;
     }
     if (filterChips.requireLift && !d.hasLift) return false;
     if (filterChips.requireCarParking && !CAR_PARKING_TYPES.includes(d.parking)) return false;
@@ -1240,15 +1353,20 @@ function renderMarkers(listings, tiers, scoreName) {
         var isSelected = selectedListing && selectedListing.url === d.url;
         var isBoxSelected = boxSelectedUrls.has(d.url);
         var fill = d.isDelisted ? '#d1d5db' : tierColor(d.scores[scoreName], tiers);
-        // Outline: selected > box-selected > starred > photo-rated > plain
-        var outline = isSelected ? '#dc2626' : isBoxSelected ? '#2563eb' : isStarred(d.url) ? '#eab308' : d.hasPhotoRating ? '#1e1b4b' : fill;
-        var outlineWidth = isSelected ? 6 : (isBoxSelected || isStarred(d.url)) ? 5 : d.hasPhotoRating ? 3 : 2;
-        var marker = L.circleMarker([d.mapLat, d.mapLng], {
-            radius: 5,
-            color: outline, weight: outlineWidth, fillColor: fill,
-            fillOpacity: d.isDelisted ? 0.25 : (d.isStacked ? 0.4 : 0.65),
-            dashArray: d.isStacked ? '4 4' : null
-        });
+        // Outline: box-selected > photo-rated > plain (the selected listing is shown by the pulsing rings)
+        var outline = isBoxSelected ? '#2563eb' : d.hasPhotoRating ? '#1e1b4b' : fill;
+        var outlineWidth = isBoxSelected ? 5 : d.hasPhotoRating ? 3 : 2;
+        var fillOpacity = d.isDelisted ? 0.25 : (d.isStacked ? 0.4 : 0.65);
+        var dashArray = d.isStacked ? '4 4' : null;
+        var marker = isStarred(d.url)
+            ? starMarker(d, {
+                color: isBoxSelected || d.hasPhotoRating ? outline : '#fff',
+                weight: isBoxSelected ? 3 : 2,
+                fillColor: fill, fillOpacity: d.isDelisted ? 0.25 : (d.isStacked ? 0.5 : 0.95), dashArray: dashArray
+            })
+            : L.circleMarker([d.mapLat, d.mapLng], {
+                radius: 5, color: outline, weight: outlineWidth, fillColor: fill, fillOpacity: fillOpacity, dashArray: dashArray
+            });
         marker.on('mouseover', function(e) { if (!selectedListing) showDetailCard(e, d); });
         marker.on('mouseout', function() {
             if (!selectedListing || selectedListing.url !== d.url) { detailCard.style.display = 'none'; detailCard.style.pointerEvents = 'none'; }
@@ -1257,6 +1375,7 @@ function renderMarkers(listings, tiers, scoreName) {
         markerLayer.addLayer(marker);
         if (isSelected) selectedMarker = marker;
     });
+    justStarredUrls.clear();
     highlightSelectedMarker(selectedMarker, selectedListing);
 }
 
@@ -1270,7 +1389,15 @@ function tagsHtml(labels, className) {
     return labels.map(function(label) { return '<span class="tag ' + (className || '') + '">' + label + '</span>'; }).join('');
 }
 function bhkLabel(d) { return escapeHtml((d.bhk || '').replace('BHK', '')) + ' BHK'; }
+var FURNISHING_LABELS = {FULL: 'Furnished', SEMI: 'Semi-furnished', NONE: 'Unfurnished'};
+function furnishingLabel(d) { return FURNISHING_LABELS[d.furnishing] || 'Furnishing unknown'; }
 function floorLabel(d) { return 'Floor ' + d.floor + (d.totalFloors ? ' of ' + d.totalFloors : ''); }
+// Shared/approximate coordinates are unreliable, so those listings search Google Maps by name instead.
+function googleMapsLinkHtml(d, labelHtml) {
+    var query = d.isStacked ? [d.society, d.locality].filter(Boolean).join(', ') : d.lat + ',' + d.lng;
+    return '<a class="maps-link" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query) +
+        '" target="_blank" rel="noopener" title="Open in Google Maps">' + icon('map-pin') + labelHtml + '</a>';
+}
 function ageLabel(d) { return d.ageYears >= 99 ? 'Age unknown' : d.ageYears <= 0 ? 'New' : d.ageYears + ' yr old'; }
 
 // AI photo-rating summary for the detail card (see rental_lookup/enrichment/photo_ratings.py).
@@ -1318,13 +1445,13 @@ function showDetailCard(e, d) {
         activeRankMode === 'quality' ? '' : 'Quality ' + (activeRankMode === 'deal' ? d.scores.dealQuality : d.scores.quality)];
     byId('card-eyebrow').innerHTML = scorePillHtml(d) + '<span class="label">' + eyebrow.filter(Boolean).join(' · ') + '</span>';
     byId('card-title').textContent = d.society || 'Unnamed society';
-    byId('card-location').textContent = (d.locality || '').substring(0, 60);
+    byId('card-location').innerHTML = googleMapsLinkHtml(d, escapeHtml((d.locality || '').substring(0, 60)));
     byId('card-price').innerHTML = '<b>' + formatRupees(d.totalCost) + '</b> /month' +
         (d.maintenance > 0 ? ' <span class="muted">· ' + formatRupees(d.rent) + ' rent + ' + formatRupees(d.maintenance) + ' maintenance</span>' : '') +
         (d.deposit > 0 ? '<br><span class="deposit">' + formatRupees(d.deposit) + ' deposit</span>' : '');
 
     var facts = [
-        ['bed-double', bhkLabel(d)], ['ruler', d.sqft.toLocaleString() + ' sqft'],
+        ['bed-double', bhkLabel(d)], ['sofa', furnishingLabel(d)], ['ruler', d.sqft.toLocaleString() + ' sqft'],
         ['compass', d.facing ? escapeHtml(d.facing) + ' facing' : 'Facing unknown'],
         ['fence', (d.balconies >= 0 ? d.balconies : '?') + ' balcon' + (d.balconies === 1 ? 'y' : 'ies')],
         ['building-2', floorLabel(d)], ['calendar', ageLabel(d)]
@@ -1421,8 +1548,8 @@ function renderSidebarList() {
             '<div class="info">' +
             '<div class="price-row"><span class="price">' + formatRupees(d.totalCost) + '</span>' +
             (d.maintenance > 0 ? '<span class="maintenance-note">incl. ' + formatRupeesShort(d.maintenance) + ' maint.</span>' : '') + '</div>' +
-            '<div class="name"><span class="rank">#' + d.rank + '</span>' + escapeHtml(d.society) + '</div>' +
-            '<div class="details-line">' + bhkLabel(d) + ' · ' + d.sqft.toLocaleString() + ' sqft · ' + (d.facing ? escapeHtml(d.facing) + ' facing' : 'facing ?') + ' · ' + floorLabel(d) + '</div>' +
+            '<div class="name">' + escapeHtml(d.society) + '</div>' +
+            '<div class="details-line">' + bhkLabel(d) + ' · ' + (FURNISHING_LABELS[d.furnishing] ? FURNISHING_LABELS[d.furnishing] + ' · ' : '') + d.sqft.toLocaleString() + ' sqft</div>' +
             (d.availableFrom ? '<div class="details-line secondary">Avail. ' + escapeHtml(d.availableFrom) + '</div>' : '') +
             '<div class="tags">' + (d.source === 'mb' ? '<span class="tag">MagicBricks</span>' : '') + (d.isPetFriendly ? '<span class="tag positive">' + icon('paw-print') + 'Pets OK</span>' : '') +
             tagsHtml(tags) + ratingTag + '</div>' +
@@ -1496,7 +1623,7 @@ function renderSelectionBar() {
 
 function starBoxSelection() {
     var urls = boxSelection.filter(function(d) { return !isStarred(d.url); }).map(function(d) { return d.url; });
-    urls.forEach(markStarred);
+    urls.forEach(function(url) { markStarred(url); justStarredUrls.add(url); });
     recordUndo('star', urls);
     clearBoxSelection();
     saveStars();

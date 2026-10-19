@@ -44,6 +44,9 @@ NOBROKER_AMENITY_KEYS = {
     "POOL": "hasPool", "GYM": "hasGym", "CLUB": "hasClubhouse", "PARK": "hasPark",
     "INTERCOM": "hasIntercom", "CPA": "hasCoveredParking",
 }
+# Source furnishing values -> map record "furnishing" ("" = unknown)
+NOBROKER_FURNISHING = {"FULLY_FURNISHED": "FULL", "SEMI_FURNISHED": "SEMI", "NOT_FURNISHED": "NONE"}
+MAGICBRICKS_FURNISHING = {11900: "FULL", 11902: "SEMI", 11901: "NONE"}
 
 
 @dataclass
@@ -112,6 +115,7 @@ def nobroker_record(raw: dict, details: dict, context: BuildContext) -> dict:
         "hasLift": raw.get("lift", False) or amenities.get("LIFT", False),
         "ageYears": raw.get("propertyAge", 99),
         "buildingType": raw.get("buildingType", ""),
+        "furnishing": NOBROKER_FURNISHING.get(raw.get("furnishing"), ""),
         "parking": raw.get("parking", "NONE"),
         "isNegotiable": raw.get("negotiable", False),
         "waterSupply": raw.get("waterSupply", ""),
@@ -169,6 +173,7 @@ def magicbricks_record(listing: Listing, raw: dict, context: BuildContext) -> di
         "totalFloors": listing.total_floors,
         "hasLift": listing.has_lift, "ageYears": listing.age_years,
         "buildingType": listing.building_type, "parking": listing.parking,
+        "furnishing": MAGICBRICKS_FURNISHING.get(magicbricks.parse_int(raw.get("furnished")), ""),
         "isNegotiable": False, "waterSupply": listing.water_supply,
         "nbTransit": 0, "nbLifestyle": 0,
         "hasPowerBackup": listing.has_power_backup, "isGated": listing.is_gated_community,
