@@ -55,7 +55,7 @@ def _save_details(details: dict) -> None:
 
 def fetch_details_for_top_listings(top_n: int = 300) -> None:
     candidates = [raw for raw in iter_saved_listings(NOBROKER_PAGES_DIR) if _worth_fetching(raw)]
-    candidates.sort(key=lambda raw: -follow_up_priority(raw, reward_many_photos=False))
+    candidates.sort(key=lambda raw: -follow_up_priority(raw))
     details = _load_saved_details()
     ids_to_fetch = [raw["id"] for raw in candidates[:top_n] if raw["id"] not in details]
     print(f"Top {top_n}: {len(ids_to_fetch)} need enrichment ({len(details)} already cached)")

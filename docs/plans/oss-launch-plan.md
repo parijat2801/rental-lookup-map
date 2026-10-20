@@ -131,7 +131,7 @@ maintainer.
 
 - [ ] **Strip personal data.** `data/cache/stars_and_dismissals.json` contains 49
       starred and 1,882 dismissed listings — a personal house-hunting history that
-      would ship as every new user's default state. Same for `photo_ratings.json`.
+      would ship as every new user's default state.
 - [ ] **Drop the embedded data blob.** `output/map_template.html` carries ~2.9MB of
       live listings that `build_map.py` splices via `var ALL = `. Anyone cloning
       gets that baked in, and every rebuild churns a huge diff. Template-as-database
@@ -157,9 +157,6 @@ maintainer.
   OSM fetch, so eastern listings compute `nearest_metro_m = None` and rank as
   transit-less despite being walking distance from Purple Line stations. Coverage
   was fixed; scoring wasn't.
-- **`photo_rater.py` is dead code.** Never invoked by CI, so ratings are frozen at
-  132 of ~9,000 listings. Either wire it into the pipeline or delete it along with
-  the cached ratings.
 - **Data sentinels:** `age: 99` (957 listings) and `age: -1` (54) are nulls in
   disguise and would break a naive max-age filter. `facing` is empty on 42% of
   listings, so facing-based filters silently keep unknowns.

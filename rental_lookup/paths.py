@@ -19,7 +19,6 @@ FACEBOOK_POSTS_DIR = DATA_DIR / "fb"
 # Long-lived state, committed to git and cached by CI.
 STARS_PATH = CACHE_DIR / "stars_and_dismissals.json"  # user stars/dismissals (published as stars.json)
 FIRST_SEEN_PATH = CACHE_DIR / "first_seen.json"  # listing url -> date we first saw it
-PHOTO_RATINGS_PATH = CACHE_DIR / "photo_ratings.json"  # listing id -> AI photo checklist
 LISTING_DETAILS_PATH = CACHE_DIR / "detail_enrichment.json"  # listing id -> NoBroker detail-page extras
 FAKE_LOCATION_IDS_PATH = CACHE_DIR / "fake_location_ids.json"  # listing ids with known-bogus coordinates
 

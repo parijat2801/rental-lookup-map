@@ -28,7 +28,7 @@ from rental_lookup.listing_age import days_since_posted_magicbricks, days_since_
 from rental_lookup.models import NOBROKER_BASE_URL, Listing, mentions_branded_builder, nobroker_platform_scores
 from rental_lookup.paths import (
     ENV_PATH, FAKE_LOCATION_IDS_PATH, FIRST_SEEN_PATH, LISTING_DETAILS_PATH, MAGICBRICKS_PAGES_DIR,
-    MAP_PAGE_PATH, MAP_TEMPLATE_PATH, METRO_LINES_PATH, NOBROKER_PAGES_DIR, PHOTO_RATINGS_PATH,
+    MAP_PAGE_PATH, MAP_TEMPLATE_PATH, METRO_LINES_PATH, NOBROKER_PAGES_DIR,
     PREVIOUS_NOBROKER_PAGES_DIR, STARS_PATH,
 )
 from rental_lookup.sources import magicbricks
@@ -52,7 +52,6 @@ MAGICBRICKS_FURNISHING = {11900: "FULL", 11902: "SEMI", 11901: "NONE"}
 @dataclass
 class BuildContext:
     """Lookups shared by every record builder."""
-    photo_ratings: dict  # listing id -> AI photo checklist
     fake_location_ids: set
     stacked_coordinates: set  # coordinate_key()s shared by too many listings
 
@@ -132,8 +131,6 @@ def nobroker_record(raw: dict, details: dict, context: BuildContext) -> dict:
         "description": _short_description(description),
         "isStacked": coordinate_key(raw["latitude"], raw["longitude"]) in context.stacked_coordinates,
         "isFakeLocation": raw["id"] in context.fake_location_ids,
-        "hasPhotoRating": raw["id"] in context.photo_ratings,
-        "photoRating": context.photo_ratings.get(raw["id"], {}),
         "daysAgo": 0,
         "coverPhoto": _nobroker_cover_photo(raw, photos),
         "photos": photos,
@@ -189,7 +186,7 @@ def magicbricks_record(listing: Listing, raw: dict, context: BuildContext) -> di
         "propertyCode": "",
         "description": _short_description(raw.get("auto_desc")),
         "isStacked": coordinate_key(listing.lat, listing.lng) in context.stacked_coordinates,
-        "isFakeLocation": False, "hasPhotoRating": False, "photoRating": {},
+        "isFakeLocation": False,
         "daysAgo": 0,
         "coverPhoto": photos[0] if photos else (raw.get("image") or ""),
         "photos": photos,
@@ -214,10 +211,8 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
     starred, dismissed = stars.get("starred") or {}, stars.get("dismissed") or {}
     print(f"  Stars: {len(starred)} starred, {len(dismissed)} dismissed")
     print(f"  First seen: {len(first_seen)} listings tracked")
-    photo_ratings = load_json(PHOTO_RATINGS_PATH, {})
     fake_location_ids = set(load_json(FAKE_LOCATION_IDS_PATH, []))
     details_by_id = load_json(LISTING_DETAILS_PATH, {})
-    print(f"  Photo ratings: {len(photo_ratings)} listings")
     print(f"  Fake locations: {len(fake_location_ids)} listings")
 
     nobroker_raw = list(iter_saved_listings(NOBROKER_PAGES_DIR))
@@ -229,7 +224,6 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
                                       if raw.get("latitude") and raw.get("longitude"))
     listings_per_coordinate.update(coordinate_key(listing.lat, listing.lng) for listing, _ in magicbricks_listings)
     context = BuildContext(
-        photo_ratings=photo_ratings,
         fake_location_ids=fake_location_ids,
         stacked_coordinates={key for key, count in listings_per_coordinate.items()
                              if count > STACKED_LISTING_THRESHOLD},

@@ -97,11 +97,44 @@ body.sidebar-collapsed .sidebar-open-control{display:block}
 @media (max-width: 600px){.shortcut-columns{grid-template-columns:1fr}}
 kbd{font-family:inherit;font-size:var(--fs-xs);font-weight:500;color:var(--text);background:var(--hover);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 6px;min-width:22px;text-align:center;display:inline-block}
 
-.rank-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin:0 18px;padding:3px;background:var(--hover);border-radius:10px}
-.rank-tab{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 4px;border-radius:8px;font-size:var(--fs-sm);font-weight:500;color:var(--muted);white-space:nowrap}
+.rank-tabs{display:flex;gap:2px;margin:0 18px;padding:3px;background:var(--hover);border-radius:10px}
+.rank-tab{flex:auto;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 8px;border-radius:8px;font-size:var(--fs-sm);font-weight:500;color:var(--muted);white-space:nowrap}
 .rank-tab:hover{color:var(--text)}
 .rank-tab.on{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
 .rank-tab svg.icon{width:14px;height:14px}
+
+/* --- Areas of interest (Commute tab) ------------------------------------------ */
+.areas-panel{margin:12px 18px 0;display:grid;gap:8px}
+.areas-panel[hidden]{display:none}
+.areas-head{display:flex;align-items:center;justify-content:space-between}
+.mode-toggle{display:inline-flex;gap:2px;padding:2px;background:var(--hover);border-radius:8px}
+.mode-toggle button{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:var(--fs-xs);font-weight:500;color:var(--muted)}
+.mode-toggle button:hover{color:var(--text)}
+.mode-toggle button.on{background:var(--bg);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.mode-toggle svg.icon{width:12px;height:12px}
+.area-search{position:relative;display:flex}
+.area-search .search-box{height:34px}
+.area-suggestions{position:absolute;left:0;right:0;top:38px;z-index:25;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:4px}
+.area-suggestions[hidden]{display:none}
+.area-suggestion{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px}
+.area-suggestion:hover,.area-suggestion.on{background:var(--hover)}
+.area-suggestion small{display:block;color:var(--muted);font-size:var(--fs-xs);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.area-list{display:flex;flex-wrap:wrap;gap:6px}
+.area-list:empty{display:none}
+.area-chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:3px 3px 3px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:var(--fs-sm);font-weight:500}
+.area-chip .area-name{width:auto;height:auto;border-radius:0;display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.area-chip .area-name:hover{background:none;text-decoration:underline}
+.area-chip button{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.area-chip button:hover{background:rgba(55,48,163,.12)}
+.area-chip svg.icon{width:12px;height:12px}
+.areas-status{font-size:var(--fs-xs);color:var(--subtle)}
+.areas-status:empty{display:none}
+.area-marker span{position:absolute;inset:0;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.area-marker svg.icon{width:13px;height:13px}
+.area-popup{display:grid;gap:6px;font:inherit;font-size:var(--fs-sm)}
+.area-popup b{font-weight:600}
+.area-popup button{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);font-weight:500;font-size:var(--fs-sm)}
+.area-popup button:hover{background:var(--hover)}
 
 .quick-filters{display:flex;gap:6px;padding:12px 18px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:var(--fs-sm);font-weight:500;white-space:nowrap;user-select:none}
@@ -225,14 +258,15 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 #detail-card .facts span{display:flex;align-items:center;gap:6px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #detail-card .facts svg.icon{width:14px;height:14px;color:var(--subtle)}
 #detail-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
+#detail-card .commute{margin-top:12px;padding-top:10px;border-top:1px solid var(--hover);display:grid;gap:6px;font-size:var(--fs-sm);color:var(--muted)}
+#detail-card .commute .area-label{display:flex;align-items:center;gap:6px;color:var(--text);font-weight:500}
+#detail-card .commute .area-label svg.icon{width:13px;height:13px;color:#4f46e5}
+#detail-card .commute b{color:var(--text);font-weight:600}
 #detail-card .meta{font-size:var(--fs-xs);color:var(--subtle);margin-top:10px}
 #detail-card .maps-link{color:inherit;text-decoration:none}
 #detail-card .maps-link:hover{color:var(--text)}
 #detail-card .maps-link svg.icon{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
 #detail-card .description{font-size:var(--fs-sm);color:var(--muted);margin-top:10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-#detail-card .photo-rating{margin-top:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:var(--fs-sm)}
-#detail-card .photo-rating .rating-head{display:flex;align-items:center;gap:6px;font-weight:600}
-#detail-card .photo-rating .rating-line{color:var(--muted);margin-top:4px;font-style:italic}
 #detail-card .actions{display:flex;gap:6px;margin-top:14px}
 #detail-card .actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:10px;border:1px solid var(--border);font-weight:500;font-size:var(--fs-sm)}
 #detail-card .actions button:hover{background:var(--hover)}
@@ -273,7 +307,25 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
     <button class="rank-tab" id="rank-value" onclick="setRankMode('value')" title="Quality per rupee"><span data-icon="indian-rupee"></span>Value</button>
     <button class="rank-tab" id="rank-vibe" onclick="setRankMode('vibe')" title="Spacious, outdoorsy, central homes"><span data-icon="trees"></span>Vibe</button>
     <button class="rank-tab" id="rank-deal" onclick="setRankMode('deal')" title="Amenities and location for the cost"><span data-icon="badge-percent"></span>Deals</button>
+    <button class="rank-tab" id="rank-commute" onclick="setRankMode('commute')" title="Easy commute to your areas of interest"><span data-icon="route"></span>Commute</button>
   </div>
+
+  <section class="areas-panel" id="areas-panel" aria-label="Areas of interest" hidden>
+    <div class="areas-head">
+      <span class="label">Areas of interest</span>
+      <div class="mode-toggle" role="group" aria-label="Commute mode">
+        <button data-commute-mode="best" onclick="setCommuteMode('best')" title="Faster of driving and metro">Best</button>
+        <button data-commute-mode="drive" onclick="setCommuteMode('drive')" title="Driving only"><span data-icon="car"></span>Drive</button>
+        <button data-commute-mode="metro" onclick="setCommuteMode('metro')" title="Metro, with a walk or auto to and from stations"><span data-icon="train-front"></span>Metro</button>
+      </div>
+    </div>
+    <div class="area-search">
+      <label class="search-box"><span data-icon="map-pin-plus"></span><input type="search" id="area-input" placeholder="Search a place or paste a Google Maps link" aria-label="Add an area of interest" autocomplete="off" oninput="onAreaInput()" onkeydown="onAreaKeydown(event)"></label>
+      <div class="area-suggestions" id="area-suggestions" role="listbox" hidden></div>
+    </div>
+    <div class="area-list" id="area-list"></div>
+    <div class="areas-status" id="areas-status"></div>
+  </section>
 
   <div class="quick-filters">
     <label class="search-box"><span data-icon="search"></span><input type="search" id="search-input" placeholder="Search society or locality" aria-label="Search listings" autocomplete="off" oninput="onSearchInput()"></label>
@@ -433,6 +485,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       <section>
         <h3 class="label">Map &amp; general</h3>
         <div class="shortcut-row"><span>Select an area</span><span class="keys"><kbd>Shift</kbd>+ drag</span></div>
+        <div class="shortcut-row"><span>Add area of interest</span><span class="keys">Right-click map</span></div>
         <div class="shortcut-row"><span>Close card or filters</span><span class="keys"><kbd>Esc</kbd></span></div>
         <div class="shortcut-row"><span>Undo</span><span class="keys"><kbd>Ctrl</kbd><kbd>Z</kbd></span></div>
         <div class="shortcut-row"><span>Show shortcuts</span><span class="keys"><kbd>?</kbd></span></div>
@@ -539,7 +592,7 @@ var RELIABLE_WATER = ['CORPORATION','BOREWELL_AND_CORPORATION','CORP_BORE'];
 var STANDALONE_SOCIETIES = ['standalone building','standalone','stand alone','none',''];
 // Sidebar: drag its right edge to resize, or collapse it to give the map the full width.
 // Both are remembered in localStorage.
-var SIDEBAR_MIN = 420, SIDEBAR_MAX = 450, SIDEBAR_DEFAULT = 420;
+var SIDEBAR_MIN = 420, SIDEBAR_MAX = 540, SIDEBAR_DEFAULT = 420;
 function clampSidebarWidth(width) {
     return Math.round(Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, window.innerWidth * 0.6, width)));
 }
@@ -740,7 +793,6 @@ legend.onAdd = function() {
         TIER_COLORS.map(function(c) { return '<span style="background:' + c + '"></span>'; }).join('') +
         '</span><span>High</span></summary><div class="legend-rows">' +
         '<div>' + starMarkIcon() + 'Starred</div>' +
-        '<div><span class="legend-dot" style="border-color:#1e1b4b"></span>Photos rated by AI</div>' +
         '<div><span class="legend-dot" style="background:#d1d5db"></span>Delisted since last run</div>' +
         '<div><span class="legend-dot" style="opacity:.5;border:2px dashed #65a30d"></span>Shared / approximate location</div></div>';
     L.DomEvent.disableClickPropagation(container);
@@ -882,10 +934,11 @@ function computeScores(d) {
             value: d.totalCost > 0 ? Math.round(quality / d.totalCost * 100000) : 0,
             dealQuality: dealQuality,
             deal: d.totalCost > 0 ? Math.round(dealQuality * dealQuality / d.totalCost * 1000) : 0,
-            vibe: villaVibeScore(d)
+            vibe: villaVibeScore(d),
+            commute: 0  // depends on the areas of interest; see refreshCommuteScores()
         };
     } catch (e) {
-        d.scores = {quality: 0, value: 0, dealQuality: 0, deal: 0, vibe: 0};
+        d.scores = {quality: 0, value: 0, dealQuality: 0, deal: 0, vibe: 0, commute: 0};
     }
 }
 LISTINGS.forEach(computeScores);
@@ -895,13 +948,29 @@ var RANK_MODES = {
     quality: {score: 'quality', label: 'score', sortedBy: 'quality', sort: function(a, b) { return b.scores.quality - a.scores.quality || a.totalCost - b.totalCost; }},
     value: {score: 'value', label: 'value', sortedBy: 'value for money', sort: function(a, b) { return b.scores.value - a.scores.value || b.scores.quality - a.scores.quality; }},
     vibe: {score: 'vibe', label: 'vibe score', sortedBy: 'villa vibe', sort: function(a, b) { return b.scores.vibe - a.scores.vibe || b.sqft - a.sqft; }},
-    deal: {score: 'deal', label: 'deal score', sortedBy: 'best deal', sort: function(a, b) { return b.scores.deal - a.scores.deal || b.scores.dealQuality - a.scores.dealQuality; }}
+    deal: {score: 'deal', label: 'deal score', sortedBy: 'best deal', sort: function(a, b) { return b.scores.deal - a.scores.deal || b.scores.dealQuality - a.scores.dealQuality; }},
+    commute: {score: 'commute', label: 'commute score', sortedBy: 'commute', sort: function(a, b) {
+        return b.scores.commute - a.scores.commute || a.commute.worstMinutes - b.commute.worstMinutes ||
+            a.commute.averageMinutes - b.commute.averageMinutes || a.totalCost - b.totalCost;
+    }}
 };
 var activeRankMode = 'quality';
 function setRankMode(mode) {
     activeRankMode = mode;
     for (var m in RANK_MODES) byId('rank-' + m).classList.toggle('on', m === mode);
+    byId('areas-panel').hidden = mode !== 'commute';
     refreshMap();
+}
+// The Commute tab ranks by quality until at least one area of interest is set.
+function effectiveRankMode() {
+    return activeRankMode === 'commute' && !areasOfInterest.length ? 'quality' : activeRankMode;
+}
+// Commute bonus for the other rank modes. At 0 they ignore the areas of interest; to blend,
+// raise the weight (0-1) and wrap their scores with this in computeScores / refreshCommuteScores.
+var COMMUTE_BLEND_WEIGHT = 0;
+function withCommuteBlend(score, d) {
+    if (!COMMUTE_BLEND_WEIGHT || !d.commute) return score;
+    return Math.round(score * (1 - COMMUTE_BLEND_WEIGHT + COMMUTE_BLEND_WEIGHT * d.commute.score / 100));
 }
 
 // Marker colours, red -> dark green. Quality uses fixed cut-offs; the other modes
@@ -925,7 +994,7 @@ function tierIndex(value, tiers) {
 function tierColor(value, tiers) { return TIER_COLORS[tierIndex(value, tiers)]; }
 // Pill showing listing d's score in the active rank mode, tinted like its marker.
 function scorePillHtml(d) {
-    var mode = RANK_MODES[activeRankMode], value = d.scores[mode.score];
+    var mode = RANK_MODES[effectiveRankMode()], value = d.scores[mode.score];
     if (d.isDelisted) return '<span class="score-badge" title="Delisted">' + value + '</span>';
     var i = tierIndex(value, currentTiers), pill = TIER_PILLS[i];
     return '<span class="score-badge" title="' + mode.label.charAt(0).toUpperCase() + mode.label.slice(1) + '" style="--pill-bg:' + pill[0] +
@@ -1225,6 +1294,7 @@ document.addEventListener('keydown', function(e) {
         if (key === 'Escape') { e.preventDefault(); e.target.value = ''; e.target.blur(); refreshMap(); }
         return;
     }
+    if (e.target.id === 'area-input') return;  // handled by onAreaKeydown
     if (key === '?' && !typing) { e.preventDefault(); toggleShortcuts(true); return; }
     var isDismissKey = key === 'x' || key === 'd', isStarKey = key === 'c' || key === 's';
 
@@ -1314,7 +1384,7 @@ function refreshMap() {
     updateActiveFilterCount();
     paintSliders();
     var sliders = readSliders();
-    var mode = RANK_MODES[activeRankMode];
+    var rankMode = effectiveRankMode(), mode = RANK_MODES[rankMode];
 
     byId('value-cost').textContent = formatRupeesShort(sliders.costMin) + ' – ' + formatRupeesShort(sliders.costMax) +
         (sliders.costMax >= +byId('filter-cost-max').max ? '+' : '');
@@ -1330,7 +1400,7 @@ function refreshMap() {
         // 90 = "Any"; otherwise listings with unknown age (delisted, -1) are hidden
         return sliders.maxDaysAgo >= 90 || (d.daysAgo >= 0 && d.daysAgo <= sliders.maxDaysAgo);
     });
-    var tiers = currentTiers = activeRankMode === 'quality' ? QUALITY_TIERS
+    var tiers = currentTiers = rankMode === 'quality' ? QUALITY_TIERS
         : percentileTiers(matches.map(function(d) { return d.scores[mode.score]; }));
     matches.sort(mode.sort);
     filteredListings = matches;
@@ -1342,6 +1412,7 @@ function refreshMap() {
     renderSidebarList();
     renderSelectionBar();
     if (selectedListing) showDetailCard(null, selectedListing);
+    scheduleRouting();
 }
 
 function renderMarkers(listings, tiers, scoreName) {
@@ -1353,14 +1424,14 @@ function renderMarkers(listings, tiers, scoreName) {
         var isSelected = selectedListing && selectedListing.url === d.url;
         var isBoxSelected = boxSelectedUrls.has(d.url);
         var fill = d.isDelisted ? '#d1d5db' : tierColor(d.scores[scoreName], tiers);
-        // Outline: box-selected > photo-rated > plain (the selected listing is shown by the pulsing rings)
-        var outline = isBoxSelected ? '#2563eb' : d.hasPhotoRating ? '#1e1b4b' : fill;
-        var outlineWidth = isBoxSelected ? 5 : d.hasPhotoRating ? 3 : 2;
+        // Outline: box-selected > plain (the selected listing is shown by the pulsing rings)
+        var outline = isBoxSelected ? '#2563eb' : fill;
+        var outlineWidth = isBoxSelected ? 5 : 2;
         var fillOpacity = d.isDelisted ? 0.25 : (d.isStacked ? 0.4 : 0.65);
         var dashArray = d.isStacked ? '4 4' : null;
         var marker = isStarred(d.url)
             ? starMarker(d, {
-                color: isBoxSelected || d.hasPhotoRating ? outline : '#fff',
+                color: isBoxSelected ? outline : '#fff',
                 weight: isBoxSelected ? 3 : 2,
                 fillColor: fill, fillOpacity: d.isDelisted ? 0.25 : (d.isStacked ? 0.5 : 0.95), dashArray: dashArray
             })
@@ -1400,28 +1471,6 @@ function googleMapsLinkHtml(d, labelHtml) {
 }
 function ageLabel(d) { return d.ageYears >= 99 ? 'Age unknown' : d.ageYears <= 0 ? 'New' : d.ageYears + ' yr old'; }
 
-// AI photo-rating summary for the detail card (see rental_lookup/enrichment/photo_ratings.py).
-var RATING_ICONS = [
-    ['well_lit','☀️'], ['has_big_windows','🪟'], ['trees_or_greenery_outside','🌳'], ['open_view_not_blocked','🏞️'],
-    ['light_colored_walls','⬜'], ['modular_kitchen','🍳'], ['kitchen_has_chimney','🔥'], ['has_balcony','🏠'],
-    ['balcony_usable_size','💺'], ['rooms_feel_spacious','📐'], ['cat_could_sit_at_window','🐱'], ['has_wardrobes','🗄️']
-];
-var VERDICTS = {'would visit': ['thumbs-up', 'Worth a visit'], 'maybe': ['circle-help', 'Maybe'], 'would skip': ['thumbs-down', 'Probably skip']};
-function photoRatingHtml(rating) {
-    var yes = 0, answered = 0;
-    for (var question in rating) { if (typeof rating[question] === 'boolean') { answered++; if (rating[question]) yes++; } }
-    var icons = RATING_ICONS.filter(function(r) { return rating[r[0]]; }).map(function(r) { return r[1]; }).join(' ');
-    var warnings = [];
-    if (rating.walls_in_good_condition === false) warnings.push('Wall damage');
-    if (rating.no_visible_damage === false) warnings.push('Visible damage');
-    var verdict = VERDICTS[rating.overall_impression] || VERDICTS['would skip'];
-    return '<div class="photo-rating"><div class="rating-head">' + icon(verdict[0]) + verdict[1] +
-        '<span class="muted" style="font-weight:500;margin-left:auto">' + yes + '/' + answered + ' checks</span></div>' +
-        '<div style="margin-top:6px">' + icons + '</div>' +
-        (warnings.length ? '<div class="tags">' + tagsHtml(warnings, 'warning') + '</div>' : '') +
-        (rating.one_line ? '<div class="rating-line">"' + escapeHtml(rating.one_line) + '"</div>' : '') + '</div>';
-}
-
 // Fill the detail card for listing `d` and position it near the mouse event `e`.
 // With e = null the card is only refreshed in place (photo position kept).
 function showDetailCard(e, d) {
@@ -1441,8 +1490,9 @@ function showDetailCard(e, d) {
     if (d.isPetFriendly) badges.push('<span class="tag">' + icon('paw-print') + 'Pet friendly</span>');
     byId('card-badges').innerHTML = badges.join('');
 
+    var rankMode = effectiveRankMode();
     var eyebrow = [d.isDelisted ? '' : '#' + d.rank, d.source === 'mb' ? 'MagicBricks' : 'NoBroker',
-        activeRankMode === 'quality' ? '' : 'Quality ' + (activeRankMode === 'deal' ? d.scores.dealQuality : d.scores.quality)];
+        rankMode === 'quality' ? '' : 'Quality ' + (rankMode === 'deal' ? d.scores.dealQuality : d.scores.quality)];
     byId('card-eyebrow').innerHTML = scorePillHtml(d) + '<span class="label">' + eyebrow.filter(Boolean).join(' · ') + '</span>';
     byId('card-title').textContent = d.society || 'Unnamed society';
     byId('card-location').innerHTML = googleMapsLinkHtml(d, escapeHtml((d.locality || '').substring(0, 60)));
@@ -1460,7 +1510,7 @@ function showDetailCard(e, d) {
     if (d.availableFrom) facts.push(['calendar-check', 'From ' + escapeHtml(d.availableFrom)]);
     var amenities = amenityLabels(d);
     byId('card-details').innerHTML = '<div class="facts">' + facts.map(function(f) { return '<span>' + icon(f[0]) + f[1] + '</span>'; }).join('') + '</div>' +
-        (amenities.length ? '<div class="tags">' + tagsHtml(amenities, 'positive') + '</div>' : '') +
+        (amenities.length ? '<div class="tags">' + tagsHtml(amenities, 'positive') + '</div>' : '') + commuteHtml(d) +
         '<div class="meta">' + [d.street ? escapeHtml(d.street) : '', d.source === 'nb' ? 'NoBroker transit ' + d.nbTransit + ' · lifestyle ' + d.nbLifestyle : '',
             d.propertyCode ? escapeHtml(d.propertyCode) : ''].filter(Boolean).join(' · ') + '</div>';
 
@@ -1470,8 +1520,7 @@ function showDetailCard(e, d) {
         '<button class="' + (isStarred(d.url) ? 'on' : '') + '" onclick="toggleStar(selectedListing.url)">' + icon('star') + (isStarred(d.url) ? 'Starred' : 'Star') + '</button>' +
         '<button onclick="toggleDismiss(selectedListing.url);deselectListing();">' + icon('eye-off') + 'Dismiss</button>' +
         '<button onclick="window.open(selectedListing.url,\'_blank\');">' + icon('external-link') + 'Open</button></div>' : '';
-    byId('card-extras').innerHTML = (d.hasPhotoRating && d.photoRating ? photoRatingHtml(d.photoRating) : '') +
-        (d.description ? '<div class="description">' + escapeHtml(d.description) + '</div>' : '') + actionsHtml;
+    byId('card-extras').innerHTML = (d.description ? '<div class="description">' + escapeHtml(d.description) + '</div>' : '') + actionsHtml;
 
     if (!e) return;
     var wasHidden = detailCard.style.display !== 'block';
@@ -1535,10 +1584,6 @@ function renderSidebarList() {
         var starred = isStarred(d.url);
         var tags = amenityLabels(d).slice(0, 3);
         if (d.isBrandedBuilder) tags.unshift('Branded');
-        var rating = d.photoRating;
-        var ratingTag = d.hasPhotoRating && rating ? '<span class="tag">' + (rating.overall_impression === 'would visit' ? '👍' : '🤔') +
-            (rating.well_lit ? '☀️' : '') + (rating.trees_or_greenery_outside ? '🌳' : '') +
-            (rating.modular_kitchen ? '🍳' : '') + (rating.cat_could_sit_at_window ? '🐱' : '') + '</span>' : '';
         var extraPhotos = d.coverPhoto ? d.photoCount - 1 : 0;
         var thumb = '<div class="thumb">' + (d.coverPhoto
             ? '<img src="' + escapeHtml(d.coverPhoto) + '" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=&quot;thumb-placeholder&quot;></div>\'">'
@@ -1551,8 +1596,9 @@ function renderSidebarList() {
             '<div class="name">' + escapeHtml(d.society) + '</div>' +
             '<div class="details-line">' + bhkLabel(d) + ' · ' + (FURNISHING_LABELS[d.furnishing] ? FURNISHING_LABELS[d.furnishing] + ' · ' : '') + d.sqft.toLocaleString() + ' sqft</div>' +
             (d.availableFrom ? '<div class="details-line secondary">Avail. ' + escapeHtml(d.availableFrom) + '</div>' : '') +
+            commuteLineHtml(d) +
             '<div class="tags">' + (d.source === 'mb' ? '<span class="tag">MagicBricks</span>' : '') + (d.isPetFriendly ? '<span class="tag positive">' + icon('paw-print') + 'Pets OK</span>' : '') +
-            tagsHtml(tags) + ratingTag + '</div>' +
+            tagsHtml(tags) + '</div>' +
             '</div><div class="card-corner">' + scorePillHtml(d) +
             '<button class="star-toggle' + (starred ? ' on' : '') + '" aria-label="' + (starred ? 'Unstar' : 'Star') + '">' + icon('star') + '</button></div></div>';
     }).join('');
@@ -1641,6 +1687,435 @@ function clearBoxSelection() {
     boxSelection = [];
     refreshMap();
 }
+
+// ===========================================================================
+// Areas of interest and commute
+//   Each listing gets a drive time (OSRM, cached) and a metro time (computed
+//   from the METRO_LINES station graph) to every area; the Commute tab ranks
+//   by them. Areas, drive times and the mode are kept in localStorage.
+// ===========================================================================
+var DRIVE_TRAFFIC_FACTOR = 1.6;  // OSRM's demo server assumes empty roads
+var ROAD_DETOUR = 1.4, WALK_DETOUR = 1.3;  // road / walking distance per straight-line km
+var CITY_DRIVE_KMH = 20, WALK_KMH = 4.8, MAX_WALK_KM = 1.5, AUTO_PICKUP_MIN = 4;
+var METRO_SPEED_KMH = 34, METRO_DWELL_MIN = 0.5, METRO_TRANSFER_MIN = 5, METRO_WAIT_MIN = 5, METRO_INTERCHANGE_KM = 0.4, METRO_TERMINUS_LINK_KM = 1.5;
+var METRO_STATION_CHOICES = 3;  // nearest stations tried at each end of a trip
+var COMMUTE_FULL_POINTS_MIN = 10, COMMUTE_ZERO_POINTS_MIN = 60;
+var MAX_AREAS = 8;
+var OSRM_TABLE_URL = 'https://router.project-osrm.org/table/v1/driving/';
+var OSRM_MAX_COORDINATES = 100, OSRM_REQUEST_GAP_MS = 1100, OSRM_MAX_FAILURES = 4;
+var PHOTON_URL = 'https://photon.komoot.io/';
+var BANGALORE_BBOX = '77.3,12.7,77.9,13.2';
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+    var rad = Math.PI / 180, dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+    var a = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.pow(Math.sin(dLng / 2), 2);
+    return 12742 * Math.asin(Math.sqrt(a));
+}
+function coordKey(lat, lng) { return lat.toFixed(4) + ',' + lng.toFixed(4); }  // same ~11m grid as builder.coordinate_key
+function estimateDriveMinutes(km) { return km * ROAD_DETOUR / CITY_DRIVE_KMH * 60; }
+// Getting between a point and a station: walk when it's close enough, else take an auto.
+function stationLegMinutes(km) {
+    var auto = estimateDriveMinutes(km) + AUTO_PICKUP_MIN;
+    var walkKm = km * WALK_DETOUR;
+    return walkKm <= MAX_WALK_KM ? Math.min(walkKm / WALK_KMH * 60, auto) : auto;
+}
+
+// --- Metro station graph -------------------------------------------------------
+var metroStations = [];  // {name, line, lat, lng}
+var metroMinutesBetween = [], metroTransfersBetween = [];  // all-pairs, indexed by station
+(function buildMetroGraph() {
+    var edges = [];
+    function link(a, b, minutes, transfers) { edges[a].push([b, minutes, transfers]); edges[b].push([a, minutes, transfers]); }
+    Object.keys(METRO_LINES).forEach(function(lineId) {
+        (METRO_LINES[lineId].stations || []).forEach(function(station, i) {
+            var index = metroStations.length;
+            metroStations.push({name: station.name, line: lineId, lat: station.lat, lng: station.lng});
+            edges[index] = [];
+            if (i > 0) {
+                var previous = metroStations[index - 1];
+                link(index - 1, index, haversineKm(previous.lat, previous.lng, station.lat, station.lng) / METRO_SPEED_KMH * 60 + METRO_DWELL_MIN, 0);
+            }
+        });
+    });
+    // Interchange stations have a different name on each line, so pair them up by distance.
+    metroStations.forEach(function(a, i) {
+        for (var j = i + 1; j < metroStations.length; j++) {
+            var b = metroStations[j];
+            if (a.line !== b.line && haversineKm(a.lat, a.lng, b.lat, b.lng) < METRO_INTERCHANGE_KM) link(i, j, METRO_TRANSFER_MIN, 1);
+        }
+    });
+    // OSM leaves a shared terminus off one of its lines (Yellow ends at Ragigudda, one stop short of
+    // RV Road on Green), so a line end close to another line rides on to that line's nearest station.
+    metroStations.forEach(function(a, i) {
+        var isTerminus = i === 0 || i === metroStations.length - 1 || metroStations[i - 1].line !== a.line || metroStations[i + 1].line !== a.line;
+        if (!isTerminus || edges[i].some(function(edge) { return edge[2] === 1; })) return;
+        var nearest = -1, nearestKm = METRO_TERMINUS_LINK_KM;
+        metroStations.forEach(function(b, j) {
+            var km = haversineKm(a.lat, a.lng, b.lat, b.lng);
+            if (b.line !== a.line && km < nearestKm) { nearest = j; nearestKm = km; }
+        });
+        if (nearest >= 0) link(i, nearest, nearestKm / METRO_SPEED_KMH * 60 + METRO_DWELL_MIN + METRO_TRANSFER_MIN, 1);
+    });
+    var n = metroStations.length;
+    for (var source = 0; source < n; source++) {
+        var minutes = new Array(n).fill(Infinity), transfers = new Array(n).fill(0), done = new Array(n).fill(false);
+        minutes[source] = 0;
+        for (;;) {
+            var u = -1;
+            for (var k = 0; k < n; k++) if (!done[k] && minutes[k] < Infinity && (u < 0 || minutes[k] < minutes[u])) u = k;
+            if (u < 0) break;
+            done[u] = true;
+            edges[u].forEach(function(edge) {
+                if (minutes[u] + edge[1] < minutes[edge[0]]) { minutes[edge[0]] = minutes[u] + edge[1]; transfers[edge[0]] = transfers[u] + edge[2]; }
+            });
+        }
+        metroMinutesBetween.push(minutes);
+        metroTransfersBetween.push(transfers);
+    }
+})();
+// The few stations quickest to reach from (lat, lng): [{index, minutes}].
+function nearestStations(lat, lng) {
+    return metroStations.map(function(s, index) { return {index: index, minutes: stationLegMinutes(haversineKm(lat, lng, s.lat, s.lng))}; })
+        .sort(function(a, b) { return a.minutes - b.minutes; })
+        .slice(0, METRO_STATION_CHOICES);
+}
+// Fastest metro trip between two points given their nearest stations, or null without a usable pair.
+function metroTrip(fromStations, toStations) {
+    var best = null;
+    fromStations.forEach(function(a) {
+        toStations.forEach(function(b) {
+            if (a.index === b.index || metroMinutesBetween[a.index][b.index] === Infinity) return;
+            var minutes = a.minutes + METRO_WAIT_MIN + metroMinutesBetween[a.index][b.index] + b.minutes;
+            if (!best || minutes < best.minutes) {
+                best = {minutes: minutes, fromStation: metroStations[a.index].name, toStation: metroStations[b.index].name,
+                        transfers: metroTransfersBetween[a.index][b.index]};
+            }
+        });
+    });
+    return best;
+}
+
+// --- State and persistence -------------------------------------------------------
+function loadStored(key, fallback) {
+    try { var value = JSON.parse(localStorage.getItem(key)); return value == null ? fallback : value; } catch (e) { return fallback; }
+}
+function storeValue(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+var areasOfInterest = loadStored('rental_areas_of_interest', []).filter(function(a) {
+    return a && a.id && isFinite(a.lat) && isFinite(a.lng);
+});
+var commuteMode = loadStored('rental_commute_mode', 'best');
+var driveCache = loadStored('rental_commute_cache', {});  // "lat,lng|areaId" -> [seconds, metres]; -1 = no route
+areasOfInterest.forEach(function(area) { area.stations = nearestStations(area.lat, area.lng); });
+function saveAreas() {
+    storeValue('rental_areas_of_interest', areasOfInterest.map(function(a) { return {id: a.id, name: a.name, lat: a.lat, lng: a.lng}; }));
+}
+var driveCacheSaveTimer = null;
+function saveDriveCacheSoon() {
+    clearTimeout(driveCacheSaveTimer);
+    driveCacheSaveTimer = setTimeout(function() { storeValue('rental_commute_cache', driveCache); }, 1000);
+}
+
+// --- Commute per listing -----------------------------------------------------------
+function commutePoints(minutes) {
+    if (minutes <= COMMUTE_FULL_POINTS_MIN) return 100;
+    if (minutes >= COMMUTE_ZERO_POINTS_MIN) return 0;
+    return 100 * (COMMUTE_ZERO_POINTS_MIN - minutes) / (COMMUTE_ZERO_POINTS_MIN - COMMUTE_FULL_POINTS_MIN);
+}
+function updateCommute(d) {
+    if (!areasOfInterest.length) { d.commute = null; d.scores.commute = 0; return; }
+    if (!d.nearStations) d.nearStations = nearestStations(d.lat, d.lng);
+    var key = coordKey(d.lat, d.lng), totalMinutes = 0, worstMinutes = 0;
+    var perArea = areasOfInterest.map(function(area) {
+        var km = haversineKm(d.lat, d.lng, area.lat, area.lng);
+        var route = driveCache[key + '|' + area.id], routed = !!route && route[0] >= 0;
+        var drive = routed ? route[0] / 60 * DRIVE_TRAFFIC_FACTOR : estimateDriveMinutes(km);
+        var metro = metroTrip(d.nearStations, area.stations);
+        var bestMode = commuteMode === 'drive' || !metro ? 'drive'
+            : commuteMode === 'metro' ? 'metro' : metro.minutes < drive ? 'metro' : 'drive';
+        var best = bestMode === 'metro' ? metro.minutes : drive;
+        totalMinutes += best;
+        worstMinutes = Math.max(worstMinutes, best);
+        return {area: area, drive: drive, driveKm: routed ? route[1] / 1000 : km * ROAD_DETOUR, estimated: !routed,
+                metro: metro, metroUseful: !!metro && metro.minutes < drive, best: best, bestMode: bestMode};
+    });
+    // AND over the areas: a listing is only as good as its longest commute, so being next to one
+    // area can't make up for being far from another.
+    var score = Math.round(commutePoints(worstMinutes));
+    d.commute = {perArea: perArea, score: score, averageMinutes: totalMinutes / perArea.length, worstMinutes: worstMinutes};
+    d.scores.commute = score;
+}
+function refreshCommuteScores() { LISTINGS.forEach(updateCommute); }
+
+// After new drive times arrive: re-rank at most every few seconds so routing doesn't make the map stutter.
+var lastRoutingRefresh = 0, routingRefreshTimer = null;
+function refreshAfterRouting() {
+    refreshCommuteScores();
+    clearTimeout(routingRefreshTimer);
+    var wait = 3000 - (Date.now() - lastRoutingRefresh);
+    if (activeRankMode === 'commute' && wait > 0) { routingRefreshTimer = setTimeout(refreshAfterRouting, wait); return; }
+    lastRoutingRefresh = Date.now();
+    if (activeRankMode === 'commute') refreshMap();
+    else if (selectedListing) showDetailCard(null, selectedListing);
+}
+
+// --- Drive times from OSRM ------------------------------------------------------------
+// One table request routes up to 100 - areas unique listing coordinates to every area,
+// spaced about a second apart (OSRM demo server policy). Filtered listings in view go first.
+var routingTimer = null, routingInFlight = false, lastRoutingRequest = 0, routingFailures = 0;
+function routingWork() {
+    var bounds = map.getBounds(), inView = [], elsewhere = [], seen = {}, total = 0;
+    filteredListings.forEach(function(d) {
+        var key = coordKey(d.lat, d.lng);
+        if (seen[key]) return;
+        seen[key] = true;
+        total++;
+        if (areasOfInterest.every(function(a) { return driveCache[key + '|' + a.id]; })) return;
+        (bounds.contains([d.lat, d.lng]) ? inView : elsewhere).push({key: key, lat: d.lat, lng: d.lng});
+    });
+    return {pending: inView.concat(elsewhere), total: total};
+}
+function scheduleRouting() {
+    updateAreasStatus();
+    if (!areasOfInterest.length || routingTimer || routingInFlight || routingFailures >= OSRM_MAX_FAILURES) return;
+    var gap = OSRM_REQUEST_GAP_MS * Math.pow(2, routingFailures);
+    routingTimer = setTimeout(runRoutingBatch, Math.max(0, gap - (Date.now() - lastRoutingRequest)));
+}
+function runRoutingBatch() {
+    routingTimer = null;
+    var pending = routingWork().pending;
+    if (!areasOfInterest.length || !pending.length) return updateAreasStatus();
+    var areas = areasOfInterest.slice(), batch = pending.slice(0, OSRM_MAX_COORDINATES - areas.length);
+    var points = batch.concat(areas).map(function(p) { return p.lng.toFixed(5) + ',' + p.lat.toFixed(5); }).join(';');
+    var sources = batch.map(function(_, i) { return i; }).join(';');
+    var destinations = areas.map(function(_, j) { return batch.length + j; }).join(';');
+    routingInFlight = true;
+    lastRoutingRequest = Date.now();
+    fetch(OSRM_TABLE_URL + points + '?sources=' + sources + '&destinations=' + destinations + '&annotations=duration,distance')
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(body) {
+            if (body.code !== 'Ok') throw new Error(body.code);
+            batch.forEach(function(p, i) {
+                areas.forEach(function(area, j) {
+                    if (areasOfInterest.indexOf(area) < 0) return;  // removed while the request was in flight
+                    var seconds = body.durations[i][j], metres = body.distances[i][j];
+                    driveCache[p.key + '|' + area.id] = seconds == null ? [-1, -1] : [Math.round(seconds), Math.round(metres)];
+                });
+            });
+            routingFailures = 0;
+            saveDriveCacheSoon();
+            refreshAfterRouting();
+        })
+        .catch(function() { routingFailures++; })
+        .then(function() { routingInFlight = false; scheduleRouting(); });
+}
+function updateAreasStatus() {
+    var status = byId('areas-status');
+    if (!areasOfInterest.length) {
+        status.textContent = 'Search a place, paste a Google Maps link, or right-click the map. Listings are then ranked by drive and metro time.';
+        return;
+    }
+    var work = routingWork(), routed = work.total - work.pending.length;
+    if (!work.pending.length) status.textContent = 'Drive times for all ' + work.total.toLocaleString() + ' matching locations';
+    else if (routingFailures >= OSRM_MAX_FAILURES) status.textContent = 'Routing server unavailable · using estimated drive times (~)';
+    else status.textContent = 'Routing ' + routed.toLocaleString() + ' / ' + work.total.toLocaleString() + ' locations… (~ = estimate)';
+}
+
+// --- Adding, removing and showing areas -------------------------------------------------
+var areaLayer = L.layerGroup().addTo(map);
+map.attributionControl.addAttribution('Routing <a href="https://project-osrm.org">OSRM</a> · Search <a href="https://photon.komoot.io">Photon</a>');
+function onAreasChanged(showCommuteTab) {
+    saveAreas();
+    renderAreas();
+    routingFailures = 0;
+    refreshCommuteScores();
+    if (showCommuteTab && activeRankMode !== 'commute') setRankMode('commute');
+    else refreshMap();
+}
+function addArea(name, lat, lng) {
+    if (areasOfInterest.length >= MAX_AREAS) { toast('Up to ' + MAX_AREAS + ' areas of interest'); return null; }
+    var area = {id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name, lat: lat, lng: lng,
+                stations: nearestStations(lat, lng)};
+    areasOfInterest.push(area);
+    toast('Added ' + name);
+    onAreasChanged(true);
+    return area;
+}
+function removeArea(id) {
+    areasOfInterest = areasOfInterest.filter(function(a) { return a.id !== id; });
+    var suffix = '|' + id;
+    Object.keys(driveCache).forEach(function(key) { if (key.slice(-suffix.length) === suffix) delete driveCache[key]; });
+    saveDriveCacheSoon();
+    map.closePopup();
+    onAreasChanged();
+}
+function renameArea(id, name) {
+    areasOfInterest.forEach(function(a) { if (a.id === id) a.name = name; });
+    saveAreas();
+    renderAreas();
+    if (selectedListing) showDetailCard(null, selectedListing);
+}
+function focusArea(id) {
+    var area = areasOfInterest.find(function(a) { return a.id === id; });
+    if (area) map.flyTo([area.lat, area.lng], Math.max(map.getZoom(), 14), {duration: 0.8});
+}
+function renderAreas() {
+    areaLayer.clearLayers();
+    areasOfInterest.forEach(function(area) {
+        var popup = L.DomUtil.create('div', 'area-popup');
+        popup.innerHTML = '<b>' + escapeHtml(area.name) + '</b><button type="button">' + icon('x') + 'Remove area</button>';
+        popup.querySelector('button').onclick = function() { removeArea(area.id); };
+        L.marker([area.lat, area.lng], {
+            icon: L.divIcon({className: 'area-marker', html: '<span>' + icon('flag') + '</span>', iconSize: [26, 26]}),
+            zIndexOffset: 2000, keyboard: false
+        }).bindTooltip(escapeHtml(area.name), {direction: 'top', offset: [0, -12]}).bindPopup(popup).addTo(areaLayer);
+    });
+    byId('area-list').innerHTML = areasOfInterest.map(function(area) {
+        return '<span class="area-chip"><button type="button" class="area-name" title="Show on map" onclick="focusArea(\'' + area.id + '\')">' +
+            icon('flag') + escapeHtml(area.name) + '</button><button type="button" aria-label="Remove ' + escapeHtml(area.name) + '" onclick="removeArea(\'' + area.id + '\')">' + icon('x') + '</button></span>';
+    }).join('');
+    document.querySelectorAll('[data-commute-mode]').forEach(function(button) {
+        button.classList.toggle('on', button.dataset.commuteMode === commuteMode);
+    });
+}
+function setCommuteMode(mode) {
+    commuteMode = mode;
+    storeValue('rental_commute_mode', mode);
+    renderAreas();
+    refreshCommuteScores();
+    refreshMap();
+}
+
+// Coordinates from a Google Maps URL (place pin, query or viewport) or a bare "lat, lng".
+function parseLatLng(text) {
+    try { text = decodeURIComponent(text); } catch (e) {}
+    var patterns = [/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/, /[?&](?:q|query|ll|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/,
+                    /@(-?\d+\.\d+),(-?\d+\.\d+)/, /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/];
+    for (var i = 0; i < patterns.length; i++) {
+        var m = text.match(patterns[i]);
+        if (m && Math.abs(+m[1]) <= 90 && Math.abs(+m[2]) <= 180) return {lat: +m[1], lng: +m[2]};
+    }
+    return null;
+}
+function placeNameFromMapsUrl(text) {
+    var m = text.match(/\/place\/([^\/@?]+)/);
+    if (!m) return '';
+    try { return decodeURIComponent(m[1].replace(/\+/g, ' ')).split(',')[0].trim(); } catch (e) { return ''; }
+}
+function isShortMapsLink(text) { return /maps\.app\.goo\.gl|goo\.gl\/maps/.test(text); }
+function photonPlace(feature) {
+    var p = feature.properties || {}, c = feature.geometry.coordinates;
+    var name = p.name || [p.housenumber, p.street].filter(Boolean).join(' ') || p.district || p.city || 'Pinned location';
+    var detail = [p.name ? p.street : '', p.locality, p.district, p.city].filter(function(part, i, all) {
+        return part && part !== name && all.indexOf(part) === i;
+    }).join(', ');
+    return {name: name, detail: detail, lat: c[1], lng: c[0]};
+}
+
+var areaSuggestions = [], areaSuggestionIndex = 0, areaSearchDebounce = null, areaSearchSequence = 0;
+function showAreaSuggestions(places) {
+    areaSuggestions = places;
+    areaSuggestionIndex = 0;
+    var box = byId('area-suggestions');
+    box.hidden = places.length === 0;
+    box.innerHTML = places.map(function(place, i) {
+        return '<button type="button" class="area-suggestion' + (i === 0 ? ' on' : '') + '" role="option" data-index="' + i + '">' +
+            escapeHtml(place.name) + (place.detail ? '<small>' + escapeHtml(place.detail) + '</small>' : '') + '</button>';
+    }).join('');
+}
+function pickAreaSuggestion(index) {
+    var place = areaSuggestions[index];
+    if (!place) return;
+    byId('area-input').value = '';
+    showAreaSuggestions([]);
+    addArea(place.name, place.lat, place.lng);
+}
+function onAreaInput() {
+    clearTimeout(areaSearchDebounce);
+    areaSearchSequence++;
+    var text = byId('area-input').value.trim(), pasted = parseLatLng(text);
+    if (pasted) {
+        var name = placeNameFromMapsUrl(text) || 'Pinned location';
+        return showAreaSuggestions([{name: name, detail: pasted.lat.toFixed(5) + ', ' + pasted.lng.toFixed(5), lat: pasted.lat, lng: pasted.lng}]);
+    }
+    if (text.length < 3 || isShortMapsLink(text) || /^https?:/.test(text)) return showAreaSuggestions([]);
+    var sequence = areaSearchSequence;
+    areaSearchDebounce = setTimeout(function() {
+        fetch(PHOTON_URL + 'api/?q=' + encodeURIComponent(text) + '&lat=12.97&lon=77.60&bbox=' + BANGALORE_BBOX + '&limit=5')
+            .then(function(r) { return r.json(); })
+            .then(function(body) {
+                if (sequence === areaSearchSequence) showAreaSuggestions((body.features || []).map(photonPlace));
+            })
+            .catch(function() { if (sequence === areaSearchSequence) toast('Place search is unavailable right now'); });
+    }, 300);
+}
+function onAreaKeydown(e) {
+    var text = e.target.value.trim();
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        if (areaSuggestions.length) showAreaSuggestions([]); else { e.target.value = ''; e.target.blur(); }
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (!areaSuggestions.length) return;
+        e.preventDefault();
+        areaSuggestionIndex = (areaSuggestionIndex + (e.key === 'ArrowDown' ? 1 : -1) + areaSuggestions.length) % areaSuggestions.length;
+        byId('area-suggestions').querySelectorAll('.area-suggestion').forEach(function(el, i) { el.classList.toggle('on', i === areaSuggestionIndex); });
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (areaSuggestions.length) pickAreaSuggestion(areaSuggestionIndex);
+        else if (isShortMapsLink(text)) toast('Short links can\'t be read here: open it and paste the full Google Maps URL');
+        else if (/^https?:/.test(text)) toast('No coordinates in that link: copy the URL from the address bar after the map loads');
+    }
+}
+byId('area-suggestions').addEventListener('mousedown', function(e) {
+    var option = e.target.closest('.area-suggestion');
+    if (option) { e.preventDefault(); pickAreaSuggestion(+option.dataset.index); }
+});
+byId('area-input').addEventListener('blur', function() { showAreaSuggestions([]); });
+
+// Right-click anywhere on the map to add it as an area; the name is filled in by reverse geocoding.
+map.on('contextmenu', function(e) {
+    var lat = e.latlng.lat, lng = e.latlng.lng;
+    var popup = L.DomUtil.create('div', 'area-popup');
+    popup.innerHTML = '<button type="button">' + icon('map-pin-plus') + 'Add as area of interest</button>';
+    popup.querySelector('button').onclick = function() {
+        map.closePopup();
+        var area = addArea('Pinned location', lat, lng);
+        if (!area) return;
+        fetch(PHOTON_URL + 'reverse?lat=' + lat + '&lon=' + lng)
+            .then(function(r) { return r.json(); })
+            .then(function(body) { if (body.features && body.features.length) renameArea(area.id, photonPlace(body.features[0]).name); })
+            .catch(function() {});
+    };
+    L.popup({closeButton: false}).setLatLng(e.latlng).setContent(popup).openOn(map);
+});
+
+// --- Commute in the detail card and list ----------------------------------------------
+function formatMinutes(minutes) { return Math.round(minutes) + ' min'; }
+function commuteHtml(d) {
+    if (!d.commute) return '';
+    var compare = commuteMode === 'best';
+    return '<div class="commute">' + d.commute.perArea.map(function(c) {
+        var drive = 'Drive ' + (c.estimated ? '~' : '') + formatMinutes(c.drive) + ' (' + c.driveKm.toFixed(1) + ' km)';
+        var metro = c.metro
+            ? 'Metro ' + formatMinutes(c.metro.minutes) + ' (' + escapeHtml(c.metro.fromStation) + ' → ' + escapeHtml(c.metro.toStation) +
+              ', ' + c.metro.transfers + (c.metro.transfers === 1 ? ' change' : ' changes') + ')'
+            : 'No metro route';
+        if (compare || commuteMode === 'drive') drive = c.bestMode === 'drive' ? '<b>' + drive + '</b>' : drive;
+        if (compare || commuteMode === 'metro') metro = c.bestMode === 'metro' ? '<b>' + metro + '</b>' : metro;
+        return '<div><div class="area-label">' + icon('flag') + escapeHtml(c.area.name) + '</div>' + drive + ' · ' + metro + '</div>';
+    }).join('') + '</div>';
+}
+function commuteLineHtml(d) {
+    if (!d.commute || effectiveRankMode() !== 'commute') return '';
+    var perArea = d.commute.perArea, modes = perArea.map(function(c) { return c.bestMode; });
+    var modeIcon = modes.every(function(m) { return m === 'metro'; }) ? 'train-front' : modes.every(function(m) { return m === 'drive'; }) ? 'car' : 'route';
+    var estimated = perArea.some(function(c) { return c.bestMode === 'drive' && c.estimated; }) ? '~' : '';
+    var text = perArea.length === 1 ? estimated + formatMinutes(perArea[0].best) + ' to ' + escapeHtml(perArea[0].area.name)
+        : 'All ' + perArea.length + ' within ' + estimated + formatMinutes(d.commute.worstMinutes) + ' · avg ' + formatMinutes(d.commute.averageMinutes);
+    return '<div class="details-line secondary" style="display:flex;align-items:center;gap:4px">' + icon(modeIcon).replace('class="icon"', 'class="icon" style="width:12px;height:12px"') + text + '</div>';
+}
+
+renderAreas();
+refreshCommuteScores();
 
 // ===========================================================================
 // Boot

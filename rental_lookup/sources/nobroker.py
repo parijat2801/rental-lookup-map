@@ -110,11 +110,9 @@ def has_real_photo(raw: dict) -> bool:
     return bool(image_url) and "static/img" not in image_url
 
 
-def follow_up_priority(raw: dict, reward_many_photos: bool = True) -> int:
+def follow_up_priority(raw: dict) -> int:
     """Cheap desirability score used to choose which listings get the expensive
-    follow-ups (detail-page fetch, AI photo rating). Higher = sooner.
-
-    `reward_many_photos` adds +5 for 10+ photos (instead of +3 for 5+).
+    detail-page fetch. Higher = sooner.
     """
     amenities = raw.get("amenitiesMap") or {}
     points = 0
@@ -134,10 +132,7 @@ def follow_up_priority(raw: dict, reward_many_photos: bool = True) -> int:
     points += 8 if lifestyle_score >= 8 else 4 if lifestyle_score >= 6 else 0
     if raw.get("negotiable"):
         points += 3
-    photo_count = len(raw.get("photos") or [])
-    if reward_many_photos and photo_count >= 10:
-        points += 5
-    elif photo_count >= 5:
+    if len(raw.get("photos") or []) >= 5:
         points += 3
     if mentions_branded_builder(f"{raw.get('society') or ''} {raw.get('propertyTitle') or ''}"):
         points += 8

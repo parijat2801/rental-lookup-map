@@ -21,7 +21,8 @@ publishes it to GitHub Pages.
 - One marker per listing, sized by area and coloured by the active ranking.
 - Four rankings: **Quality** (light, age, amenities, platform scores, ...),
   **Value** (quality per rupee), **Villa Vibe** (spacious, outdoorsy, central) and
-  **Best Deals** (amenities and location relative to cost).
+  **Best Deals** (amenities and location relative to cost), plus a fifth,
+  **Commute**, driven by your [areas of interest](#areas-of-interest).
 - Sliders for total cost (rent + maintenance), area, photo count, deposit
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
   balcony, pool, pet-friendly, branded builder, source and more.
@@ -93,7 +94,6 @@ Each step can also be run on its own, from the repository root:
 | Fetch from every source | `rental-map-fetch all [--cookie COOKIE]` |
 | Rank NoBroker listings into `output/results.csv` | `rental-map-rank [--cookie COOKIE]` |
 | Fetch detail pages for the top N NoBroker listings | `python -m rental_lookup.enrichment.listing_details [N]` |
-| Rate listing photos with a vision model | `python -m rental_lookup.enrichment.photo_ratings [N]` |
 | Build `output/map.html` from saved data | `rental-map-build` |
 | Serve the map with star auto-save | `rental-map-serve [PORT]` |
 | Serve, watch and rebuild on changes | `rental-map-dev [PORT]` |
@@ -115,7 +115,6 @@ Notes:
 | Variable | Used by | Purpose |
 | --- | --- | --- |
 | `CARTO_BASEMAPS_KEY` | map builder | CARTO light basemap. Without it the map uses Esri's keyless light-grey tiles. Can also be set in a local `.env` (see `.env.example`). |
-| `OPENROUTER_API_KEY` | photo ratings | [OpenRouter](https://openrouter.ai) key for the vision model. Environment variable only. |
 
 Search areas, budgets and scoring weights are constants at the top of the
 relevant modules (`sources/nobroker.py`, `scoring.py`, `location.py`) and in the
@@ -151,7 +150,7 @@ To use it on your fork:
 ```
 rental_lookup/
   sources/          scrapers: nobroker, magicbricks, facebook (experimental)
-  enrichment/       slow per-listing extras: listing_details, photo_ratings
+  enrichment/       slow per-listing extras: listing_details
   webmap/           builder (data -> output/map.html), template.html, server, dev watcher
   models.py         normalised Listing and related dataclasses
   location.py       OpenStreetMap parks / lakes / metro and distance lookups
@@ -178,6 +177,33 @@ the most recent action for each URL wins. The map merges three copies on load:
 the stars embedded at build time, the browser's `localStorage`, and a `stars.json`
 published next to the page. The "Saved state" panel can back up and restore them
 as a file.
+
+## Areas of interest
+
+On the **Commute** tab, add the places you want to get to easily (office, gym,
+friends): search for a place, paste a full Google Maps URL or `lat, lng`, or
+right-click anywhere on the map. Short `maps.app.goo.gl` links can't be read from
+the page; open them and paste the full URL instead. Each listing then gets two
+commute times per area:
+
+- **Drive**: road time from the public [OSRM](https://project-osrm.org) server,
+  multiplied by `DRIVE_TRAFFIC_FACTOR` (1.6) because OSRM assumes empty roads.
+  The page routes about one batch of 100 locations per second, listings in view
+  first, and caches the results in `localStorage`. Until a listing is routed, a
+  straight-line estimate is shown with a leading `~`.
+- **Metro**: computed in the page from the Namma Metro stations in
+  `data/metro_lines.json`: walk (up to 1.5 km) or take an auto to one of the
+  three nearest stations, wait, ride (including changes between lines), then walk
+  or take an auto to the area. Lines that open after the last
+  `python scripts/fetch_metro_lines.py` run aren't counted.
+
+The **Best / Drive / Metro** toggle picks which time counts. Areas combine with
+AND: a listing has to be easy to reach from every area, so its commute score comes
+from its longest commute (100 at 10 minutes or less, falling to 0 at 60 minutes).
+Ties go to the shorter average commute, then the lower cost. Areas, the toggle and drive times are kept per browser.
+All speeds and penalties are constants at the top of the "Areas of interest and
+commute" section in `rental_lookup/webmap/template.html`. `COMMUTE_BLEND_WEIGHT`
+(currently 0) is where commute can later be blended into the other rankings.
 
 ## Development
 
