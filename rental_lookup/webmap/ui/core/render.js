@@ -44,8 +44,10 @@ function passesFilters(d, sliders) {
     if (filterChips.poolOnly && !d.hasPool) return false;
     if (filterChips.brandedBuilderOnly && !d.isBrandedBuilder) return false;
     if (filterChips.excludeFakeLocations && d.isFakeLocation) return false;
-    if (filterChips.nobrokerOnly && d.source !== 'nb') return false;
-    if (filterChips.magicbricksOnly && d.source !== 'mb') return false;
+    // Source chips are an OR-set: none selected = show all
+    if (filterChips.sourceNoBroker || filterChips.sourceMagicBricks) {
+        if (!((filterChips.sourceNoBroker && d.source === 'nb') || (filterChips.sourceMagicBricks && d.source === 'mb'))) return false;
+    }
     if (filterChips.penthouseOnly && (d.totalFloors < 4 || d.floor !== d.totalFloors)) return false;  // top floor of 4+
     if (filterChips.newTodayOnly && d.daysAgo !== 0) return false;
     if (filterChips.starredOnly && !isStarred(d.url)) return false;

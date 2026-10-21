@@ -2,7 +2,7 @@
 // Filter chips, sliders, the filters sheet and active-filter counts
 // ===========================================================================
 // One entry per chip (its data-filter attribute); true = filter active.
-var filterChips = {bhk1:true,bhk2:true,bhk3:false,furnishedFull:true,furnishedSemi:true,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:false,requireBalcony:false,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
+var filterChips = {bhk1:true,bhk2:true,bhk3:false,furnishedFull:true,furnishedSemi:true,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:false,requireBalcony:false,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,sourceNoBroker:false,sourceMagicBricks:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
 var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
 var SLIDER_IDS = ['filter-cost-min','filter-cost-max','filter-sqft','filter-photos','filter-deposit','filter-score','filter-days'];
 // Chips shown outside the sheet; they don't count towards the "Filters" badge.
