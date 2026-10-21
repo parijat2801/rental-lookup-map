@@ -84,11 +84,15 @@ body.sidebar-collapsed .sidebar-open-control{display:block}
 .popover[hidden]{display:none}
 .popover .menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;text-align:left}
 .popover .menu-item:hover{background:var(--hover)}
+.popover .menu-item:disabled{opacity:.5;cursor:default;background:none}
 .overlay{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(9,9,11,.45);backdrop-filter:blur(2px)}
 .overlay[hidden]{display:none}
 .dialog{width:100%;max-width:600px;background:var(--bg);border-radius:20px;box-shadow:var(--shadow-lg);padding:22px 28px 28px}
 .dialog-header{display:flex;align-items:center;justify-content:space-between;margin:0 -8px 20px 0}
 .dialog-header h2{font-size:var(--fs-lg);font-weight:600}
+.dialog.compact{max-width:420px}
+.dialog-body{color:var(--muted);line-height:1.5}
+.dialog-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:24px}
 .shortcut-columns{display:grid;grid-template-columns:1fr 1fr;gap:28px 48px}
 .shortcut-columns h3{margin-bottom:6px}
 .shortcut-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 0;color:var(--muted)}
@@ -302,8 +306,9 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
     <div class="header-actions">
       <button class="icon-button sidebar-collapse-button" title="Collapse sidebar" aria-label="Collapse sidebar" onclick="toggleSidebar(true)"><span data-icon="panel-left-close"></span></button>
       <button class="icon-button" title="Keyboard shortcuts" aria-label="Keyboard shortcuts" onclick="toggleShortcuts(true)"><span data-icon="keyboard"></span></button>
-      <button class="icon-button" title="Saved stars" aria-label="Saved stars" onclick="toggleMenu('saved-popover', event)"><span data-icon="ellipsis"></span></button>
+      <button class="icon-button" title="More" aria-label="More" onclick="toggleMenu('saved-popover', event)"><span data-icon="ellipsis"></span></button>
       <div class="popover" id="saved-popover" hidden>
+        <button class="menu-item" id="resync-button" onclick="toggleResyncConfirm(true)"><span data-icon="refresh-cw"></span><span id="resync-label">Resync listings</span></button>
         <button class="menu-item" onclick="copyStarredToClipboard()"><span data-icon="copy"></span>Copy starred listings</button>
         <button class="menu-item" onclick="downloadStarsBackup()"><span data-icon="download"></span>Download backup</button>
         <button class="menu-item" onclick="restoreStarsBackup()"><span data-icon="upload"></span>Restore from backup</button>
@@ -314,7 +319,6 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
   <div class="rank-tabs" role="tablist" aria-label="Rank by">
     <button class="rank-tab on" id="rank-quality" onclick="setRankMode('quality')" title="General desirability"><span data-icon="sparkles"></span>Quality</button>
     <button class="rank-tab" id="rank-value" onclick="setRankMode('value')" title="Quality per rupee"><span data-icon="indian-rupee"></span>Value</button>
-    <button class="rank-tab" id="rank-vibe" onclick="setRankMode('vibe')" title="Spacious, outdoorsy, central homes"><span data-icon="trees"></span>Vibe</button>
     <button class="rank-tab" id="rank-deal" onclick="setRankMode('deal')" title="Amenities and location for the cost"><span data-icon="badge-percent"></span>Deals</button>
     <button class="rank-tab" id="rank-commute" onclick="setRankMode('commute')" title="Easy commute to your areas of interest"><span data-icon="route"></span>Commute</button>
   </div>
@@ -442,16 +446,12 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
       </details>
 
       <details class="filter-section">
-        <summary>Source &amp; presets<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
+        <summary>Source<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
         <div class="section-body">
           <div class="chip-row">
             <button class="chip" data-filter="nobrokerOnly" onclick="toggleChip(this)">NoBroker only</button>
             <button class="chip" data-filter="magicbricksOnly" onclick="toggleChip(this)">MagicBricks only</button>
           </div>
-          <div class="chip-row">
-            <button class="chip" data-filter="villaVibeOnly" onclick="toggleChip(this)"><span data-icon="house"></span>Villa vibe preset</button>
-          </div>
-          <p class="section-hint">Central houses, villas and spacious apartments between ₹40K and ₹75K.</p>
         </div>
       </details>
 
@@ -499,6 +499,16 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <div class="shortcut-row"><span>Undo</span><span class="keys"><kbd>Ctrl</kbd><kbd>Z</kbd></span></div>
         <div class="shortcut-row"><span>Show shortcuts</span><span class="keys"><kbd>?</kbd></span></div>
       </section>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="resync-overlay" hidden onclick="if (event.target === this) toggleResyncConfirm(false)">
+  <div class="dialog compact" role="alertdialog" aria-modal="true" aria-labelledby="resync-title" aria-describedby="resync-description">
+    <div class="dialog-header"><h2 id="resync-title">Resync listings?</h2><button class="icon-button" aria-label="Close" onclick="toggleResyncConfirm(false)"><span data-icon="x"></span></button></div>
+    <p class="dialog-body" id="resync-description">This fetches fresh listings from NoBroker and MagicBricks and rebuilds the map. It takes a few minutes, and the page reloads when it finishes. Your stars and dismissals are kept.</p>
+    <div class="dialog-actions">
+      <button class="text-button" onclick="toggleResyncConfirm(false)">Cancel</button>
+      <button class="primary-button" id="resync-confirm-button" onclick="toggleResyncConfirm(false); startResync()">Resync</button>
     </div>
   </div>
 </div>
@@ -593,8 +603,6 @@ function toast(message) {
 
 // Locality keyword lists (substring match on locality + society).
 var CENTRAL_AREAS = ['indiranagar','koramangala','hsr','btm','jayanagar','jp nagar','malleshwaram','domlur','frazer','ulsoor','halasuru','richmond','basavanagudi','wilson','rajajinagar','banashankari'];
-var CENTRAL_AREAS_EXTENDED = CENTRAL_AREAS.concat(['sadashiv','cox town','benson','langford','cunningham','vasanth','shivaji','lalbagh','shanti nagar']);
-var VILLA_VIBE_AREAS = CENTRAL_AREAS_EXTENDED.concat(['adugodi','hombegowda']);
 var GOOD_FACING = ['E','SE','S','NE'];
 var CAR_PARKING_TYPES = ['FOUR_WHEELER','BOTH'];
 var RELIABLE_WATER = ['CORPORATION','BOREWELL_AND_CORPORATION','CORP_BORE'];
@@ -943,21 +951,6 @@ function dealQualityScore(d) {
     if (d.deposit > 0 && d.rent > 0 && d.deposit / d.rent <= 3) q += 5;
     return q;
 }
-// Villa vibe: spacious, outdoorsy, central houses / villas / duplexes.
-function villaVibeScore(d) {
-    var v = 0;
-    var society = (d.society || '').toLowerCase();
-    // Space is king (max 30)
-    if (d.sqft >= 2000) v += 30; else if (d.sqft >= 1500) v += 25; else if (d.sqft >= 1200) v += 20;
-    else if (d.sqft >= 1000) v += 15; else v += 5;
-    // House/villa/duplex bonus (max 20)
-    if (d.buildingType === 'IH') v += 20; else if (/villa|duplex|row house|townhouse|bungalow/.test(society)) v += 15;
-    // Balconies / outdoor space (max 10)
-    if (d.balconies >= 3) v += 10; else if (d.balconies >= 2) v += 7; else if (d.balconies >= 1) v += 4;
-    // Central location (max 10)
-    if (mentionsAnyArea(d, CENTRAL_AREAS_EXTENDED)) v += 10;
-    return v;
-}
 function computeScores(d) {
     try {
         var quality = qualityScore(d), dealQuality = dealQualityScore(d);
@@ -966,11 +959,10 @@ function computeScores(d) {
             value: d.totalCost > 0 ? Math.round(quality / d.totalCost * 100000) : 0,
             dealQuality: dealQuality,
             deal: d.totalCost > 0 ? Math.round(dealQuality * dealQuality / d.totalCost * 1000) : 0,
-            vibe: villaVibeScore(d),
             commute: 0  // depends on the areas of interest; see refreshCommuteScores()
         };
     } catch (e) {
-        d.scores = {quality: 0, value: 0, dealQuality: 0, deal: 0, vibe: 0, commute: 0};
+        d.scores = {quality: 0, value: 0, dealQuality: 0, deal: 0, commute: 0};
     }
 }
 LISTINGS.forEach(computeScores);
@@ -979,7 +971,6 @@ LISTINGS.forEach(computeScores);
 var RANK_MODES = {
     quality: {score: 'quality', label: 'score', sortedBy: 'quality', sort: function(a, b) { return b.scores.quality - a.scores.quality || a.totalCost - b.totalCost; }},
     value: {score: 'value', label: 'value', sortedBy: 'value for money', sort: function(a, b) { return b.scores.value - a.scores.value || b.scores.quality - a.scores.quality; }},
-    vibe: {score: 'vibe', label: 'vibe score', sortedBy: 'villa vibe', sort: function(a, b) { return b.scores.vibe - a.scores.vibe || b.sqft - a.sqft; }},
     deal: {score: 'deal', label: 'deal score', sortedBy: 'best deal', sort: function(a, b) { return b.scores.deal - a.scores.deal || b.scores.dealQuality - a.scores.dealQuality; }},
     commute: {score: 'commute', label: 'commute score', sortedBy: 'commute', sort: function(a, b) {
         return b.scores.commute - a.scores.commute || a.commute.worstMinutes - b.commute.worstMinutes ||
@@ -1038,7 +1029,7 @@ legend.addTo(map);
 // Filter chips, sliders, the filters sheet and active-filter counts
 // ===========================================================================
 // One entry per chip (its data-filter attribute); true = filter active.
-var filterChips = {bhk1:true,bhk2:true,bhk3:false,furnishedFull:true,furnishedSemi:true,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:false,requireBalcony:false,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,villaVibeOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
+var filterChips = {bhk1:true,bhk2:true,bhk3:false,furnishedFull:true,furnishedSemi:true,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:false,requireBalcony:false,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
 var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
 var SLIDER_IDS = ['filter-cost-min','filter-cost-max','filter-sqft','filter-photos','filter-deposit','filter-score','filter-days'];
 // Chips shown outside the sheet; they don't count towards the "Filters" badge.
@@ -1211,24 +1202,62 @@ function toggleMenu(id, e) {
         if (!p.hidden) animateIn(p, {y: -4, scale: 0.97, transformOrigin: 'top right'}, 0.16);
     });
 }
-var shortcutsOpen = false;
-function toggleShortcuts(show) {
-    var overlay = byId('shortcuts-overlay');
-    shortcutsOpen = show;
+var openOverlay = null;
+function setOverlayOpen(overlay, show) {
+    openOverlay = show ? overlay : null;
     if (show) {
         document.querySelectorAll('.popover').forEach(function(p) { p.hidden = true; });
         overlay.hidden = false;
         animateIn(overlay, {}, 0.18);
         if (MOTION) gsap.fromTo(overlay.firstElementChild, {y: 12, scale: 0.96}, {y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.6)'});
     } else if (MOTION) {
-        gsap.to(overlay, {autoAlpha: 0, duration: 0.15, overwrite: true, onComplete: function() { if (!shortcutsOpen) overlay.hidden = true; }});
+        gsap.to(overlay, {autoAlpha: 0, duration: 0.15, overwrite: true, onComplete: function() { if (openOverlay !== overlay) overlay.hidden = true; }});
     } else {
         overlay.hidden = true;
     }
 }
+function toggleShortcuts(show) { setOverlayOpen(byId('shortcuts-overlay'), show); }
+function toggleResyncConfirm(show) {
+    setOverlayOpen(byId('resync-overlay'), show);
+    if (show) byId('resync-confirm-button').focus();
+}
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.popover')) document.querySelectorAll('.popover').forEach(function(p) { p.hidden = true; });
 });
+// Resync: webmap/server.py re-runs scripts/refresh_map.sh, then the page reloads
+// with the rebuilt map. Polling resumes after a reload mid-sync.
+var resyncPollTimer = null;
+function setResyncRunning(running) {
+    byId('resync-button').disabled = running;
+    byId('resync-label').textContent = running ? 'Resyncing listings…' : 'Resync listings';
+}
+function pollResync() {
+    fetch('/resync_status').then(function(r) { return r.json(); }).then(function(status) {
+        if (status.running) {
+            setResyncRunning(true);
+            resyncPollTimer = setTimeout(pollResync, 5000);
+            return;
+        }
+        setResyncRunning(false);
+        if (resyncPollTimer === null) return;  // nothing was running when the page loaded
+        resyncPollTimer = null;
+        if (status.exitCode === 0) location.reload();
+        else toast('Resync failed. See output/resync.log');
+    }).catch(function() { setResyncRunning(false); });
+}
+function startResync() {
+    document.querySelectorAll('.popover').forEach(function(p) { p.hidden = true; });
+    fetch('/resync', {method: 'POST'}).then(function(r) {
+        if (r.status !== 202 && r.status !== 409) throw new Error();
+        toast(r.status === 409 ? 'A resync is already running' : 'Resyncing listings. This takes a few minutes.');
+        resyncPollTimer = setTimeout(pollResync, 5000);
+        setResyncRunning(true);
+    }).catch(function() { toast('Resync needs the local server: run rental-map-dev'); });
+}
+fetch('/resync_status').then(function(r) { return r.json(); }).then(function(status) {
+    if (status.running) { setResyncRunning(true); resyncPollTimer = setTimeout(pollResync, 5000); }
+}).catch(function() {});
+
 function downloadStarsBackup() {
     var state = {
         starred: starredAt,
@@ -1317,8 +1346,8 @@ document.addEventListener('keydown', function(e) {
     }
     var key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (key === 'Escape' && filtersOpen()) { e.preventDefault(); closeFilters(); return; }
-    if (shortcutsOpen) {
-        if (key === 'Escape' || key === '?') { e.preventDefault(); toggleShortcuts(false); }
+    if (openOverlay) {
+        if (key === 'Escape' || (key === '?' && openOverlay.id === 'shortcuts-overlay')) { e.preventDefault(); setOverlayOpen(openOverlay, false); }
         return;
     }
     var typing = e.target.closest && e.target.closest('input, textarea');
@@ -1394,16 +1423,6 @@ function passesFilters(d, sliders) {
     if (filterChips.excludeFakeLocations && d.isFakeLocation) return false;
     if (filterChips.nobrokerOnly && d.source !== 'nb') return false;
     if (filterChips.magicbricksOnly && d.source !== 'mb') return false;
-    if (filterChips.villaVibeOnly) {
-        // Villa Vibe: central, mid-budget houses/villas (1000+ sqft) or really spacious apartments
-        var society = (d.society || '').toLowerCase();
-        var isVillaType = d.buildingType === 'IH' || /villa|duplex|row.?house|townhouse|bungalow|penthouse/.test(society);
-        var isSpaciousApartment = d.buildingType === 'AP' && d.sqft >= 1500;
-        if (!isVillaType && !isSpaciousApartment) return false;
-        if (d.sqft < 1000) return false;
-        if (d.totalCost < 40000 || d.totalCost > 75000) return false;
-        if (!mentionsAnyArea(d, VILLA_VIBE_AREAS)) return false;
-    }
     if (filterChips.penthouseOnly && (d.totalFloors < 4 || d.floor !== d.totalFloors)) return false;  // top floor of 4+
     if (filterChips.newTodayOnly && d.daysAgo !== 0) return false;
     if (filterChips.starredOnly && !isStarred(d.url)) return false;

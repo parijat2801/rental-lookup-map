@@ -19,9 +19,9 @@ publishes it to GitHub Pages.
 **Interactive map** (`output/map.html`)
 
 - One marker per listing, sized by area and coloured by the active ranking.
-- Four rankings: **Quality** (light, age, amenities, platform scores, ...),
-  **Value** (quality per rupee), **Villa Vibe** (spacious, outdoorsy, central) and
-  **Best Deals** (amenities and location relative to cost), plus a fifth,
+- Three rankings: **Quality** (light, age, amenities, platform scores, ...),
+  **Value** (quality per rupee) and **Best Deals** (amenities and location
+  relative to cost), plus a fourth,
   **Commute**, driven by your [areas of interest](#areas-of-interest).
 - Sliders for total cost (rent + maintenance), area, photo count, deposit
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
@@ -63,6 +63,8 @@ rental-map-dev           # serve it at http://localhost:8765/map.html, rebuildin
 
 Serving the map through the bundled server (rather than opening the file) makes
 every star and dismissal auto-save to `data/cache/stars_and_dismissals.json`.
+It also enables **••• → Resync listings**, which runs `scripts/refresh_map.sh` in
+the background (output in `output/resync.log`) and reloads the page when done.
 
 ### Build / run commands
 

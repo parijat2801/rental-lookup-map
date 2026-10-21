@@ -32,3 +32,5 @@ ENV_PATH = REPO_ROOT / ".env"  # optional local secrets (gitignored)
 MAP_TEMPLATE_PATH = Path(__file__).resolve().parent / "webmap" / "template.html"
 MAP_PAGE_PATH = OUTPUT_DIR / "map.html"
 RANKING_CSV_PATH = OUTPUT_DIR / "results.csv"
+RESYNC_LOG_PATH = OUTPUT_DIR / "resync.log"  # output of the last resync started from the map
+REFRESH_SCRIPT_PATH = REPO_ROOT / "scripts" / "refresh_map.sh"

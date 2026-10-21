@@ -6,20 +6,51 @@ Open: http://localhost:8765/map.html
 The page POSTs its full star state to /save_stars on every change; it is merged
 into data/cache/stars_and_dismissals.json (most recent action per URL wins), so
 a fresh browser with no saved state can never wipe the file.
+
+POST /resync runs scripts/refresh_map.sh in the background (one at a time, output
+in output/resync.log); GET /resync_status reports whether it is still running.
 """
 import json
+import subprocess
 import sys
 import threading
 from datetime import datetime, timezone
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit
 
-from rental_lookup.paths import OUTPUT_DIR, STARS_PATH
+from rental_lookup.paths import OUTPUT_DIR, REFRESH_SCRIPT_PATH, REPO_ROOT, RESYNC_LOG_PATH, STARS_PATH
 from rental_lookup.stars import merge_stars, parse_json_object
 
 DEFAULT_PORT = 8765
 MAX_REQUEST_BYTES = 10 * 1024 * 1024
 _save_lock = threading.Lock()  # requests are handled on separate threads
+
+_resync_lock = threading.Lock()
+_resync_process = None
+_resync_started_at = None
+
+
+def resync_status() -> dict:
+    with _resync_lock:
+        if _resync_process is None:
+            return {"running": False, "exitCode": None, "startedAt": None}
+        exit_code = _resync_process.poll()
+        return {"running": exit_code is None, "exitCode": exit_code, "startedAt": _resync_started_at}
+
+
+def start_resync() -> bool:
+    """Start the refresh script unless one is already running; True if started."""
+    global _resync_process, _resync_started_at
+    with _resync_lock:
+        if _resync_process is not None and _resync_process.poll() is None:
+            return False
+        RESYNC_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with RESYNC_LOG_PATH.open("w") as log:
+            _resync_process = subprocess.Popen(["bash", str(REFRESH_SCRIPT_PATH)], cwd=REPO_ROOT,
+                                               stdout=log, stderr=subprocess.STDOUT)
+        _resync_started_at = datetime.now(timezone.utc).isoformat()
+        return True
 
 
 class MapRequestHandler(SimpleHTTPRequestHandler):
@@ -32,7 +63,24 @@ class MapRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
+    def _is_same_origin(self) -> bool:
+        # Browsers send Origin on cross-site POSTs; without this check any web page
+        # could start a scrape on this machine.
+        origin = self.headers.get("Origin")
+        return origin is None or urlsplit(origin).netloc == self.headers.get("Host")
+
+    def do_GET(self):
+        if self.path.split("?", 1)[0] == "/resync_status":
+            return self._reply_json(200, resync_status())
+        super().do_GET()
+
     def do_POST(self):
+        if self.path == "/resync":
+            if not self._is_same_origin():
+                return self._reply_json(403, {"ok": False, "error": "cross-origin request"})
+            if not start_resync():
+                return self._reply_json(409, {"ok": False, "error": "a resync is already running"})
+            return self._reply_json(202, {"ok": True})
         if self.path != "/save_stars":
             return self._reply_json(404, {"ok": False, "error": "not found"})
         length = int(self.headers.get("Content-Length") or 0)
