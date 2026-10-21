@@ -5,7 +5,7 @@ Inputs (all optional except the template):
   data/raw_prev/*.json   NoBroker pages from the previous run, to show delisted listings
   data/raw_mb/*.json     MagicBricks pages
   data/cache/*.json      stars/dismissals, first-seen dates, photo ratings, fake-location ids,
-                         listing details
+                         listing details, NoBroker ratings missing from search results
   data/metro_lines.json  Namma Metro overlay (regenerate with scripts/fetch_metro_lines.py)
 
 Run: python -m rental_lookup.webmap.builder
@@ -19,7 +19,7 @@ import html
 import json
 import os
 import re
-from collections import Counter
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -28,7 +28,7 @@ from rental_lookup.listing_age import days_since_posted_magicbricks, days_since_
 from rental_lookup.models import NOBROKER_BASE_URL, Listing, mentions_branded_builder, nobroker_platform_scores
 from rental_lookup.paths import (
     ENV_PATH, FAKE_LOCATION_IDS_PATH, FIRST_SEEN_PATH, LISTING_DETAILS_PATH, MAGICBRICKS_PAGES_DIR,
-    MAP_PAGE_PATH, MAP_TEMPLATE_PATH, METRO_LINES_PATH, NOBROKER_PAGES_DIR,
+    MAP_PAGE_PATH, MAP_TEMPLATE_PATH, METRO_LINES_PATH, NOBROKER_PAGES_DIR, PLATFORM_SCORES_PATH,
     PREVIOUS_NOBROKER_PAGES_DIR, STARS_PATH,
 )
 from rental_lookup.sources import magicbricks
@@ -37,6 +37,9 @@ from rental_lookup.sources.nobroker import has_real_photo, iter_saved_listings, 
 MAX_RENT = 150000
 MIN_SQFT = 500
 STACKED_LISTING_THRESHOLD = 3  # more listings than this at one coordinate = likely a fake/centroid location
+# _place_key()s of society names that describe a building type rather than a property
+GENERIC_SOCIETY_KEYS = {"independenthouse", "independentbuilding", "independentfloor", "individualhouse",
+                        "standalonebuilding", "standalone", "villa", "na", "none"}
 PET_PHRASES = ("pet-friendly", "pet friendly", "pets allowed", "pets welcome")
 # NoBroker amenitiesMap code -> map record key
 NOBROKER_AMENITY_KEYS = {
@@ -53,7 +56,8 @@ MAGICBRICKS_FURNISHING = {11900: "FULL", 11902: "SEMI", 11901: "NONE"}
 class BuildContext:
     """Lookups shared by every record builder."""
     fake_location_ids: set
-    stacked_coordinates: set  # coordinate_key()s shared by too many listings
+    stacked_coordinates: set  # coordinate_key()s shared by too many listings from different properties
+    platform_scores: dict  # listing id -> [transit, lifestyle] from the detail page, or None
 
 
 def load_json(path: Path, default):
@@ -88,6 +92,13 @@ def _nobroker_cover_photo(raw: dict, photos: list[str]) -> str:
     return "" if "static/img" in thumbnail else thumbnail  # skip NoBroker's placeholder
 
 
+def _nobroker_ratings(raw: dict, context: BuildContext) -> tuple:
+    """(transit, lifestyle): from the search result, else the detail-page cache; (None, None) = unknown."""
+    if isinstance(raw.get("score"), dict):
+        return nobroker_platform_scores(raw)
+    return tuple(context.platform_scores.get(raw["id"]) or (None, None))
+
+
 # --- Record builders ----------------------------------------------------------
 
 def nobroker_record(raw: dict, details: dict, context: BuildContext) -> dict:
@@ -98,7 +109,7 @@ def nobroker_record(raw: dict, details: dict, context: BuildContext) -> dict:
     maintenance = details.get("maintenanceAmount") or 0
     if not isinstance(maintenance, (int, float)):
         maintenance = 0
-    transit_score, lifestyle_score = nobroker_platform_scores(raw)
+    transit_score, lifestyle_score = _nobroker_ratings(raw, context)
     photos = photo_urls(raw)
     rent = raw.get("rent") or 0
     balconies = raw.get("balconies")
@@ -149,7 +160,7 @@ def delisted_nobroker_record(raw: dict, context: BuildContext) -> dict:
     record = nobroker_record(raw, {}, context)
     record.update({
         "hasLift": raw.get("lift", False),
-        "isNegotiable": False, "nbTransit": 0, "nbLifestyle": 0, "isBrandedBuilder": False,
+        "isNegotiable": False, "nbTransit": None, "nbLifestyle": None, "isBrandedBuilder": False,
         "isStacked": False, "daysAgo": -1, "isDelisted": True,
     })
     return record
@@ -172,7 +183,7 @@ def magicbricks_record(listing: Listing, raw: dict, context: BuildContext) -> di
         "buildingType": listing.building_type, "parking": listing.parking,
         "furnishing": MAGICBRICKS_FURNISHING.get(magicbricks.parse_int(raw.get("furnished")), ""),
         "isNegotiable": False, "waterSupply": listing.water_supply,
-        "nbTransit": 0, "nbLifestyle": 0,
+        "nbTransit": None, "nbLifestyle": None,
         "hasPowerBackup": listing.has_power_backup, "isGated": listing.is_gated_community,
         "hasSecurity": listing.has_security, "hasFireSafety": listing.has_fire_safety,
         "hasPool": "pool" in amenities, "hasGym": "gym" in amenities, "hasClubhouse": "club" in amenities,
@@ -202,6 +213,26 @@ def _duplicate_signature(rent, sqft, bhk, locality: str) -> str:
     return f"{rent}_{sqft}_{bhk}_{locality}"
 
 
+def _place_key(name: str) -> str:
+    """Comparable form of a society/locality name: "Delta - The Signature, X" -> "deltasignature"."""
+    name = re.sub(r"\bthe\b", "", (name or "").split(",")[0].lower())
+    return re.sub(r"[^a-z0-9]", "", name)
+
+
+def _is_single_property(listings: list[tuple[str, str]]) -> bool:
+    """Whether (society, locality) pairs sharing a coordinate all name one real property.
+
+    Placeholder societies ("Independent House") and societies that just repeat the
+    locality ("Indiranagar") don't count: those are area centroids, not buildings.
+    """
+    societies = {_place_key(society) for society, _ in listings}
+    if len(societies) != 1:
+        return False
+    society = societies.pop()
+    return (bool(society) and society not in GENERIC_SOCIETY_KEYS
+            and any(_place_key(locality) != society for _, locality in listings))
+
+
 def build_records(today: date, first_seen: dict) -> list[dict]:
     """All map records: current NoBroker, then unique MagicBricks, then delisted.
 
@@ -213,20 +244,28 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
     print(f"  First seen: {len(first_seen)} listings tracked")
     fake_location_ids = set(load_json(FAKE_LOCATION_IDS_PATH, []))
     details_by_id = load_json(LISTING_DETAILS_PATH, {})
+    platform_scores = load_json(PLATFORM_SCORES_PATH, {})
     print(f"  Fake locations: {len(fake_location_ids)} listings")
+    print(f"  NoBroker ratings from detail pages: {sum(1 for s in platform_scores.values() if s)} listings")
 
     nobroker_raw = list(iter_saved_listings(NOBROKER_PAGES_DIR))
     magicbricks_listings = [(listing, raw) for raw in magicbricks.iter_saved_listings(MAGICBRICKS_PAGES_DIR)
                             if (listing := magicbricks.normalize_listing(raw))]
 
-    # Several distinct listings on one exact spot means a shared (fake / centroid) location.
-    listings_per_coordinate = Counter(coordinate_key(raw["latitude"], raw["longitude"]) for raw in nobroker_raw
-                                      if raw.get("latitude") and raw.get("longitude"))
-    listings_per_coordinate.update(coordinate_key(listing.lat, listing.lng) for listing, _ in magicbricks_listings)
+    # Several distinct listings on one exact spot means a shared (fake / centroid) location,
+    # unless they are all flats in the same named property.
+    listings_per_coordinate = defaultdict(list)
+    for raw in nobroker_raw:
+        if raw.get("latitude") and raw.get("longitude"):
+            listings_per_coordinate[coordinate_key(raw["latitude"], raw["longitude"])].append(
+                (raw.get("society") or "", raw.get("locality") or ""))
+    for listing, _ in magicbricks_listings:
+        listings_per_coordinate[coordinate_key(listing.lat, listing.lng)].append((listing.society, listing.locality))
     context = BuildContext(
         fake_location_ids=fake_location_ids,
-        stacked_coordinates={key for key, count in listings_per_coordinate.items()
-                             if count > STACKED_LISTING_THRESHOLD},
+        stacked_coordinates={key for key, listings in listings_per_coordinate.items()
+                             if len(listings) > STACKED_LISTING_THRESHOLD and not _is_single_property(listings)},
+        platform_scores=platform_scores,
     )
     print(f"  Stacked coords (NB+MB): {len(context.stacked_coordinates)} locations")
 

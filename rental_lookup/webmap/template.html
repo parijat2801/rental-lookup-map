@@ -258,10 +258,19 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
 #detail-card .facts span{display:flex;align-items:center;gap:6px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #detail-card .facts svg.icon{width:14px;height:14px;color:var(--subtle)}
 #detail-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
-#detail-card .commute{margin-top:12px;padding-top:10px;border-top:1px solid var(--hover);display:grid;gap:6px;font-size:var(--fs-sm);color:var(--muted)}
-#detail-card .commute .area-label{display:flex;align-items:center;gap:6px;color:var(--text);font-weight:500}
+#detail-card .commute{margin-top:12px;padding-top:10px;border-top:1px solid var(--hover);display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px 12px;font-size:var(--fs-sm);color:var(--muted)}
+#detail-card .commute-row{display:contents}
+#detail-card .commute .area-label{min-width:0;display:flex;align-items:center;gap:6px;color:var(--text);font-weight:500;white-space:nowrap}
+#detail-card .commute .area-label span{overflow:hidden;text-overflow:ellipsis}
+#detail-card .commute-time{display:flex;align-items:center;gap:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+#detail-card .commute-time.best{color:var(--text);font-weight:600}
+#detail-card .commute-time svg.icon{width:13px;height:13px;color:var(--subtle)}
 #detail-card .commute .area-label svg.icon{width:13px;height:13px;color:#4f46e5}
-#detail-card .commute b{color:var(--text);font-weight:600}
+#detail-card .same-property{margin-top:12px;padding-top:10px;border-top:1px solid var(--hover);display:grid;gap:2px}
+#detail-card .same-property .label{margin-bottom:4px}
+#detail-card .same-property-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 8px;margin:0 -8px;border-radius:8px;font-size:var(--fs-sm);color:var(--muted);text-align:left}
+#detail-card .same-property-row:hover{background:var(--hover);color:var(--text)}
+#detail-card .same-property-row b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
 #detail-card .meta{font-size:var(--fs-xs);color:var(--subtle);margin-top:10px}
 #detail-card .maps-link{color:inherit;text-decoration:none}
 #detail-card .maps-link:hover{color:var(--text)}
@@ -350,7 +359,7 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
             <div class="dual-range">
               <div class="track"><div class="track-fill" id="cost-track-fill"></div></div>
               <input type="range" id="filter-cost-min" min="0" max="150000" step="5000" value="30000" oninput="onCostInput(this)" aria-label="Minimum monthly cost">
-              <input type="range" id="filter-cost-max" min="0" max="150000" step="5000" value="55000" oninput="onCostInput(this)" aria-label="Maximum monthly cost">
+              <input type="range" id="filter-cost-max" min="0" max="150000" step="5000" value="50000" oninput="onCostInput(this)" aria-label="Maximum monthly cost">
             </div>
           </div>
           <div>
@@ -364,13 +373,13 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <summary>Space<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
         <div class="section-body">
           <div class="chip-row">
-            <button class="chip" data-filter="bhk1" onclick="toggleChip(this)">1 BHK</button>
-            <button class="chip" data-filter="bhk2" onclick="toggleChip(this)">2 BHK</button>
+            <button class="chip on" data-filter="bhk1" onclick="toggleChip(this)">1 BHK</button>
+            <button class="chip on" data-filter="bhk2" onclick="toggleChip(this)">2 BHK</button>
             <button class="chip" data-filter="bhk3" onclick="toggleChip(this)">3 BHK</button>
           </div>
           <div class="chip-row">
-            <button class="chip" data-filter="furnishedFull" onclick="toggleChip(this)">Furnished</button>
-            <button class="chip" data-filter="furnishedSemi" onclick="toggleChip(this)">Semi-furnished</button>
+            <button class="chip on" data-filter="furnishedFull" onclick="toggleChip(this)">Furnished</button>
+            <button class="chip on" data-filter="furnishedSemi" onclick="toggleChip(this)">Semi-furnished</button>
             <button class="chip" data-filter="furnishedNone" onclick="toggleChip(this)">Unfurnished</button>
           </div>
           <div>
@@ -389,13 +398,13 @@ input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;bac
         <summary>Must-haves<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
         <div class="section-body">
           <div class="chip-row">
-            <button class="chip on" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</button>
+            <button class="chip" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</button>
             <button class="chip" data-filter="requireLift" onclick="toggleChip(this)">Lift</button>
             <button class="chip" data-filter="requireCarParking" onclick="toggleChip(this)">Car parking</button>
             <button class="chip" data-filter="requireAnyParking" onclick="toggleChip(this)">Any parking</button>
             <button class="chip" data-filter="poolOnly" onclick="toggleChip(this)">Pool</button>
             <button class="chip" data-filter="petFriendlyOnly" onclick="toggleChip(this)">Pet friendly</button>
-            <button class="chip on" data-filter="excludeWestFacing" onclick="toggleChip(this)">Not west-facing</button>
+            <button class="chip" data-filter="excludeWestFacing" onclick="toggleChip(this)">Not west-facing</button>
           </div>
         </div>
       </details>
@@ -811,8 +820,31 @@ LISTINGS.forEach(function(d, i) {
         d.mapLat = d.lat;
         d.mapLng = d.lng;
     }
+    d.propertyKey = d.isStacked ? null : d.lat.toFixed(4) + ',' + d.lng.toFixed(4);
 });
 var markerLayer = L.layerGroup().addTo(map);
+// Several listings at one real spot (flats in the same building) fan out in a small ring
+// so each marker stays clickable; the ring never strays more than FAN_MAX_METERS from the building.
+var FAN_MAX_METERS = 40;
+var fannedGroups = [];  // [{lat, lng, members: [{d, marker}]}] from the last renderMarkers()
+function layoutFannedGroups() {
+    var zoom = map.getZoom();
+    fannedGroups.forEach(function(group) {
+        var count = group.members.length;
+        var center = map.project([group.lat, group.lng], zoom);
+        var metersPerPixel = 40075016.686 * Math.cos(group.lat * Math.PI / 180) / Math.pow(2, zoom + 8);
+        var radius = Math.min(Math.max(9, count * 14 / (2 * Math.PI)), FAN_MAX_METERS / metersPerPixel);
+        group.members.forEach(function(member, i) {
+            var angle = 2 * Math.PI * i / count - Math.PI / 2;
+            var position = map.unproject(center.add([radius * Math.cos(angle), radius * Math.sin(angle)]), zoom);
+            member.d.mapLat = position.lat;
+            member.d.mapLng = position.lng;
+            member.marker.setLatLng(position);
+        });
+    });
+    if (selectedListing && map.hasLayer(pulseMarker)) pulseMarker.setLatLng([selectedListing.mapLat, selectedListing.mapLng]);
+}
+map.on('zoomend', layoutFannedGroups);
 // Starred listings are drawn as a star (filled with the tier colour) instead of a circle.
 var STAR_MARKER_SIZE = 18;
 var justStarredUrls = new Set();  // star markers to animate on the next render
@@ -1006,7 +1038,7 @@ legend.addTo(map);
 // Filter chips, sliders, the filters sheet and active-filter counts
 // ===========================================================================
 // One entry per chip (its data-filter attribute); true = filter active.
-var filterChips = {bhk1:false,bhk2:false,bhk3:false,furnishedFull:false,furnishedSemi:false,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:true,requireBalcony:true,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,villaVibeOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
+var filterChips = {bhk1:true,bhk2:true,bhk3:false,furnishedFull:true,furnishedSemi:true,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:false,requireBalcony:false,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,villaVibeOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
 var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
 var SLIDER_IDS = ['filter-cost-min','filter-cost-max','filter-sqft','filter-photos','filter-deposit','filter-score','filter-days'];
 // Chips shown outside the sheet; they don't count towards the "Filters" badge.
@@ -1419,6 +1451,13 @@ function renderMarkers(listings, tiers, scoreName) {
     var boxSelectedUrls = new Set(boxSelection.map(function(d) { return d.url; }));
     markerLayer.clearLayers();
     var selectedMarker = null;
+    var listingsByProperty = {}, markersByUrl = {};
+    listings.forEach(function(d) {
+        if (!d.propertyKey) return;
+        d.mapLat = d.lat;
+        d.mapLng = d.lng;
+        (listingsByProperty[d.propertyKey] = listingsByProperty[d.propertyKey] || []).push(d);
+    });
     listings.forEach(function(d, index) {
         d.rank = index + 1;
         var isSelected = selectedListing && selectedListing.url === d.url;
@@ -1444,8 +1483,18 @@ function renderMarkers(listings, tiers, scoreName) {
         });
         marker.on('click', function(e) { e.originalEvent.handledByMarker = true; selectListing(d, e); });
         markerLayer.addLayer(marker);
+        markersByUrl[d.url] = marker;
         if (isSelected) selectedMarker = marker;
     });
+    // Sorted by URL so a listing keeps its place in the ring when the ranking changes.
+    fannedGroups = Object.keys(listingsByProperty).map(function(key) { return listingsByProperty[key]; })
+        .filter(function(group) { return group.length > 1; })
+        .map(function(group) {
+            group.sort(function(a, b) { return a.url < b.url ? -1 : 1; });
+            return {lat: group[0].lat, lng: group[0].lng,
+                    members: group.map(function(d) { return {d: d, marker: markersByUrl[d.url]}; })};
+        });
+    layoutFannedGroups();
     justStarredUrls.clear();
     highlightSelectedMarker(selectedMarker, selectedListing);
 }
@@ -1470,6 +1519,7 @@ function googleMapsLinkHtml(d, labelHtml) {
         '" target="_blank" rel="noopener" title="Open in Google Maps">' + icon('map-pin') + labelHtml + '</a>';
 }
 function ageLabel(d) { return d.ageYears >= 99 ? 'Age unknown' : d.ageYears <= 0 ? 'New' : d.ageYears + ' yr old'; }
+function ratingLabel(value) { return value == null ? '-' : value; }  // null = NoBroker has no rating
 
 // Fill the detail card for listing `d` and position it near the mouse event `e`.
 // With e = null the card is only refreshed in place (photo position kept).
@@ -1510,8 +1560,8 @@ function showDetailCard(e, d) {
     if (d.availableFrom) facts.push(['calendar-check', 'From ' + escapeHtml(d.availableFrom)]);
     var amenities = amenityLabels(d);
     byId('card-details').innerHTML = '<div class="facts">' + facts.map(function(f) { return '<span>' + icon(f[0]) + f[1] + '</span>'; }).join('') + '</div>' +
-        (amenities.length ? '<div class="tags">' + tagsHtml(amenities, 'positive') + '</div>' : '') + commuteHtml(d) +
-        '<div class="meta">' + [d.street ? escapeHtml(d.street) : '', d.source === 'nb' ? 'NoBroker transit ' + d.nbTransit + ' · lifestyle ' + d.nbLifestyle : '',
+        (amenities.length ? '<div class="tags">' + tagsHtml(amenities, 'positive') + '</div>' : '') + commuteHtml(d) + samePropertyHtml(d) +
+        '<div class="meta">' + [d.street ? escapeHtml(d.street) : '', d.source === 'nb' ? 'NoBroker transit ' + ratingLabel(d.nbTransit) + ' · lifestyle ' + ratingLabel(d.nbLifestyle) : '',
             d.propertyCode ? escapeHtml(d.propertyCode) : ''].filter(Boolean).join(' · ') + '</div>';
 
     var isPinned = selectedListing && selectedListing.url === d.url;
@@ -1531,6 +1581,24 @@ function showDetailCard(e, d) {
     if (wasHidden || detailCard.dataset.url !== d.url) animateIn(detailCard, {y: 6, scale: 0.98}, 0.2);
     detailCard.dataset.url = d.url;
 }
+// Other matching listings at the same spot as d; clicking one (on a pinned card) switches to it.
+function samePropertyHtml(d) {
+    if (!d.propertyKey) return '';
+    var others = filteredListings.filter(function(x) { return x.propertyKey === d.propertyKey && x !== d; });
+    if (!others.length) return '';
+    return '<div class="same-property"><div class="label">' + others.length + ' more in this property</div>' +
+        others.map(function(x) {
+            return '<button class="same-property-row" data-url="' + escapeHtml(x.url) + '">' +
+                '<span>' + bhkLabel(x) + ' · ' + x.sqft.toLocaleString() + ' sqft · ' + floorLabel(x) +
+                (x.isDelisted ? ' · Delisted' : '') + '</span><b>' + formatRupeesShort(x.totalCost) + '</b></button>';
+        }).join('') + '</div>';
+}
+detailCard.addEventListener('click', function(e) {
+    var row = e.target.closest('.same-property-row');
+    if (!row) return;
+    var d = filteredListings.find(function(x) { return x.url === row.dataset.url; });
+    if (d) selectListing(d, {});
+});
 // Card position for an anchor at viewport (x, y): beside it, on screen and clear of the sidebar.
 function cardPosition(anchorX, anchorY) {
     var x = anchorX + 20, y = anchorY - 120;
@@ -2092,16 +2160,15 @@ map.on('contextmenu', function(e) {
 function formatMinutes(minutes) { return Math.round(minutes) + ' min'; }
 function commuteHtml(d) {
     if (!d.commute) return '';
-    var compare = commuteMode === 'best';
+    function time(iconName, minutes, title, isBest) {
+        return '<span class="commute-time' + (isBest ? ' best' : '') + '" title="' + escapeHtml(title) + '">' + icon(iconName) + minutes + '</span>';
+    }
     return '<div class="commute">' + d.commute.perArea.map(function(c) {
-        var drive = 'Drive ' + (c.estimated ? '~' : '') + formatMinutes(c.drive) + ' (' + c.driveKm.toFixed(1) + ' km)';
-        var metro = c.metro
-            ? 'Metro ' + formatMinutes(c.metro.minutes) + ' (' + escapeHtml(c.metro.fromStation) + ' → ' + escapeHtml(c.metro.toStation) +
-              ', ' + c.metro.transfers + (c.metro.transfers === 1 ? ' change' : ' changes') + ')'
-            : 'No metro route';
-        if (compare || commuteMode === 'drive') drive = c.bestMode === 'drive' ? '<b>' + drive + '</b>' : drive;
-        if (compare || commuteMode === 'metro') metro = c.bestMode === 'metro' ? '<b>' + metro + '</b>' : metro;
-        return '<div><div class="area-label">' + icon('flag') + escapeHtml(c.area.name) + '</div>' + drive + ' · ' + metro + '</div>';
+        var drive = time('car', (c.estimated ? '~' : '') + formatMinutes(c.drive),
+            'Drive, ' + c.driveKm.toFixed(1) + ' km' + (c.estimated ? ' (estimate)' : ''), c.bestMode === 'drive');
+        var metro = c.metro ? time('train-front', formatMinutes(c.metro.minutes), 'Metro: ' + c.metro.fromStation + ' → ' + c.metro.toStation +
+            (c.metro.transfers ? ', ' + c.metro.transfers + (c.metro.transfers === 1 ? ' change' : ' changes') : ''), c.bestMode === 'metro') : '<span></span>';
+        return '<div class="commute-row"><span class="area-label">' + icon('flag') + '<span>' + escapeHtml(c.area.name) + '</span></span>' + drive + metro + '</div>';
     }).join('') + '</div>';
 }
 function commuteLineHtml(d) {

@@ -94,6 +94,7 @@ Each step can also be run on its own, from the repository root:
 | Fetch from every source | `rental-map-fetch all [--cookie COOKIE]` |
 | Rank NoBroker listings into `output/results.csv` | `rental-map-rank [--cookie COOKIE]` |
 | Fetch detail pages for the top N NoBroker listings | `python -m rental_lookup.enrichment.listing_details [N]` |
+| Look up NoBroker transit / lifestyle ratings missing from search results (~1 s per listing, cached) | `python -m rental_lookup.enrichment.listing_details scores [LIMIT]` |
 | Build `output/map.html` from saved data | `rental-map-build` |
 | Serve the map with star auto-save | `rental-map-serve [PORT]` |
 | Serve, watch and rebuild on changes | `rental-map-dev [PORT]` |
@@ -162,7 +163,7 @@ scripts/            refresh_map.sh, fetch_metro_lines.py
 tests/              pytest suite (no network needed)
 data/
   raw/ raw_prev/ raw_mb/   saved API pages (gitignored, re-fetched each run)
-  cache/                   stars, first-seen dates, detail and photo caches (tracked)
+  cache/                   stars, first-seen dates, detail, rating and photo caches (tracked)
   metro_lines.json         metro overlay
   spike/                   API contracts and sample responses
 docs/               design notes and API investigations

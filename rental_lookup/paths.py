@@ -20,6 +20,9 @@ FACEBOOK_POSTS_DIR = DATA_DIR / "fb"
 STARS_PATH = CACHE_DIR / "stars_and_dismissals.json"  # user stars/dismissals (published as stars.json)
 FIRST_SEEN_PATH = CACHE_DIR / "first_seen.json"  # listing url -> date we first saw it
 LISTING_DETAILS_PATH = CACHE_DIR / "detail_enrichment.json"  # listing id -> NoBroker detail-page extras
+# listing id -> NoBroker [transit, lifestyle] from the detail page (null = it has none either),
+# for listings whose search result came without them
+PLATFORM_SCORES_PATH = CACHE_DIR / "platform_scores.json"
 FAKE_LOCATION_IDS_PATH = CACHE_DIR / "fake_location_ids.json"  # listing ids with known-bogus coordinates
 
 METRO_LINES_PATH = DATA_DIR / "metro_lines.json"  # map overlay, from scripts/fetch_metro_lines.py

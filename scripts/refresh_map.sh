@@ -29,7 +29,11 @@ echo "=== Step 4: Fetch detail pages for the top 300 ==="
 "$PY" -m rental_lookup.enrichment.listing_details 300
 
 echo
-echo "=== Step 5: Rebuild map ==="
+echo "=== Step 5: Look up NoBroker ratings missing from search results ==="
+"$PY" -m rental_lookup.enrichment.listing_details scores
+
+echo
+echo "=== Step 6: Rebuild map ==="
 "$PY" -m rental_lookup.webmap.builder
 
 echo
