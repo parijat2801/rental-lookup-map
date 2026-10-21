@@ -33,12 +33,15 @@ def test_map_template_has_1bhk_chip():
     assert 'data-filter="bhk1"' in html, "map template is missing the 1 BHK filter chip"
 
 
-def test_map_template_bhk1_chip_off_by_default():
+def test_map_template_shows_1bhk_by_default():
     html = load_template()
-    state = re.search(r"var filterChips = \{(.*?)\};", html, re.S).group(1)
-    assert "bhk1:false" in state.replace(" ", ""), (
-        "bhk1 must default to false so 1 BHK listings show without hiding 2/3 BHK"
+    state = re.search(r"var filterChips = \{(.*?)\};", html, re.S).group(1).replace(" ", "")
+    chips = {k: f"{k}:true" in state for k in ("bhk1", "bhk2", "bhk3")}
+    assert chips["bhk1"] or not any(chips.values()), (
+        "1 BHK listings must be visible by default: either bhk1 is on, or no BHK chip is on"
     )
+    chip_on = 'class="chip on" data-filter="bhk1"' in html
+    assert chip_on == chips["bhk1"], "1 BHK chip markup must match its filterChips default"
 
 
 def test_map_template_filter_predicate_handles_bhk1():
