@@ -30,6 +30,8 @@ PACKAGE_DIR = Path(__file__).resolve().parent.parent
 WATCHED_FOLDERS = (
     (PACKAGE_DIR, "**/*.py"),
     (PACKAGE_DIR, "**/*.html"),
+    (PACKAGE_DIR, "**/*.css"),
+    (PACKAGE_DIR, "**/*.js"),
     (NOBROKER_PAGES_DIR, "*.json"),
     (PREVIOUS_NOBROKER_PAGES_DIR, "*.json"),
     (MAGICBRICKS_PAGES_DIR, "*.json"),

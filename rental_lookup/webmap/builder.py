@@ -10,8 +10,13 @@ Inputs (all optional except the template):
 
 Run: python -m rental_lookup.webmap.builder
 
-The listing records built here are read by webmap/template.html, so their keys
-are part of the template's contract: rename them in both places together.
+The listing records built here are read by the page's scripts (webmap/ui/*/*.js),
+so their keys are part of the template's contract: rename them in both places together.
+
+webmap/template.html is the page shell. Lines of the form
+  <!-- @include path -->   /* @include path */   // @include path
+are replaced by the named file (relative to the including file, nested includes
+allowed), so the built page stays a single self-contained HTML file.
 """
 from __future__ import annotations
 
@@ -328,6 +333,26 @@ def to_script_json(value) -> str:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False).replace("</", "<\\/")
 
 
+INCLUDE_LINE = re.compile(r"^[ \t]*(?:<!--|/\*|//)[ \t]*@include[ \t]+(\S+)[ \t]*(?:-->|\*/)?[ \t]*(?:\n|\Z)",
+                          re.MULTILINE)
+
+
+def load_template(path: Path = MAP_TEMPLATE_PATH, _including: tuple = ()) -> str:
+    """The template at `path` with every @include line replaced by its file, recursively."""
+    path = path.resolve()
+    if path in _including:
+        raise ValueError(f"Template include cycle: {' -> '.join(p.name for p in (*_including, path))}")
+
+    def expand(match: re.Match) -> str:
+        target = path.parent / match.group(1)
+        if not target.is_file():
+            raise FileNotFoundError(f"{path.name} includes missing file {match.group(1)}")
+        text = load_template(target, (*_including, path))
+        return text if text.endswith("\n") else text + "\n"
+
+    return INCLUDE_LINE.sub(expand, path.read_text(encoding="utf-8"))
+
+
 def inject(template: str, variable: str, value_json: str) -> str:
     """Replace the single-line `var NAME = ...;` declaration in the template."""
     declaration = re.compile(rf"^var {variable} = .*;$", re.MULTILINE)
@@ -359,7 +384,7 @@ def main() -> None:
     FIRST_SEEN_PATH.write_text(json.dumps(first_seen))
     print(f"  First seen saved: {len(first_seen)} listings")
 
-    page = MAP_TEMPLATE_PATH.read_text(encoding="utf-8")
+    page = load_template()
     page = inject(page, "LISTINGS", to_script_json(_unescape_strings(records)))
     if METRO_LINES_PATH.exists():
         page = inject(page, "METRO_LINES", to_script_json(json.loads(METRO_LINES_PATH.read_text())))

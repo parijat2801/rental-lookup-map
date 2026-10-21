@@ -1,8 +1,8 @@
 """BHK coverage: scrapers must request 1, 2 and 3 BHK from both sources."""
 import re
 
-from rental_lookup.paths import MAP_TEMPLATE_PATH
 from rental_lookup.sources import magicbricks, nobroker
+from rental_lookup.webmap.builder import load_template
 
 
 def test_nobroker_requests_1bhk():
@@ -29,12 +29,12 @@ def test_magicbricks_normalizes_1bhk():
 
 
 def test_map_template_has_1bhk_chip():
-    html = MAP_TEMPLATE_PATH.read_text()
+    html = load_template()
     assert 'data-filter="bhk1"' in html, "map template is missing the 1 BHK filter chip"
 
 
 def test_map_template_bhk1_chip_off_by_default():
-    html = MAP_TEMPLATE_PATH.read_text()
+    html = load_template()
     state = re.search(r"var filterChips = \{(.*?)\};", html, re.S).group(1)
     assert "bhk1:false" in state.replace(" ", ""), (
         "bhk1 must default to false so 1 BHK listings show without hiding 2/3 BHK"
@@ -42,7 +42,7 @@ def test_map_template_bhk1_chip_off_by_default():
 
 
 def test_map_template_filter_predicate_handles_bhk1():
-    html = MAP_TEMPLATE_PATH.read_text()
+    html = load_template()
     assert "filterChips.bhk1 && d.bhk === 'BHK1'" in html, (
         "filter predicate must match BHK1 when the 1 BHK chip is on"
     )

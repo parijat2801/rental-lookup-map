@@ -121,7 +121,7 @@ Notes:
 
 Search areas, budgets and scoring weights are constants at the top of the
 relevant modules (`sources/nobroker.py`, `scoring.py`, `location.py`) and in the
-scoring functions of `webmap/template.html`.
+scoring functions of `webmap/ui/scoring/scoring.js`.
 
 ### Experimental: Facebook groups
 
@@ -155,6 +155,10 @@ rental_lookup/
   sources/          scrapers: nobroker, magicbricks, facebook (experimental)
   enrichment/       slow per-listing extras: listing_details
   webmap/           builder (data -> output/map.html), template.html, server, dev watcher
+    ui/             the page's components, inlined into map.html by the builder; each
+                    folder holds a component's markup, styles and script (map/,
+                    sidebar/, filters/, detail-card/, commute/, ...). core/ has the
+                    shared base styles, helpers, data placeholders and boot code
   models.py         normalised Listing and related dataclasses
   location.py       OpenStreetMap parks / lakes / metro and distance lookups
   scoring.py        CLI suitability score; ranking_report.py writes results.csv
@@ -204,9 +208,9 @@ The **Best / Drive / Metro** toggle picks which time counts. Areas combine with
 AND: a listing has to be easy to reach from every area, so its commute score comes
 from its longest commute (100 at 10 minutes or less, falling to 0 at 60 minutes).
 Ties go to the shorter average commute, then the lower cost. Areas, the toggle and drive times are kept per browser.
-All speeds and penalties are constants at the top of the "Areas of interest and
-commute" section in `rental_lookup/webmap/template.html`. `COMMUTE_BLEND_WEIGHT`
-(currently 0) is where commute can later be blended into the other rankings.
+All speeds and penalties are constants at the top of
+`rental_lookup/webmap/ui/commute/metro.js`. `COMMUTE_BLEND_WEIGHT` in
+`ui/scoring/score-tiers.js` (currently 0) is where commute can later be blended into the other rankings.
 
 ## Development
 

@@ -15,6 +15,9 @@ def test_watcher_sees_template_and_code():
     snapshot = dev.snapshot_inputs()
     assert dev.PACKAGE_DIR / "webmap" / "template.html" in snapshot
     assert dev.PACKAGE_DIR / "webmap" / "builder.py" in snapshot
+    ui = dev.PACKAGE_DIR / "webmap" / "ui"
+    for partial in (ui / "sidebar" / "sidebar.html", ui / "core" / "base.css", ui / "core" / "boot.js"):
+        assert partial in snapshot
 
 
 def test_build_version_is_a_string():

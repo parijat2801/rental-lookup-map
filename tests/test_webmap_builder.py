@@ -33,8 +33,49 @@ def test_html_entities_decoded_without_breaking_json():
     assert json.loads(builder.to_script_json(records))[0]["society"] == 'Tom & Jerry "Heights"'
 
 
+def test_load_template_expands_nested_includes(tmp_path):
+    (tmp_path / "parts").mkdir()
+    (tmp_path / "parts" / "outer.html").write_text("<div>\n  <!-- @include inner.html -->\n</div>\n")
+    (tmp_path / "parts" / "inner.html").write_text("  <p>hi</p>\n")
+    (tmp_path / "style.css").write_text("a{}\n")
+    (tmp_path / "app.js").write_text("var x = 1;")
+    (tmp_path / "page.html").write_text(
+        "<style>\n/* @include style.css */\n</style>\n<!-- @include parts/outer.html -->\n"
+        "<script>\n// @include app.js\n</script>\n")
+    assert builder.load_template(tmp_path / "page.html") == (
+        "<style>\na{}\n</style>\n<div>\n  <p>hi</p>\n</div>\n<script>\nvar x = 1;\n</script>\n")
+
+
+def test_load_template_fails_loudly_on_missing_include(tmp_path):
+    (tmp_path / "page.html").write_text("<!-- @include nope.html -->\n")
+    with pytest.raises(FileNotFoundError):
+        builder.load_template(tmp_path / "page.html")
+
+
+def test_load_template_rejects_include_cycles(tmp_path):
+    (tmp_path / "a.html").write_text("<!-- @include b.html -->\n")
+    (tmp_path / "b.html").write_text("<!-- @include a.html -->\n")
+    with pytest.raises(ValueError):
+        builder.load_template(tmp_path / "a.html")
+
+
+def test_every_ui_file_is_included_once():
+    ui_dir = MAP_TEMPLATE_PATH.parent / "ui"
+    included = []
+    pending = [MAP_TEMPLATE_PATH]
+    while pending:
+        path = pending.pop()
+        for match in builder.INCLUDE_LINE.finditer(path.read_text(encoding="utf-8")):
+            target = (path.parent / match.group(1)).resolve()
+            included.append(target)
+            pending.append(target)
+    ui_files = {p.resolve() for p in ui_dir.rglob("*") if p.is_file()}
+    assert sorted(included) == sorted(ui_files)
+    assert "@include" not in builder.load_template()
+
+
 def test_template_has_injectable_placeholders():
-    template = MAP_TEMPLATE_PATH.read_text(encoding="utf-8")
+    template = builder.load_template()
     page = builder.inject(builder.inject(template, "LISTINGS", "[]"), "METRO_LINES", "{}")
     page = builder.inject(page, "CARTO_KEY", '"k"')
     assert "var LISTINGS = [];" in page and "var METRO_LINES = {};" in page and 'var CARTO_KEY = "k";' in page

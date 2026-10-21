@@ -1,0 +1,17 @@
+/* --- Search box, filter chips and the filters button ----------------------------- */
+.quick-filters{display:flex;gap:6px;padding:12px 18px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:var(--fs-sm);font-weight:500;white-space:nowrap;user-select:none}
+.chip:hover{border-color:var(--border-strong);background:var(--surface)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip svg.icon{width:14px;height:14px}
+.search-box{flex:1;min-width:120px;display:flex;align-items:center;gap:6px;padding:0 11px;border-radius:999px;border:1px solid var(--border);background:var(--bg);color:var(--subtle)}
+.search-box:focus-within{border-color:var(--border-strong);color:var(--text)}
+.search-box svg.icon{width:14px;height:14px}
+.search-box input{flex:1;min-width:0;border:none;outline:none;background:none;font:inherit;font-size:var(--fs-sm);color:var(--text)}
+.search-box input::placeholder{color:var(--subtle)}
+.search-box input::-webkit-search-cancel-button{cursor:pointer}
+.filters-button{margin-left:auto}
+.count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:#fff;font-size:var(--fs-xs);font-weight:600}
+.chip.on .count-badge{background:#fff;color:var(--accent)}
+.count-badge[hidden]{display:none}
+

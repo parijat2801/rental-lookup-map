@@ -1,0 +1,9 @@
+/* --- Keyboard shortcuts dialog ---------------------------------------------------- */
+.shortcut-columns{display:grid;grid-template-columns:1fr 1fr;gap:28px 48px}
+.shortcut-columns h3{margin-bottom:6px}
+.shortcut-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 0;color:var(--muted)}
+.shortcut-row + .shortcut-row{border-top:1px solid var(--hover)}
+.shortcut-row .keys{display:inline-flex;align-items:center;gap:4px;color:var(--subtle);font-size:var(--fs-xs);white-space:nowrap}
+@media (max-width: 600px){.shortcut-columns{grid-template-columns:1fr}}
+kbd{font-family:inherit;font-size:var(--fs-xs);font-weight:500;color:var(--text);background:var(--hover);border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:1px 6px;min-width:22px;text-align:center;display:inline-block}
+

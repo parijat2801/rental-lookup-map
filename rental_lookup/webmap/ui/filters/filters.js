@@ -1,0 +1,86 @@
+// ===========================================================================
+// Filter chips, sliders, the filters sheet and active-filter counts
+// ===========================================================================
+// One entry per chip (its data-filter attribute); true = filter active.
+var filterChips = {bhk1:true,bhk2:true,bhk3:false,furnishedFull:true,furnishedSemi:true,furnishedNone:false,requireLift:false,requireCarParking:false,requireAnyParking:false,excludeWestFacing:false,requireBalcony:false,excludeStandalone:false,excludeIndependentHouses:false,requireRealPhoto:true,petFriendlyOnly:false,poolOnly:false,brandedBuilderOnly:false,excludeFakeLocations:false,nobrokerOnly:false,magicbricksOnly:false,penthouseOnly:false,newTodayOnly:false,starredOnly:false,hideDismissed:true};
+var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
+var SLIDER_IDS = ['filter-cost-min','filter-cost-max','filter-sqft','filter-photos','filter-deposit','filter-score','filter-days'];
+// Chips shown outside the sheet; they don't count towards the "Filters" badge.
+var QUICK_FILTERS = ['starredOnly'];
+
+function toggleChip(chip) {
+    filterChips[chip.dataset.filter] = !filterChips[chip.dataset.filter];
+    syncChips();
+    refreshMap();
+}
+function syncChips() {
+    document.querySelectorAll('[data-filter]').forEach(function(chip) {
+        var on = !!filterChips[chip.dataset.filter];
+        chip.classList.toggle('on', on);
+        chip.setAttribute('aria-pressed', on);
+    });
+}
+function resetFilters() {
+    Object.keys(DEFAULT_FILTER_CHIPS).forEach(function(name) {
+        if (QUICK_FILTERS.indexOf(name) < 0) filterChips[name] = DEFAULT_FILTER_CHIPS[name];
+    });
+    SLIDER_IDS.forEach(function(id) { byId(id).value = byId(id).defaultValue; });
+    syncChips();
+    refreshMap();
+}
+function openFilters() {
+    byId('filters-sheet').classList.add('open');
+    if (MOTION) gsap.fromTo('#filters-sheet .filter-section', {autoAlpha: 0, y: 8}, {autoAlpha: 1, y: 0, duration: 0.25, stagger: 0.03, delay: 0.08, ease: 'power2.out'});
+}
+function closeFilters() { byId('filters-sheet').classList.remove('open'); }
+function filtersOpen() { return byId('filters-sheet').classList.contains('open'); }
+
+function onCostInput(slider) {
+    var low = byId('filter-cost-min'), high = byId('filter-cost-max');
+    if (+low.value > +high.value) slider.value = slider === low ? high.value : low.value;
+    refreshMap();
+}
+function paintSliders() {
+    document.querySelectorAll('#filters-sheet input[type=range]').forEach(function(el) {
+        el.style.setProperty('--fill', (el.value - el.min) / (el.max - el.min) * 100 + '%');
+    });
+    var low = byId('filter-cost-min'), high = byId('filter-cost-max'), max = +high.max;
+    var fill = byId('cost-track-fill');
+    fill.style.left = low.value / max * 100 + '%';
+    fill.style.right = 100 - high.value / max * 100 + '%';
+}
+
+function isNonDefault(el) {
+    if (el.dataset && el.dataset.filter) return filterChips[el.dataset.filter] !== DEFAULT_FILTER_CHIPS[el.dataset.filter];
+    return +el.value !== +el.defaultValue;
+}
+// Sliders that stop filtering at their max end; the rest stop filtering at their min end.
+var SLIDERS_OFF_AT_MAX = ['filter-cost-max', 'filter-deposit', 'filter-days'];
+function sliderApplied(id) {
+    var el = byId(id);
+    return SLIDERS_OFF_AT_MAX.indexOf(id) >= 0 ? +el.value < +el.max : +el.value > +el.min;
+}
+// Badge = filters currently narrowing results (the budget range counts once).
+// Button highlight and section counts = controls moved off their defaults (HTML value attribute).
+function updateActiveFilterCount() {
+    var applied = 0, changed = 0;
+    for (var name in DEFAULT_FILTER_CHIPS) {
+        if (QUICK_FILTERS.indexOf(name) >= 0) continue;
+        if (filterChips[name]) applied++;
+        if (filterChips[name] !== DEFAULT_FILTER_CHIPS[name]) changed++;
+    }
+    if (sliderApplied('filter-cost-min') || sliderApplied('filter-cost-max')) applied++;
+    SLIDER_IDS.forEach(function(id) {
+        if (id !== 'filter-cost-min' && id !== 'filter-cost-max' && sliderApplied(id)) applied++;
+        if (isNonDefault(byId(id))) changed++;
+    });
+    var badge = byId('active-filter-count');
+    badge.textContent = applied;
+    badge.hidden = applied === 0;
+    byId('filters-button').classList.toggle('on', changed > 0);
+    document.querySelectorAll('.filter-section').forEach(function(section) {
+        var changed = [].filter.call(section.querySelectorAll('[data-filter], input[type=range]'), isNonDefault).length;
+        section.querySelector('.section-count').textContent = changed ? '· ' + changed + ' changed' : '';
+    });
+}
+

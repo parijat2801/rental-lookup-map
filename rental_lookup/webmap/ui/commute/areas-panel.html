@@ -1,0 +1,16 @@
+  <section class="areas-panel" id="areas-panel" aria-label="Areas of interest" hidden>
+    <div class="areas-head">
+      <span class="label">Areas of interest</span>
+      <div class="mode-toggle" role="group" aria-label="Commute mode">
+        <button data-commute-mode="best" onclick="setCommuteMode('best')" title="Faster of driving and metro">Best</button>
+        <button data-commute-mode="drive" onclick="setCommuteMode('drive')" title="Driving only"><span data-icon="car"></span>Drive</button>
+        <button data-commute-mode="metro" onclick="setCommuteMode('metro')" title="Metro, with a walk or auto to and from stations"><span data-icon="train-front"></span>Metro</button>
+      </div>
+    </div>
+    <div class="area-search">
+      <label class="search-box"><span data-icon="map-pin-plus"></span><input type="search" id="area-input" placeholder="Search a place or paste a Google Maps link" aria-label="Add an area of interest" autocomplete="off" oninput="onAreaInput()" onkeydown="onAreaKeydown(event)"></label>
+      <div class="area-suggestions" id="area-suggestions" role="listbox" hidden></div>
+    </div>
+    <div class="area-list" id="area-list"></div>
+    <div class="areas-status" id="areas-status"></div>
+  </section>

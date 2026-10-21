@@ -42,7 +42,7 @@ Issues = "https://github.com/sarweshshah/rental-map/issues"
 include = ["rental_lookup*"]
 
 [tool.setuptools.package-data]
-"rental_lookup.webmap" = ["template.html"]
+"rental_lookup.webmap" = ["template.html", "ui/**/*.html", "ui/**/*.css", "ui/**/*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

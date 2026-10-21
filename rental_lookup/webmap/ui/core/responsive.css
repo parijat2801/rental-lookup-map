@@ -1,0 +1,10 @@
+/* --- Mobile: map on top, sidebar below ------------------------------------------- */
+@media (max-width: 820px){
+  body{flex-direction:column}
+  #map{flex:none;height:50vh}
+  #sidebar,body.sidebar-collapsed #sidebar{width:100%;flex:1;min-height:0;border-right:none;border-top:1px solid var(--border);order:0}
+  .sidebar-inner{width:100%}
+  .resize-handle,.sidebar-collapse-button,body.sidebar-collapsed .sidebar-open-control{display:none}
+  .floating-bar{left:50%;bottom:calc(50vh + 16px);max-width:calc(100vw - 16px)}
+  #detail-card{left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto}
+}

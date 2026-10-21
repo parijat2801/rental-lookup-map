@@ -1,0 +1,6 @@
+/* --- Header menu popover --------------------------------------------------------- */
+.popover{position:absolute;right:0;top:38px;z-index:20;width:max-content;min-width:200px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:6px}
+.popover[hidden]{display:none}
+.popover .menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:8px;text-align:left}
+.popover .menu-item:hover{background:var(--hover)}
+.popover .menu-item:disabled{opacity:.5;cursor:default;background:none}

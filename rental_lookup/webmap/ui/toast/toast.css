@@ -1,0 +1,4 @@
+/* --- Toast ----------------------------------------------------------------------- */
+#toast{position:fixed;left:16px;right:16px;bottom:24px;margin:0 auto;width:fit-content;max-width:420px;transform:translateY(16px);opacity:0;visibility:hidden;z-index:2000;background:var(--accent);color:#fff;padding:10px 16px;border-radius:10px;box-shadow:var(--shadow-lg);transition:all .2s;pointer-events:none;text-align:center}
+#toast.show{opacity:1;visibility:visible;transform:none}
+
