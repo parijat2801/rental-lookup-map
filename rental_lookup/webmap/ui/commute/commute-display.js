@@ -2,14 +2,14 @@
 function formatMinutes(minutes) { return Math.round(minutes) + ' min'; }
 function commuteHtml(d) {
     if (!d.commute) return '';
-    function time(iconName, minutes, title, isBest) {
-        return '<span class="commute-time' + (isBest ? ' best' : '') + '" title="' + escapeHtml(title) + '">' + icon(iconName) + minutes + '</span>';
+    function time(iconName, minutes, title) {
+        return '<span class="commute-time" title="' + escapeHtml(title) + '">' + icon(iconName) + minutes + '</span>';
     }
     return '<div class="commute">' + d.commute.perArea.map(function(c) {
         var drive = time('car', (c.estimated ? '~' : '') + formatMinutes(c.drive),
-            'Drive, ' + c.driveKm.toFixed(1) + ' km' + (c.estimated ? ' (estimate)' : ''), c.bestMode === 'drive');
+            'Drive, ' + c.driveKm.toFixed(1) + ' km' + (c.estimated ? ' (estimate)' : ''));
         var metro = c.metro ? time('train-front', formatMinutes(c.metro.minutes), 'Metro: ' + c.metro.fromStation + ' → ' + c.metro.toStation +
-            (c.metro.transfers ? ', ' + c.metro.transfers + (c.metro.transfers === 1 ? ' change' : ' changes') : ''), c.bestMode === 'metro') : '<span></span>';
+            (c.metro.transfers ? ', ' + c.metro.transfers + (c.metro.transfers === 1 ? ' change' : ' changes') : '')) : '<span></span>';
         return '<div class="commute-row"><span class="area-label">' + icon('flag') + '<span>' + escapeHtml(c.area.name) + '</span></span>' + drive + metro + '</div>';
     }).join('') + '</div>';
 }

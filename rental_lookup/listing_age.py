@@ -37,3 +37,8 @@ def days_since_posted_magicbricks(post_date_iso, first_seen_date, today: date) -
         except (ValueError, TypeError, AttributeError):
             pass
     return _days_since_first_seen(first_seen_date, today)
+
+
+def days_since_posted_propertyangel(first_seen_date, today: date) -> int:
+    """Property Angel publishes no posting date, so this is always the first-seen age."""
+    return _days_since_first_seen(first_seen_date, today)

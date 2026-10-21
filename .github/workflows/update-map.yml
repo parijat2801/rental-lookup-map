@@ -47,6 +47,7 @@ jobs:
             data/cache
             data/raw
             data/raw_prev
+            data/raw_pa
           key: rental-data-${{ github.run_number }}
           restore-keys: |
             rental-data-
@@ -66,6 +67,10 @@ jobs:
         run: |
           rm -rf data/raw_mb
           python -m rental_lookup.sources magicbricks
+
+      # data/raw_pa is cached: only properties new since the last run are fetched (the API is rate-limited).
+      - name: Fetch Property Angel listings
+        run: python -m rental_lookup.sources propertyangel
 
       - name: Sync stars (published stars.json + cache + repo → merge)
         run: |

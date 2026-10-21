@@ -45,8 +45,8 @@ class Listing:
     building_type: str  # "AP" apartment, "IH" independent house, ...
     floor: int
     total_floors: int
-    has_lift: bool
-    parking: str  # NONE / TWO_WHEELER / FOUR_WHEELER / BOTH
+    has_lift: Optional[bool]  # None = unknown
+    parking: str  # "" = unknown; NONE / TWO_WHEELER / FOUR_WHEELER / BOTH
     title: str
     url: str
     photo_url: str
@@ -72,7 +72,8 @@ class Listing:
             return None
 
         amenities = raw.get("amenitiesMap") or {}
-        parking = raw.get("parking", "NONE")
+        parking = raw["parking"] if raw.get("parking") is not None else ""
+        balconies = raw.get("balconies")
         detail_path = raw.get("detailUrl", "")
         transit_score, lifestyle_score = nobroker_platform_scores(raw)
 
@@ -89,13 +90,13 @@ class Listing:
             building_type=raw.get("buildingType", ""),
             floor=raw.get("floor", 0),
             total_floors=raw.get("totalFloor", 0),
-            has_lift=raw.get("lift", False),
+            has_lift=raw["lift"] if "lift" in raw else None,
             parking=parking,
             title=raw.get("propertyTitle", ""),
             url=NOBROKER_BASE_URL + detail_path if detail_path else "",
             photo_url=raw.get("originalImageUrl", ""),
             facing=raw.get("facing", ""),
-            balconies=raw.get("balconies", 0) or 0,
+            balconies=balconies if balconies is not None else -1,
             age_years=raw.get("propertyAge", 99),
             water_supply=raw.get("waterSupply", ""),
             is_negotiable=raw.get("negotiable", False),

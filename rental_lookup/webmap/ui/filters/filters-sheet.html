@@ -40,8 +40,8 @@
             <input type="range" id="filter-sqft" min="500" max="2000" step="50" value="800" oninput="refreshMap()">
           </div>
           <div class="chip-row">
-            <button class="chip" data-filter="excludeStandalone" onclick="toggleChip(this)">No standalone buildings</button>
-            <button class="chip" data-filter="excludeIndependentHouses" onclick="toggleChip(this)">No independent houses</button>
+            <button class="chip on" data-filter="excludeStandalone" onclick="toggleChip(this)">No standalone buildings</button>
+            <button class="chip on" data-filter="excludeIndependentHouses" onclick="toggleChip(this)">No independent houses</button>
             <button class="chip" data-filter="penthouseOnly" onclick="toggleChip(this)">Penthouse (top floor)</button>
           </div>
         </div>
@@ -51,10 +51,10 @@
         <summary>Must-haves<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
         <div class="section-body">
           <div class="chip-row">
-            <button class="chip" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</button>
-            <button class="chip" data-filter="requireLift" onclick="toggleChip(this)">Lift</button>
+            <button class="chip on" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</button>
+            <button class="chip on" data-filter="requireLift" onclick="toggleChip(this)">Lift</button>
             <button class="chip" data-filter="requireCarParking" onclick="toggleChip(this)">Car parking</button>
-            <button class="chip" data-filter="requireAnyParking" onclick="toggleChip(this)">Any parking</button>
+            <button class="chip on" data-filter="requireAnyParking" onclick="toggleChip(this)">Any parking</button>
             <button class="chip" data-filter="poolOnly" onclick="toggleChip(this)">Pool</button>
             <button class="chip" data-filter="petFriendlyOnly" onclick="toggleChip(this)">Pet friendly</button>
             <button class="chip" data-filter="excludeWestFacing" onclick="toggleChip(this)">Not west-facing</button>
@@ -100,6 +100,7 @@
           <div class="chip-row">
             <button class="chip" data-filter="sourceNoBroker" onclick="toggleChip(this)">NoBroker</button>
             <button class="chip" data-filter="sourceMagicBricks" onclick="toggleChip(this)">MagicBricks</button>
+            <button class="chip" data-filter="sourcePropertyAngel" onclick="toggleChip(this)">Property Angel</button>
           </div>
         </div>
       </details>

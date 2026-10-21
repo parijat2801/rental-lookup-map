@@ -32,11 +32,12 @@ function passesFilters(d, sliders) {
     if (filterChips.furnishedFull || filterChips.furnishedSemi || filterChips.furnishedNone) {
         if (!((filterChips.furnishedFull && d.furnishing === 'FULL') || (filterChips.furnishedSemi && d.furnishing === 'SEMI') || (filterChips.furnishedNone && d.furnishing === 'NONE'))) return false;
     }
-    if (filterChips.requireLift && !d.hasLift) return false;
+    // Unknown values pass for these must-haves (null lift, "" parking, -1 balconies)
+    if (filterChips.requireLift && d.hasLift === false) return false;
     if (filterChips.requireCarParking && !CAR_PARKING_TYPES.includes(d.parking)) return false;
-    if (filterChips.requireAnyParking && (!d.parking || d.parking === 'NONE')) return false;
+    if (filterChips.requireAnyParking && d.parking === 'NONE') return false;
     if (filterChips.excludeWestFacing && ['W','NW'].includes(d.facing)) return false;
-    if (filterChips.requireBalcony && d.balconies === 0) return false;  // -1 (unknown) passes
+    if (filterChips.requireBalcony && d.balconies === 0) return false;
     if (filterChips.excludeStandalone && STANDALONE_SOCIETIES.includes((d.society || '').toLowerCase().trim())) return false;
     if (filterChips.excludeIndependentHouses && d.buildingType === 'IH') return false;
     if (filterChips.requireRealPhoto && !d.hasRealPhoto) return false;
@@ -45,8 +46,9 @@ function passesFilters(d, sliders) {
     if (filterChips.brandedBuilderOnly && !d.isBrandedBuilder) return false;
     if (filterChips.excludeFakeLocations && d.isFakeLocation) return false;
     // Source chips are an OR-set: none selected = show all
-    if (filterChips.sourceNoBroker || filterChips.sourceMagicBricks) {
-        if (!((filterChips.sourceNoBroker && d.source === 'nb') || (filterChips.sourceMagicBricks && d.source === 'mb'))) return false;
+    if (filterChips.sourceNoBroker || filterChips.sourceMagicBricks || filterChips.sourcePropertyAngel) {
+        if (!((filterChips.sourceNoBroker && d.source === 'nb') || (filterChips.sourceMagicBricks && d.source === 'mb')
+              || (filterChips.sourcePropertyAngel && d.source === 'pa'))) return false;
     }
     if (filterChips.penthouseOnly && (d.totalFloors < 4 || d.floor !== d.totalFloors)) return false;  // top floor of 4+
     if (filterChips.newTodayOnly && d.daysAgo !== 0) return false;

@@ -21,19 +21,24 @@ rm -rf data/raw_mb
 "$PY" -m rental_lookup.sources magicbricks
 
 echo
-echo "=== Step 3: Rank NoBroker listings into output/results.csv ==="
+echo "=== Step 3: Fetch fresh from Property Angel ==="
+# Keeps data/raw_pa: details are reused and only new properties are fetched (the API is rate-limited).
+"$PY" -m rental_lookup.sources propertyangel
+
+echo
+echo "=== Step 4: Rank NoBroker listings into output/results.csv ==="
 "$PY" -m rental_lookup
 
 echo
-echo "=== Step 4: Fetch detail pages for the top 300 ==="
+echo "=== Step 5: Fetch detail pages for the top 300 ==="
 "$PY" -m rental_lookup.enrichment.listing_details 300
 
 echo
-echo "=== Step 5: Look up NoBroker ratings missing from search results ==="
+echo "=== Step 6: Look up NoBroker ratings missing from search results ==="
 "$PY" -m rental_lookup.enrichment.listing_details scores
 
 echo
-echo "=== Step 6: Rebuild map ==="
+echo "=== Step 7: Rebuild map ==="
 "$PY" -m rental_lookup.webmap.builder
 
 echo

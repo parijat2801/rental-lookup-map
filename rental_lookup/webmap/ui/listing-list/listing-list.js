@@ -26,7 +26,7 @@ function renderSidebarList() {
             '<div class="details-line">' + bhkLabel(d) + ' · ' + (FURNISHING_LABELS[d.furnishing] ? FURNISHING_LABELS[d.furnishing] + ' · ' : '') + d.sqft.toLocaleString() + ' sqft</div>' +
             (d.availableFrom ? '<div class="details-line secondary">Avail. ' + escapeHtml(d.availableFrom) + '</div>' : '') +
             commuteLineHtml(d) +
-            '<div class="tags">' + (d.source === 'mb' ? '<span class="tag">MagicBricks</span>' : '') + (d.isPetFriendly ? '<span class="tag positive">' + icon('paw-print') + 'Pets OK</span>' : '') +
+            '<div class="tags">' + (d.source !== 'nb' && SOURCE_LABELS[d.source] ? '<span class="tag">' + SOURCE_LABELS[d.source] + '</span>' : '') + (d.isPetFriendly ? '<span class="tag positive">' + icon('paw-print') + 'Pets OK</span>' : '') +
             tagsHtml(tags) + '</div>' +
             '</div><div class="card-corner">' + scorePillHtml(d) +
             '<button class="star-toggle' + (starred ? ' on' : '') + '" aria-label="' + (starred ? 'Unstar' : 'Star') + '">' + icon('star') + '</button></div></div>';

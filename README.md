@@ -2,7 +2,7 @@
 
 Find a flat in Bangalore without tabbing between rental portals.
 
-rental-map scrapes **NoBroker** and **MagicBricks**, de-duplicates listings across
+rental-map scrapes **NoBroker**, **MagicBricks** and **Property Angel**, de-duplicates listings across
 them, scores each one, and puts everything on a single interactive map with real
 filters, rankings and a shared star/dismiss list. It also produces a ranked CSV
 scored against distances to parks, lakes and metro stations from OpenStreetMap.
@@ -47,7 +47,7 @@ nearest park, lake and metro station.
 ## Requirements
 
 - Python 3.9+ (CI uses 3.13)
-- Network access to NoBroker, MagicBricks and the OpenStreetMap Overpass API
+- Network access to NoBroker, MagicBricks, Property Angel and the OpenStreetMap Overpass API
 
 ## Quick start
 
@@ -72,7 +72,7 @@ Installing the package adds these commands:
 
 | Command | Same as | What it does |
 | --- | --- | --- |
-| `rental-map-fetch SOURCE` | `python -m rental_lookup.sources SOURCE` | Fetch listings from `nobroker`, `magicbricks` or `all` into `data/`. |
+| `rental-map-fetch SOURCE` | `python -m rental_lookup.sources SOURCE` | Fetch listings from `nobroker`, `magicbricks`, `propertyangel` or `all` into `data/`. |
 | `rental-map-rank` | `python -m rental_lookup` | Score NoBroker listings into `output/results.csv`. |
 | `rental-map-build` | `python -m rental_lookup.webmap.builder` | Build `output/map.html` once. |
 | `rental-map-serve [PORT]` | `python -m rental_lookup.webmap.server` | Serve the map without the watcher. |
@@ -93,6 +93,7 @@ Each step can also be run on its own, from the repository root:
 | --- | --- |
 | Fetch NoBroker listings | `rental-map-fetch nobroker [--cookie COOKIE]` |
 | Fetch MagicBricks listings | `rental-map-fetch magicbricks` |
+| Fetch Property Angel listings | `rental-map-fetch propertyangel` |
 | Fetch from every source | `rental-map-fetch all [--cookie COOKIE]` |
 | Rank NoBroker listings into `output/results.csv` | `rental-map-rank [--cookie COOKIE]` |
 | Fetch detail pages for the top N NoBroker listings | `python -m rental_lookup.enrichment.listing_details [N]` |
@@ -152,7 +153,7 @@ To use it on your fork:
 
 ```
 rental_lookup/
-  sources/          scrapers: nobroker, magicbricks, facebook (experimental)
+  sources/          scrapers: nobroker, magicbricks, propertyangel, facebook (experimental)
   enrichment/       slow per-listing extras: listing_details
   webmap/           builder (data -> output/map.html), template.html, server, dev watcher
     ui/             the page's components, inlined into map.html by the builder; each
@@ -168,7 +169,7 @@ rental_lookup/
 scripts/            refresh_map.sh, fetch_metro_lines.py
 tests/              pytest suite (no network needed)
 data/
-  raw/ raw_prev/ raw_mb/   saved API pages (gitignored, re-fetched each run)
+  raw/ raw_prev/ raw_mb/ raw_pa/   saved API pages (gitignored, re-fetched each run)
   cache/                   stars, first-seen dates, detail, rating and photo caches (tracked)
   metro_lines.json         metro overlay
   spike/                   API contracts and sample responses
@@ -223,7 +224,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and how to add a new sour
 
 ## Disclaimer
 
-This project is not affiliated with NoBroker, MagicBricks, Facebook or any other
+This project is not affiliated with NoBroker, MagicBricks, Property Angel, Facebook or any other
 listing platform. The scrapers use undocumented endpoints that may change or be
 blocked at any time, and automated access may be against those sites' terms of
 service. You are responsible for how you use this software. Be polite: the

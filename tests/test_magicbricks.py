@@ -39,12 +39,20 @@ def test_coords_fall_back_to_locality_centroid():
 def test_lenient_numbers():
     listing = _listing(price="45000.0", floorNo="Ground", floors="abc", balconiesD=None)
     assert listing.rent == 45000
-    assert (listing.floor, listing.total_floors, listing.balconies) == (0, 0, 0)
+    assert (listing.floor, listing.total_floors, listing.balconies) == (0, 0, -1)
     assert _listing(price="0") is None
 
 
 def test_parking_and_water():
     assert _listing(parkingD="1 Covered").parking == "FOUR_WHEELER"
     assert _listing(parkingD="1 Covered").has_car_parking is True
-    assert _listing().parking == "NONE"
+    assert _listing().parking == ""  # missing parkingD → unknown
+    assert _listing(parkingD="None").parking == "NONE"
     assert _listing(waterStatus="Water Availability 24 Hours Available").water_supply == "CORPORATION"
+
+
+def test_unknown_lift_and_balconies():
+    assert _listing().has_lift is None  # no amenities field
+    assert _listing(amenities="12205").has_lift is False
+    assert _listing(amenities="12201").has_lift is True
+    assert _listing(balconiesD="2").balconies == 2

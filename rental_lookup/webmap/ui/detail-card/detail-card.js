@@ -12,6 +12,7 @@ function tagsHtml(labels, className) {
 }
 function bhkLabel(d) { return escapeHtml((d.bhk || '').replace('BHK', '')) + ' BHK'; }
 var FURNISHING_LABELS = {FULL: 'Furnished', SEMI: 'Semi-furnished', NONE: 'Unfurnished'};
+var SOURCE_LABELS = {nb: 'NoBroker', mb: 'MagicBricks', pa: 'Property Angel'};
 function furnishingLabel(d) { return FURNISHING_LABELS[d.furnishing] || 'Furnishing unknown'; }
 function floorLabel(d) { return 'Floor ' + d.floor + (d.totalFloors ? ' of ' + d.totalFloors : ''); }
 // Shared/approximate coordinates are unreliable, so those listings search Google Maps by name instead.
@@ -43,7 +44,7 @@ function showDetailCard(e, d) {
     byId('card-badges').innerHTML = badges.join('');
 
     var rankMode = effectiveRankMode();
-    var eyebrow = [d.isDelisted ? '' : '#' + d.rank, d.source === 'mb' ? 'MagicBricks' : 'NoBroker',
+    var eyebrow = [d.isDelisted ? '' : '#' + d.rank, SOURCE_LABELS[d.source] || 'NoBroker',
         rankMode === 'quality' ? '' : 'Quality ' + (rankMode === 'deal' ? d.scores.dealQuality : d.scores.quality)];
     byId('card-eyebrow').innerHTML = scorePillHtml(d) + '<span class="label">' + eyebrow.filter(Boolean).join(' · ') + '</span>';
     byId('card-title').textContent = d.society || 'Unnamed society';

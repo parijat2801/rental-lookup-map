@@ -14,6 +14,7 @@ OUTPUT_DIR = REPO_ROOT / "output"
 NOBROKER_PAGES_DIR = DATA_DIR / "raw"
 PREVIOUS_NOBROKER_PAGES_DIR = DATA_DIR / "raw_prev"  # last run's pages, to spot delisted listings
 MAGICBRICKS_PAGES_DIR = DATA_DIR / "raw_mb"
+PROPERTYANGEL_PAGES_DIR = DATA_DIR / "raw_pa"  # one detail payload per property
 FACEBOOK_POSTS_DIR = DATA_DIR / "fb"
 
 # Long-lived state, committed to git and cached by CI.

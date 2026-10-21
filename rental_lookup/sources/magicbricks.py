@@ -98,12 +98,29 @@ def _parse_facing(raw: dict) -> str:
 
 
 def _parse_parking(raw: dict) -> str:
+    """Map parking label; "" when the field is absent (unknown)."""
+    if raw.get("parkingD") is None:
+        return ""
     text = str(raw.get("parkingD") or "")
     if "Covered" in text or "Car" in text:
         return "FOUR_WHEELER"
     if "Bike" in text or "Two" in text:
         return "TWO_WHEELER"
     return "BOTH" if text and text != "None" else "NONE"
+
+
+def _parse_balconies(raw: dict) -> int:
+    """Balcony count; -1 when the field is absent (unknown)."""
+    if raw.get("balconiesD") is None:
+        return -1
+    return parse_int(raw.get("balconiesD"))
+
+
+def _parse_has_lift(raw: dict, amenities: set[str]) -> Optional[bool]:
+    """True/False when amenities are listed; None when amenities are absent."""
+    if raw.get("amenities") in (None, ""):
+        return None
+    return "lift" in amenities
 
 
 def _parse_age_years(raw: dict) -> int:
@@ -161,13 +178,13 @@ def normalize_listing(raw: dict) -> Optional[Listing]:
         building_type="AP",
         floor=_parse_floor(raw),
         total_floors=parse_int(raw.get("floors")),
-        has_lift="lift" in amenities,
+        has_lift=_parse_has_lift(raw, amenities),
         parking=parking,
         title=raw.get("propertyTitle", ""),
         url=f"https://www.magicbricks.com/propertyDetails/{url_path}" if url_path else "",
         photo_url=photos[0] if photos else (raw.get("image") or ""),
         facing=_parse_facing(raw),
-        balconies=parse_int(raw.get("balconiesD")),
+        balconies=_parse_balconies(raw),
         age_years=_parse_age_years(raw),
         water_supply=_parse_water_supply(raw),
         is_negotiable=False,
