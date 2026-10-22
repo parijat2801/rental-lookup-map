@@ -1,17 +1,35 @@
 <div id="detail-card">
-  <div class="carousel" id="card-carousel">
-    <img id="card-photo" src="" alt="" onerror="this.style.display='none'" onload="this.style.display='block'">
-    <div class="badges" id="card-badges"></div>
-    <button class="nav nav-left" onclick="stepPhoto(-1)" aria-label="Previous photo"><span data-icon="chevron-left"></span></button>
-    <button class="nav nav-right" onclick="stepPhoto(1)" aria-label="Next photo"><span data-icon="chevron-right"></span></button>
-    <span class="counter" id="card-photo-counter"></span>
-  </div>
-  <div class="body">
-    <div class="eyebrow" id="card-eyebrow"></div>
-    <div class="title" id="card-title"></div>
-    <div class="location" id="card-location"></div>
-    <div class="price" id="card-price"></div>
-    <div id="card-details"></div>
-    <div id="card-extras"></div>
-  </div>
+    <div class="carousel" id="card-carousel">
+        <img
+            id="card-photo"
+            src=""
+            alt=""
+            onerror="this.style.display = 'none'"
+            onload="this.style.display = 'block'"
+        />
+        <div class="badges" id="card-badges"></div>
+        <button
+            class="nav nav-left"
+            onclick="stepPhoto(-1)"
+            aria-label="Previous photo"
+        >
+            <span data-icon="chevron-left"></span>
+        </button>
+        <button
+            class="nav nav-right"
+            onclick="stepPhoto(1)"
+            aria-label="Next photo"
+        >
+            <span data-icon="chevron-right"></span>
+        </button>
+        <span class="counter" id="card-photo-counter"></span>
+    </div>
+    <div class="body">
+        <div class="eyebrow" id="card-eyebrow"></div>
+        <div class="title" id="card-title"></div>
+        <div class="location" id="card-location"></div>
+        <div class="price" id="card-price"></div>
+        <div id="card-details"></div>
+        <div id="card-extras"></div>
+    </div>
 </div>

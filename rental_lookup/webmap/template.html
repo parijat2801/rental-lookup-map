@@ -1,69 +1,83 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>Rentals — Bangalore</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/lucide@1.58.0/dist/umd/lucide.min.js"></script>
-<script src="https://unpkg.com/gsap@3.13.0/dist/gsap.min.js"></script>
-<style>
-/* @include ui/core/base.css */
-/* @include ui/map/map.css */
-/* @include ui/sidebar/sidebar.css */
-/* @include ui/sidebar-header/sidebar-header.css */
-/* @include ui/dialog/dialog.css */
-/* @include ui/shortcuts-dialog/shortcuts-dialog.css */
-/* @include ui/rank-tabs/rank-tabs.css */
-/* @include ui/commute/commute.css */
-/* @include ui/filters/quick-filters.css */
-/* @include ui/listing-list/listing-list.css */
-/* @include ui/filters/filters-sheet.css */
-/* @include ui/selection-bar/selection-bar.css */
-/* @include ui/toast/toast.css */
-/* @include ui/detail-card/detail-card.css */
-/* @include ui/core/responsive.css */
-</style></head><body>
-<!-- @include ui/map/map.html -->
-<!-- @include ui/sidebar/sidebar.html -->
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Rentals — Bangalore</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        />
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://unpkg.com/lucide@1.58.0/dist/umd/lucide.min.js"></script>
+        <script src="https://unpkg.com/gsap@3.13.0/dist/gsap.min.js"></script>
+        <style>
+            /* @include ui/core/base.css */
+            /* @include ui/map/map.css */
+            /* @include ui/sidebar/sidebar.css */
+            /* @include ui/sidebar-header/sidebar-header.css */
+            /* @include ui/dialog/dialog.css */
+            /* @include ui/shortcuts-dialog/shortcuts-dialog.css */
+            /* @include ui/rank-tabs/rank-tabs.css */
+            /* @include ui/commute/commute.css */
+            /* @include ui/filters/quick-filters.css */
+            /* @include ui/listing-list/listing-list.css */
+            /* @include ui/filters/filters-sheet.css */
+            /* @include ui/selection-bar/selection-bar.css */
+            /* @include ui/toast/toast.css */
+            /* @include ui/detail-card/detail-card.css */
+            /* @include ui/core/responsive.css */
+        </style>
+    </head>
+    <body>
+        <!-- @include ui/map/map.html -->
+        <!-- @include ui/sidebar/sidebar.html -->
 
-<!-- @include ui/selection-bar/selection-bar.html -->
-<!-- @include ui/shortcuts-dialog/shortcuts-dialog.html -->
-<!-- @include ui/resync-dialog/resync-dialog.html -->
-<!-- @include ui/toast/toast.html -->
+        <!-- @include ui/selection-bar/selection-bar.html -->
+        <!-- @include ui/shortcuts-dialog/shortcuts-dialog.html -->
+        <!-- @include ui/resync-dialog/resync-dialog.html -->
+        <!-- @include ui/toast/toast.html -->
 
-<!-- @include ui/detail-card/detail-card.html -->
-<script>
-// Scripts share one global scope and run in this order, so a file's top-level
-// code can only use what the files above it have set up.
-// @include ui/core/data.js
-// @include ui/core/helpers.js
-// @include ui/toast/toast.js
-// @include ui/sidebar/sidebar.js
-// @include ui/map/map.js
-// @include ui/map/user-location.js
-// @include ui/map/legend.js
-// @include ui/map/markers.js
-// @include ui/scoring/scoring.js
-// @include ui/rank-tabs/rank-tabs.js
-// @include ui/scoring/score-tiers.js
-// @include ui/filters/filters.js
-// @include ui/stars/stars.js
-// @include ui/sidebar-header/sidebar-header.js
-// @include ui/dialog/dialog.js
-// @include ui/resync-dialog/resync-dialog.js
-// @include ui/stars/backup.js
-// @include ui/detail-card/selection.js
-// @include ui/shortcuts-dialog/shortcuts-dialog.js
-// @include ui/core/render.js
-// @include ui/detail-card/detail-card.js
-// @include ui/listing-list/listing-list.js
-// @include ui/selection-bar/selection-bar.js
-// @include ui/commute/metro.js
-// @include ui/commute/storage.js
-// @include ui/commute/commute-times.js
-// @include ui/commute/drive-times.js
-// @include ui/commute/areas.js
-// @include ui/commute/commute-display.js
-// @include ui/core/boot.js
-</script></body></html>
+        <!-- @include ui/detail-card/detail-card.html -->
+        <script>
+            // Scripts share one global scope and run in this order, so a file's top-level
+            // code can only use what the files above it have set up.
+            // @include ui/core/data.js
+            // @include ui/core/helpers.js
+            // @include ui/toast/toast.js
+            // @include ui/sidebar/sidebar.js
+            // @include ui/map/map.js
+            // @include ui/map/user-location.js
+            // @include ui/map/legend.js
+            // @include ui/map/markers.js
+            // @include ui/scoring/scoring.js
+            // @include ui/rank-tabs/rank-tabs.js
+            // @include ui/scoring/score-tiers.js
+            // @include ui/filters/filters.js
+            // @include ui/stars/stars.js
+            // @include ui/sidebar-header/sidebar-header.js
+            // @include ui/dialog/dialog.js
+            // @include ui/resync-dialog/resync-dialog.js
+            // @include ui/stars/backup.js
+            // @include ui/detail-card/selection.js
+            // @include ui/shortcuts-dialog/shortcuts-dialog.js
+            // @include ui/core/render.js
+            // @include ui/detail-card/detail-card.js
+            // @include ui/listing-list/listing-list.js
+            // @include ui/selection-bar/selection-bar.js
+            // @include ui/commute/metro.js
+            // @include ui/commute/storage.js
+            // @include ui/commute/commute-times.js
+            // @include ui/commute/drive-times.js
+            // @include ui/commute/areas.js
+            // @include ui/commute/commute-display.js
+            // @include ui/core/boot.js
+        </script>
+    </body>
+</html>

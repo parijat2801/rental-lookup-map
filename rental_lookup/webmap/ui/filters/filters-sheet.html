@@ -1,121 +1,376 @@
-  <section id="filters-sheet" aria-label="Filters">
+<section id="filters-sheet" aria-label="Filters">
     <div class="sheet-header">
-      <h2>Filters</h2>
-      <button class="icon-button" aria-label="Close filters" onclick="closeFilters()"><span data-icon="x"></span></button>
+        <h2>Filters</h2>
+        <button
+            class="icon-button"
+            aria-label="Close filters"
+            onclick="closeFilters()"
+        >
+            <span data-icon="x"></span>
+        </button>
     </div>
     <div class="sheet-body">
-      <details class="filter-section" open>
-        <summary>Budget<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
-        <div class="section-body">
-          <div>
-            <div class="field-label"><span>Monthly total (rent + maintenance)</span><span class="slider-value" id="value-cost"></span></div>
-            <div class="dual-range">
-              <div class="track"><div class="track-fill" id="cost-track-fill"></div></div>
-              <input type="range" id="filter-cost-min" min="0" max="150000" step="5000" value="30000" oninput="onCostInput(this)" aria-label="Minimum monthly cost">
-              <input type="range" id="filter-cost-max" min="0" max="150000" step="5000" value="50000" oninput="onCostInput(this)" aria-label="Maximum monthly cost">
+        <details class="filter-section" open>
+            <summary>
+                Budget<span class="section-count"></span
+                ><span class="chevron" data-icon="chevron-down"></span>
+            </summary>
+            <div class="section-body">
+                <div>
+                    <div class="field-label">
+                        <span>Monthly total (rent + maintenance)</span
+                        ><span class="slider-value" id="value-cost"></span>
+                    </div>
+                    <div class="dual-range">
+                        <div class="track">
+                            <div class="track-fill" id="cost-track-fill"></div>
+                        </div>
+                        <input
+                            type="range"
+                            id="filter-cost-min"
+                            min="0"
+                            max="150000"
+                            step="5000"
+                            value="30000"
+                            oninput="onCostInput(this)"
+                            aria-label="Minimum monthly cost"
+                        />
+                        <input
+                            type="range"
+                            id="filter-cost-max"
+                            min="0"
+                            max="150000"
+                            step="5000"
+                            value="50000"
+                            oninput="onCostInput(this)"
+                            aria-label="Maximum monthly cost"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <div class="field-label">
+                        <span>Max deposit</span
+                        ><span class="slider-value" id="value-deposit"></span>
+                    </div>
+                    <input
+                        type="range"
+                        id="filter-deposit"
+                        min="2"
+                        max="20"
+                        step="1"
+                        value="5"
+                        oninput="refreshMap()"
+                    />
+                </div>
             </div>
-          </div>
-          <div>
-            <div class="field-label"><span>Max deposit</span><span class="slider-value" id="value-deposit"></span></div>
-            <input type="range" id="filter-deposit" min="2" max="20" step="1" value="5" oninput="refreshMap()">
-          </div>
-        </div>
-      </details>
+        </details>
 
-      <details class="filter-section" open>
-        <summary>Space<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
-        <div class="section-body">
-          <div class="chip-row">
-            <button class="chip on" data-filter="bhk1" onclick="toggleChip(this)">1 BHK</button>
-            <button class="chip on" data-filter="bhk2" onclick="toggleChip(this)">2 BHK</button>
-            <button class="chip" data-filter="bhk3" onclick="toggleChip(this)">3 BHK</button>
-          </div>
-          <div class="chip-row">
-            <button class="chip on" data-filter="furnishedFull" onclick="toggleChip(this)">Furnished</button>
-            <button class="chip on" data-filter="furnishedSemi" onclick="toggleChip(this)">Semi-furnished</button>
-            <button class="chip" data-filter="furnishedNone" onclick="toggleChip(this)">Unfurnished</button>
-          </div>
-          <div>
-            <div class="field-label"><span>Minimum area</span><span class="slider-value" id="value-sqft"></span></div>
-            <input type="range" id="filter-sqft" min="500" max="2000" step="50" value="800" oninput="refreshMap()">
-          </div>
-          <div class="chip-row">
-            <button class="chip on" data-filter="excludeStandalone" onclick="toggleChip(this)">No standalone buildings</button>
-            <button class="chip on" data-filter="excludeIndependentHouses" onclick="toggleChip(this)">No independent houses</button>
-            <button class="chip" data-filter="penthouseOnly" onclick="toggleChip(this)">Penthouse (top floor)</button>
-          </div>
-        </div>
-      </details>
+        <details class="filter-section" open>
+            <summary>
+                Space<span class="section-count"></span
+                ><span class="chevron" data-icon="chevron-down"></span>
+            </summary>
+            <div class="section-body">
+                <div class="chip-row">
+                    <button
+                        class="chip on"
+                        data-filter="bhk1"
+                        onclick="toggleChip(this)"
+                    >
+                        1 BHK
+                    </button>
+                    <button
+                        class="chip on"
+                        data-filter="bhk2"
+                        onclick="toggleChip(this)"
+                    >
+                        2 BHK
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="bhk3"
+                        onclick="toggleChip(this)"
+                    >
+                        3 BHK
+                    </button>
+                </div>
+                <div class="chip-row">
+                    <button
+                        class="chip on"
+                        data-filter="furnishedFull"
+                        onclick="toggleChip(this)"
+                    >
+                        Furnished
+                    </button>
+                    <button
+                        class="chip on"
+                        data-filter="furnishedSemi"
+                        onclick="toggleChip(this)"
+                    >
+                        Semi-furnished
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="furnishedNone"
+                        onclick="toggleChip(this)"
+                    >
+                        Unfurnished
+                    </button>
+                </div>
+                <div>
+                    <div class="field-label">
+                        <span>Minimum area</span
+                        ><span class="slider-value" id="value-sqft"></span>
+                    </div>
+                    <input
+                        type="range"
+                        id="filter-sqft"
+                        min="500"
+                        max="2000"
+                        step="50"
+                        value="800"
+                        oninput="refreshMap()"
+                    />
+                </div>
+                <div class="chip-row">
+                    <button
+                        class="chip on"
+                        data-filter="excludeStandalone"
+                        onclick="toggleChip(this)"
+                    >
+                        No standalone buildings
+                    </button>
+                    <button
+                        class="chip on"
+                        data-filter="excludeIndependentHouses"
+                        onclick="toggleChip(this)"
+                    >
+                        No independent houses
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="penthouseOnly"
+                        onclick="toggleChip(this)"
+                    >
+                        Penthouse (top floor)
+                    </button>
+                </div>
+            </div>
+        </details>
 
-      <details class="filter-section">
-        <summary>Must-haves<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
-        <div class="section-body">
-          <div class="chip-row">
-            <button class="chip on" data-filter="requireBalcony" onclick="toggleChip(this)">Balcony</button>
-            <button class="chip on" data-filter="requireLift" onclick="toggleChip(this)">Lift</button>
-            <button class="chip" data-filter="requireCarParking" onclick="toggleChip(this)">Car parking</button>
-            <button class="chip on" data-filter="requireAnyParking" onclick="toggleChip(this)">Any parking</button>
-            <button class="chip" data-filter="poolOnly" onclick="toggleChip(this)">Pool</button>
-            <button class="chip" data-filter="petFriendlyOnly" onclick="toggleChip(this)">Pet friendly</button>
-            <button class="chip" data-filter="excludeWestFacing" onclick="toggleChip(this)">Not west-facing</button>
-          </div>
-        </div>
-      </details>
+        <details class="filter-section">
+            <summary>
+                Must-haves<span class="section-count"></span
+                ><span class="chevron" data-icon="chevron-down"></span>
+            </summary>
+            <div class="section-body">
+                <div class="chip-row">
+                    <button
+                        class="chip on"
+                        data-filter="requireBalcony"
+                        onclick="toggleChip(this)"
+                    >
+                        Balcony
+                    </button>
+                    <button
+                        class="chip on"
+                        data-filter="requireLift"
+                        onclick="toggleChip(this)"
+                    >
+                        Lift
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="requireCarParking"
+                        onclick="toggleChip(this)"
+                    >
+                        Car parking
+                    </button>
+                    <button
+                        class="chip on"
+                        data-filter="requireAnyParking"
+                        onclick="toggleChip(this)"
+                    >
+                        Any parking
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="poolOnly"
+                        onclick="toggleChip(this)"
+                    >
+                        Pool
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="petFriendlyOnly"
+                        onclick="toggleChip(this)"
+                    >
+                        Pet friendly
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="excludeWestFacing"
+                        onclick="toggleChip(this)"
+                    >
+                        Not west-facing
+                    </button>
+                </div>
+            </div>
+        </details>
 
-      <details class="filter-section">
-        <summary>Listing quality<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
-        <div class="section-body">
-          <div>
-            <div class="field-label"><span>Minimum <span id="score-label">score</span></span><span class="slider-value" id="value-score"></span></div>
-            <input type="range" id="filter-score" min="0" max="100" step="5" value="0" oninput="refreshMap()">
-          </div>
-          <div>
-            <div class="field-label"><span>Minimum photos</span><span class="slider-value" id="value-photos"></span></div>
-            <input type="range" id="filter-photos" min="0" max="20" step="1" value="0" oninput="refreshMap()">
-          </div>
-          <div class="chip-row">
-            <button class="chip on" data-filter="requireRealPhoto" onclick="toggleChip(this)">Real photos</button>
-            <button class="chip" data-filter="excludeFakeLocations" onclick="toggleChip(this)">Verified location</button>
-            <button class="chip" data-filter="brandedBuilderOnly" onclick="toggleChip(this)">Branded builder</button>
-          </div>
-        </div>
-      </details>
+        <details class="filter-section">
+            <summary>
+                Listing quality<span class="section-count"></span
+                ><span class="chevron" data-icon="chevron-down"></span>
+            </summary>
+            <div class="section-body">
+                <div>
+                    <div class="field-label">
+                        <span>Minimum <span id="score-label">score</span></span
+                        ><span class="slider-value" id="value-score"></span>
+                    </div>
+                    <input
+                        type="range"
+                        id="filter-score"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value="0"
+                        oninput="refreshMap()"
+                    />
+                </div>
+                <div>
+                    <div class="field-label">
+                        <span>Minimum photos</span
+                        ><span class="slider-value" id="value-photos"></span>
+                    </div>
+                    <input
+                        type="range"
+                        id="filter-photos"
+                        min="0"
+                        max="20"
+                        step="1"
+                        value="0"
+                        oninput="refreshMap()"
+                    />
+                </div>
+                <div class="chip-row">
+                    <button
+                        class="chip on"
+                        data-filter="requireRealPhoto"
+                        onclick="toggleChip(this)"
+                    >
+                        Real photos
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="excludeFakeLocations"
+                        onclick="toggleChip(this)"
+                    >
+                        Verified location
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="brandedBuilderOnly"
+                        onclick="toggleChip(this)"
+                    >
+                        Branded builder
+                    </button>
+                </div>
+            </div>
+        </details>
 
-      <details class="filter-section">
-        <summary>Freshness<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
-        <div class="section-body">
-          <div>
-            <div class="field-label"><span>Posted within</span><span class="slider-value" id="value-days"></span></div>
-            <input type="range" id="filter-days" min="0" max="90" step="1" value="90" oninput="refreshMap()">
-          </div>
-          <div class="chip-row">
-            <button class="chip" data-filter="newTodayOnly" onclick="toggleChip(this)">New today</button>
-          </div>
-        </div>
-      </details>
+        <details class="filter-section">
+            <summary>
+                Freshness<span class="section-count"></span
+                ><span class="chevron" data-icon="chevron-down"></span>
+            </summary>
+            <div class="section-body">
+                <div>
+                    <div class="field-label">
+                        <span>Posted within</span
+                        ><span class="slider-value" id="value-days"></span>
+                    </div>
+                    <input
+                        type="range"
+                        id="filter-days"
+                        min="0"
+                        max="90"
+                        step="1"
+                        value="90"
+                        oninput="refreshMap()"
+                    />
+                </div>
+                <div class="chip-row">
+                    <button
+                        class="chip"
+                        data-filter="newTodayOnly"
+                        onclick="toggleChip(this)"
+                    >
+                        New today
+                    </button>
+                </div>
+            </div>
+        </details>
 
-      <details class="filter-section">
-        <summary>Source<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
-        <div class="section-body">
-          <div class="chip-row">
-            <button class="chip" data-filter="sourceNoBroker" onclick="toggleChip(this)">NoBroker</button>
-            <button class="chip" data-filter="sourceMagicBricks" onclick="toggleChip(this)">MagicBricks</button>
-            <button class="chip" data-filter="sourcePropertyAngel" onclick="toggleChip(this)">Property Angel</button>
-          </div>
-        </div>
-      </details>
+        <details class="filter-section">
+            <summary>
+                Source<span class="section-count"></span
+                ><span class="chevron" data-icon="chevron-down"></span>
+            </summary>
+            <div class="section-body">
+                <div class="chip-row">
+                    <button
+                        class="chip"
+                        data-filter="sourceNoBroker"
+                        onclick="toggleChip(this)"
+                    >
+                        NoBroker
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="sourceMagicBricks"
+                        onclick="toggleChip(this)"
+                    >
+                        MagicBricks
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="sourcePropertyAngel"
+                        onclick="toggleChip(this)"
+                    >
+                        Property Angel
+                    </button>
+                </div>
+            </div>
+        </details>
 
-      <details class="filter-section">
-        <summary>Your lists<span class="section-count"></span><span class="chevron" data-icon="chevron-down"></span></summary>
-        <div class="section-body">
-          <div class="chip-row">
-            <button class="chip on" data-filter="hideDismissed" onclick="toggleChip(this)">Hide dismissed</button>
-          </div>
-        </div>
-      </details>
+        <details class="filter-section">
+            <summary>
+                Your lists<span class="section-count"></span
+                ><span class="chevron" data-icon="chevron-down"></span>
+            </summary>
+            <div class="section-body">
+                <div class="chip-row">
+                    <button
+                        class="chip on"
+                        data-filter="hideDismissed"
+                        onclick="toggleChip(this)"
+                    >
+                        Hide dismissed
+                    </button>
+                </div>
+            </div>
+        </details>
     </div>
     <div class="sheet-footer">
-      <button class="text-button" onclick="resetFilters()">Reset all</button>
-      <button class="primary-button" id="show-results-button" onclick="closeFilters()">Show listings</button>
+        <button class="text-button" onclick="resetFilters()">Reset all</button>
+        <button
+            class="primary-button"
+            id="show-results-button"
+            onclick="closeFilters()"
+        >
+            Show listings
+        </button>
     </div>
-  </section>
+</section>

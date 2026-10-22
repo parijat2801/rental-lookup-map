@@ -1,17 +1,51 @@
-  <header class="sidebar-header">
+<header class="sidebar-header">
     <div>
-      <h1>Rentals in Bangalore</h1>
-      <p class="subtitle" id="result-summary">&nbsp;</p>
+        <h1>Rentals in Bangalore</h1>
+        <p class="subtitle" id="result-summary">&nbsp;</p>
     </div>
     <div class="header-actions">
-      <button class="icon-button sidebar-collapse-button" title="Collapse sidebar" aria-label="Collapse sidebar" onclick="toggleSidebar(true)"><span data-icon="panel-left-close"></span></button>
-      <button class="icon-button" title="Keyboard shortcuts" aria-label="Keyboard shortcuts" onclick="toggleShortcuts(true)"><span data-icon="keyboard"></span></button>
-      <button class="icon-button" title="More" aria-label="More" onclick="toggleMenu('saved-popover', event)"><span data-icon="ellipsis"></span></button>
-      <div class="popover" id="saved-popover" hidden>
-        <button class="menu-item" id="resync-button" onclick="toggleResyncConfirm(true)"><span data-icon="refresh-cw"></span><span id="resync-label">Resync listings</span></button>
-        <button class="menu-item" onclick="copyStarredToClipboard()"><span data-icon="copy"></span>Copy starred listings</button>
-        <button class="menu-item" onclick="downloadStarsBackup()"><span data-icon="download"></span>Download backup</button>
-        <button class="menu-item" onclick="restoreStarsBackup()"><span data-icon="upload"></span>Restore from backup</button>
-      </div>
+        <button
+            class="icon-button sidebar-collapse-button"
+            title="Collapse sidebar"
+            aria-label="Collapse sidebar"
+            onclick="toggleSidebar(true)"
+        >
+            <span data-icon="panel-left-close"></span>
+        </button>
+        <button
+            class="icon-button"
+            title="Keyboard shortcuts"
+            aria-label="Keyboard shortcuts"
+            onclick="toggleShortcuts(true)"
+        >
+            <span data-icon="keyboard"></span>
+        </button>
+        <button
+            class="icon-button"
+            title="More"
+            aria-label="More"
+            onclick="toggleMenu('saved-popover', event)"
+        >
+            <span data-icon="ellipsis"></span>
+        </button>
+        <div class="popover" id="saved-popover" hidden>
+            <button
+                class="menu-item"
+                id="resync-button"
+                onclick="toggleResyncConfirm(true)"
+            >
+                <span data-icon="refresh-cw"></span
+                ><span id="resync-label">Resync listings</span>
+            </button>
+            <button class="menu-item" onclick="copyStarredToClipboard()">
+                <span data-icon="copy"></span>Copy starred listings
+            </button>
+            <button class="menu-item" onclick="downloadStarsBackup()">
+                <span data-icon="download"></span>Download backup
+            </button>
+            <button class="menu-item" onclick="restoreStarsBackup()">
+                <span data-icon="upload"></span>Restore from backup
+            </button>
+        </div>
     </div>
-  </header>
+</header>

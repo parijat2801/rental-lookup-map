@@ -1,5 +1,31 @@
-  <div class="quick-filters">
-    <label class="search-box"><span data-icon="search"></span><input type="search" id="search-input" placeholder="Search society or locality" aria-label="Search listings" autocomplete="off" oninput="onSearchInput()"></label>
-    <button class="chip" data-filter="starredOnly" title="Starred only" aria-label="Starred only" onclick="toggleChip(this)"><span data-icon="star"></span></button>
-    <button class="chip filters-button" id="filters-button" title="Filters" aria-label="Filters" onclick="openFilters()"><span data-icon="sliders-horizontal"></span><span class="count-badge" id="active-filter-count" hidden>0</span></button>
-  </div>
+<div class="quick-filters">
+    <label class="search-box"
+        ><span data-icon="search"></span
+        ><input
+            type="search"
+            id="search-input"
+            placeholder="Search society or locality"
+            aria-label="Search listings"
+            autocomplete="off"
+            oninput="onSearchInput()"
+    /></label>
+    <button
+        class="chip"
+        data-filter="starredOnly"
+        title="Starred only"
+        aria-label="Starred only"
+        onclick="toggleChip(this)"
+    >
+        <span data-icon="star"></span>
+    </button>
+    <button
+        class="chip filters-button"
+        id="filters-button"
+        title="Filters"
+        aria-label="Filters"
+        onclick="openFilters()"
+    >
+        <span data-icon="sliders-horizontal"></span
+        ><span class="count-badge" id="active-filter-count" hidden>0</span>
+    </button>
+</div>

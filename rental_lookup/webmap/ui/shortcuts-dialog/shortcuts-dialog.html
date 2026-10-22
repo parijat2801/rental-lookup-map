@@ -1,22 +1,66 @@
-<div class="overlay" id="shortcuts-overlay" hidden onclick="if (event.target === this) toggleShortcuts(false)">
-  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
-    <div class="dialog-header"><h2 id="shortcuts-title">Keyboard shortcuts</h2><button class="icon-button" aria-label="Close" onclick="toggleShortcuts(false)"><span data-icon="x"></span></button></div>
-    <div class="shortcut-columns">
-      <section>
-        <h3 class="label">Selected listing</h3>
-        <div class="shortcut-row"><span>Star</span><span class="keys"><kbd>C</kbd></span></div>
-        <div class="shortcut-row"><span>Dismiss</span><span class="keys"><kbd>X</kbd></span></div>
-        <div class="shortcut-row"><span>Open listing</span><span class="keys"><kbd>Enter</kbd></span></div>
-        <div class="shortcut-row"><span>Previous / next photo</span><span class="keys"><kbd>←</kbd><kbd>→</kbd></span></div>
-      </section>
-      <section>
-        <h3 class="label">Map &amp; general</h3>
-        <div class="shortcut-row"><span>Select an area</span><span class="keys"><kbd>Shift</kbd>+ drag</span></div>
-        <div class="shortcut-row"><span>Add place of interest</span><span class="keys">Right-click map</span></div>
-        <div class="shortcut-row"><span>Close card or filters</span><span class="keys"><kbd>Esc</kbd></span></div>
-        <div class="shortcut-row"><span>Undo</span><span class="keys"><kbd>Ctrl</kbd><kbd>Z</kbd></span></div>
-        <div class="shortcut-row"><span>Show shortcuts</span><span class="keys"><kbd>?</kbd></span></div>
-      </section>
+<div
+    class="overlay"
+    id="shortcuts-overlay"
+    hidden
+    onclick="if (event.target === this) toggleShortcuts(false);"
+>
+    <div
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-title"
+    >
+        <div class="dialog-header">
+            <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+            <button
+                class="icon-button"
+                aria-label="Close"
+                onclick="toggleShortcuts(false)"
+            >
+                <span data-icon="x"></span>
+            </button>
+        </div>
+        <div class="shortcut-columns">
+            <section>
+                <h3 class="label">Selected listing</h3>
+                <div class="shortcut-row">
+                    <span>Star</span><span class="keys"><kbd>C</kbd></span>
+                </div>
+                <div class="shortcut-row">
+                    <span>Dismiss</span><span class="keys"><kbd>X</kbd></span>
+                </div>
+                <div class="shortcut-row">
+                    <span>Open listing</span
+                    ><span class="keys"><kbd>Enter</kbd></span>
+                </div>
+                <div class="shortcut-row">
+                    <span>Previous / next photo</span
+                    ><span class="keys"><kbd>←</kbd><kbd>→</kbd></span>
+                </div>
+            </section>
+            <section>
+                <h3 class="label">Map &amp; general</h3>
+                <div class="shortcut-row">
+                    <span>Select an area</span
+                    ><span class="keys"><kbd>Shift</kbd>+ drag</span>
+                </div>
+                <div class="shortcut-row">
+                    <span>Add place of interest</span
+                    ><span class="keys">Right-click map</span>
+                </div>
+                <div class="shortcut-row">
+                    <span>Close card or filters</span
+                    ><span class="keys"><kbd>Esc</kbd></span>
+                </div>
+                <div class="shortcut-row">
+                    <span>Undo</span
+                    ><span class="keys"><kbd>Ctrl</kbd><kbd>Z</kbd></span>
+                </div>
+                <div class="shortcut-row">
+                    <span>Show shortcuts</span
+                    ><span class="keys"><kbd>?</kbd></span>
+                </div>
+            </section>
+        </div>
     </div>
-  </div>
 </div>
