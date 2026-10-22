@@ -152,29 +152,27 @@ To use it on your fork:
 ## Project layout
 
 ```
+sources → data/ → enrichment → webmap builder → output/map.html
+```
+
+```
 rental_lookup/
-  sources/          scrapers: nobroker, magicbricks, propertyangel, facebook (experimental)
-  enrichment/       slow per-listing extras: listing_details
-  webmap/           builder (data -> output/map.html), template.html, server, dev watcher
-    ui/             the page's components, inlined into map.html by the builder; each
-                    folder holds a component's markup, styles and script (map/,
-                    sidebar/, filters/, detail-card/, commute/, ...). core/ has the
-                    shared base styles, helpers, data placeholders and boot code
-  models.py         normalised Listing and related dataclasses
-  location.py       OpenStreetMap parks / lakes / metro and distance lookups
-  scoring.py        CLI suitability score; ranking_report.py writes results.csv
-  listing_age.py    days since a listing was posted
-  stars.py          merging starred / dismissed listings across copies
-  paths.py          every data and output location in one place
-scripts/            refresh_map.sh, fetch_metro_lines.py
-tests/              pytest suite (no network needed)
+  sources/         scrapers (nobroker, magicbricks, propertyangel)
+  enrichment/      per-listing extras (detail pages, scores)
+  webmap/
+    builder.py     data/ + ui/ → output/map.html
+    ui/            front-end components (one folder each; core/ is shared)
+    server.py      serve the map
+    dev.py         serve + rebuild on changes
+  models.py        Listing dataclass
+  scoring.py       CLI ranking → results.csv
+  paths.py         all on-disk locations
 data/
-  raw/ raw_prev/ raw_mb/ raw_pa/   saved API pages (gitignored, re-fetched each run)
-  cache/                   stars, first-seen dates, detail, rating and photo caches (tracked)
-  metro_lines.json         metro overlay
-  spike/                   API contracts and sample responses
-docs/               design notes and API investigations
-output/             generated map.html and results.csv (gitignored)
+  raw*/            saved API pages (gitignored)
+  cache/           stars, first-seen, detail caches (tracked)
+scripts/           refresh_map.sh, fetch_metro_lines.py
+tests/             pytest
+output/            map.html, results.csv (gitignored)
 ```
 
 ## Stars and dismissals
