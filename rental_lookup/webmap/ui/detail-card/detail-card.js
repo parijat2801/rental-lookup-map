@@ -73,7 +73,7 @@ function showDetailCard(e, d) {
         '<button class="' + (isStarred(d.url) ? 'on' : '') + '" onclick="toggleStar(selectedListing.url)">' + icon('star') + (isStarred(d.url) ? 'Starred' : 'Star') + '</button>' +
         '<button onclick="toggleDismiss(selectedListing.url);deselectListing();">' + icon('eye-off') + 'Dismiss</button>' +
         '<button onclick="window.open(selectedListing.url,\'_blank\');">' + icon('external-link') + 'Open</button></div>' : '';
-    byId('card-extras').innerHTML = (d.description ? '<div class="description">' + escapeHtml(d.description) + '</div>' : '') + actionsHtml;
+    byId('card-extras').innerHTML = actionsHtml;
 
     if (!e) return;
     var wasHidden = detailCard.style.display !== 'block';

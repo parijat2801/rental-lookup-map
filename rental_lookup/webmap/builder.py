@@ -85,10 +85,6 @@ def _nobroker_in_scope(raw: dict) -> bool:
             and bool(raw.get("latitude")) and bool(raw.get("longitude")))
 
 
-def _short_description(text: str) -> str:
-    return (text or "")[:200].replace("\n", " ")
-
-
 def _nobroker_cover_photo(raw: dict, photos: list[str]) -> str:
     if photos:
         return photos[0]
@@ -144,7 +140,6 @@ def nobroker_record(raw: dict, details: dict, context: BuildContext) -> dict:
         "availableFrom": details.get("availableFrom", ""),
         "propertyCode": details.get("propertyCode", ""),
         "buildingName": details.get("buildingName") or "",
-        "description": _short_description(description),
         "isStacked": coordinate_key(raw["latitude"], raw["longitude"]) in context.stacked_coordinates,
         "isFakeLocation": raw["id"] in context.fake_location_ids,
         "isCentroidLocation": False,
@@ -203,7 +198,6 @@ def magicbricks_record(listing: Listing, raw: dict, context: BuildContext) -> di
         "availableFrom": raw.get("possStatusD") or "",
         "propertyCode": "",
         "buildingName": "",
-        "description": _short_description(raw.get("auto_desc")),
         "isStacked": coordinate_key(listing.lat, listing.lng) in context.stacked_coordinates,
         "isFakeLocation": False,
         "isCentroidLocation": not magicbricks.has_property_pin(raw),
@@ -249,7 +243,6 @@ def propertyangel_record(listing: Listing, raw: dict, context: BuildContext) -> 
         "availableFrom": raw.get("Available_from") or ("After current tenant" if is_tenanted else ""),
         "propertyCode": f"PA {propertyangel.prop_id(raw)}",
         "buildingName": "",
-        "description": "",
         "isStacked": coordinate_key(listing.lat, listing.lng) in context.stacked_coordinates,
         "isFakeLocation": False,
         "isCentroidLocation": False,

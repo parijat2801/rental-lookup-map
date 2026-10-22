@@ -37,7 +37,6 @@
 #detail-card .maps-link{color:inherit;text-decoration:none}
 #detail-card .maps-link:hover{color:var(--text)}
 #detail-card .maps-link svg.icon{width:13px;height:13px;vertical-align:-2px;margin-right:4px}
-#detail-card .description{font-size:var(--fs-sm);color:var(--muted);margin-top:10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 #detail-card .actions{display:flex;gap:6px;margin-top:14px}
 #detail-card .actions button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:10px;border:1px solid var(--border);font-weight:500;font-size:var(--fs-sm)}
 #detail-card .actions button:hover{background:var(--hover)}
