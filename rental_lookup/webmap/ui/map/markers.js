@@ -13,9 +13,11 @@ LISTINGS.forEach(function(d, i) {
     d.propertyKey = d.isStacked ? null : d.lat.toFixed(4) + ',' + d.lng.toFixed(4);
 });
 var markerLayer = L.layerGroup().addTo(map);
-// Several listings at one real spot (flats in the same building) fan out in a small ring
-// so each marker stays clickable; the ring never strays more than FAN_MAX_METERS from the building.
-var FAN_MAX_METERS = 40;
+// Several listings at one real spot (flats in the same building) fan out in a tight ring
+// so each marker stays clickable without looking like separate buildings.
+var FAN_MAX_METERS = 10;
+var FAN_MIN_PX = 5;       // ~marker radius: barely separated at small counts
+var FAN_SPACING_PX = 9;   // arc length per marker (~diameter of a circleMarker)
 var fannedGroups = [];  // [{lat, lng, members: [{d, marker}]}] from the last renderMarkers()
 function layoutFannedGroups() {
     var zoom = map.getZoom();
@@ -23,7 +25,7 @@ function layoutFannedGroups() {
         var count = group.members.length;
         var center = map.project([group.lat, group.lng], zoom);
         var metersPerPixel = 40075016.686 * Math.cos(group.lat * Math.PI / 180) / Math.pow(2, zoom + 8);
-        var radius = Math.min(Math.max(9, count * 14 / (2 * Math.PI)), FAN_MAX_METERS / metersPerPixel);
+        var radius = Math.min(Math.max(FAN_MIN_PX, count * FAN_SPACING_PX / (2 * Math.PI)), FAN_MAX_METERS / metersPerPixel);
         group.members.forEach(function(member, i) {
             var angle = 2 * Math.PI * i / count - Math.PI / 2;
             var position = map.unproject(center.add([radius * Math.cos(angle), radius * Math.sin(angle)]), zoom);

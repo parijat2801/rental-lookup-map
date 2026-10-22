@@ -1,7 +1,7 @@
 // ===========================================================================
 // Map, metro overlay, legend and marker jitter
 // ===========================================================================
-var map = L.map('map', {zoomControl: false}).setView([12.9716, 77.60], 12);
+var map = L.map('map', {zoomControl: false, keyboard: false}).setView([12.9716, 77.60], 12);
 L.control.zoom({position: 'bottomright'}).addTo(map);
 var ESRI_SERVICES = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
 var lightLayer = L.layerGroup();
