@@ -85,7 +85,22 @@ Object.keys(METRO_LINES).forEach(function (lineId) {
 });
 metroLayer.addTo(map);
 
-// Button under the zoom controls opening a panel of map layers (satellite imagery, metro overlay).
+// Live traffic roads as a transparent overlay above the basemap, below markers.
+map.createPane("traffic");
+map.getPane("traffic").style.zIndex = 250;
+map.getPane("traffic").style.pointerEvents = "none";
+var trafficLayer = L.tileLayer(
+    // apistyle hides the hybrid road outlines so only coloured traffic segments show.
+    "https://{s}.google.com/vt?lyrs=h@159000000,traffic|seconds_into_week:-1&style=3&apistyle=s.t:3|s.e:g|p.v:off&x={x}&y={y}&z={z}",
+    {
+        maxZoom: 20,
+        pane: "traffic",
+        subdomains: ["mt0", "mt1", "mt2", "mt3"],
+        attribution: "Traffic &copy; Google",
+    },
+);
+
+// Button under the zoom controls opening a panel of map layers (satellite, metro, traffic).
 var layersControl = L.control({ position: "bottomright" });
 layersControl.onAdd = function () {
     var container = L.DomUtil.create("div", "layers-control");
@@ -122,6 +137,17 @@ layersControl.onAdd = function () {
             toggle: function () {
                 if (map.hasLayer(metroLayer)) map.removeLayer(metroLayer);
                 else metroLayer.addTo(map);
+            },
+        },
+        {
+            label: "Traffic",
+            iconName: "car-front",
+            isOn: function () {
+                return map.hasLayer(trafficLayer);
+            },
+            toggle: function () {
+                if (map.hasLayer(trafficLayer)) map.removeLayer(trafficLayer);
+                else trafficLayer.addTo(map);
             },
         },
     ];
