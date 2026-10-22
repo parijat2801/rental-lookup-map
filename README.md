@@ -32,8 +32,8 @@ publishes it to GitHub Pages.
 - Hover cards with photos, costs, amenities and an optional AI photo checklist.
   A selected listing's card stays pinned to its marker as the map pans, and the
   marker pulses so it's easy to spot.
-- Resizable sidebar (drag its edge, double-click to reset) that can be collapsed
-  to give the map the full width; both settings are remembered per browser.
+- Floating sidebar over the map (drag its edge to resize, double-click to reset)
+  that can be collapsed; both settings are remembered per browser.
 - "Show my location" button that puts a live blue dot on the map (needs browser
   location permission).
 - Namma Metro line overlay; listings delisted since the last run shown in grey;
@@ -204,10 +204,11 @@ commute times per area:
   or take an auto to the area. Lines that open after the last
   `python scripts/fetch_metro_lines.py` run aren't counted.
 
-The **Best / Drive / Metro** toggle picks which time counts. Areas combine with
-AND: a listing has to be easy to reach from every area, so its commute score comes
-from its longest commute (100 at 10 minutes or less, falling to 0 at 60 minutes).
-Ties go to the shorter average commute, then the lower cost. Areas, the toggle and drive times are kept per browser.
+Ranking uses the faster of drive and metro for each area; both times are shown.
+Areas combine with AND: a listing has to be easy to reach from every area, so its
+commute score comes from its longest commute (100 at 10 minutes or less, falling
+to 0 at 60 minutes). Ties go to the shorter average commute, then the lower cost.
+Areas and drive times are kept per browser.
 All speeds and penalties are constants at the top of
 `rental_lookup/webmap/ui/commute/metro.js`. `COMMUTE_BLEND_WEIGHT` in
 `ui/scoring/score-tiers.js` (currently 0) is where commute can later be blended into the other rankings.

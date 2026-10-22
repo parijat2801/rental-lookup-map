@@ -1,5 +1,5 @@
 /* --- Floating selection bar ------------------------------------------------- */
-.floating-bar{position:fixed;left:calc((100vw + var(--sidebar)) / 2);bottom:24px;translate:-50% 0;z-index:1000;display:flex;align-items:center;gap:4px;background:var(--accent);color:#fff;padding:6px 6px 6px 16px;border-radius:999px;box-shadow:var(--shadow-lg);font-weight:500}
+.floating-bar{position:fixed;left:calc((100vw + var(--sidebar) + var(--sidebar-inset)) / 2);bottom:24px;translate:-50% 0;z-index:1000;display:flex;align-items:center;gap:4px;background:var(--accent);color:#fff;padding:6px 6px 6px 16px;border-radius:999px;box-shadow:var(--shadow-lg);font-weight:500;transition:left .38s cubic-bezier(.32,.72,0,1)}
 .floating-bar[hidden]{display:none}
 .floating-bar button{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;color:#fff}
 .floating-bar button:hover{background:rgba(255,255,255,.14)}

@@ -51,12 +51,13 @@ function runRoutingBatch() {
 function updateAreasStatus() {
     var status = byId('areas-status');
     if (!areasOfInterest.length) {
-        status.textContent = 'Search a place, paste a Google Maps link, or right-click the map. Listings are then ranked by drive and metro time.';
+        status.textContent = '';
         return;
     }
     var work = routingWork(), routed = work.total - work.pending.length;
-    if (!work.pending.length) status.textContent = 'Drive times for all ' + work.total.toLocaleString() + ' matching locations';
+    // Only while routing (or on failure) — idle success copy steals listing space.
+    if (!work.pending.length) status.textContent = '';
     else if (routingFailures >= OSRM_MAX_FAILURES) status.textContent = 'Routing server unavailable · using estimated drive times (~)';
-    else status.textContent = 'Routing ' + routed.toLocaleString() + ' / ' + work.total.toLocaleString() + ' locations… (~ = estimate)';
+    else status.textContent = 'Routing ' + routed.toLocaleString() + ' / ' + work.total.toLocaleString() + '…';
 }
 

@@ -13,8 +13,7 @@ function updateCommute(d) {
         var route = driveCache[key + '|' + area.id], routed = !!route && route[0] >= 0;
         var drive = routed ? route[0] / 60 * DRIVE_TRAFFIC_FACTOR : estimateDriveMinutes(km);
         var metro = metroTrip(d.nearStations, area.stations);
-        var bestMode = commuteMode === 'drive' || !metro ? 'drive'
-            : commuteMode === 'metro' ? 'metro' : metro.minutes < drive ? 'metro' : 'drive';
+        var bestMode = metro && metro.minutes < drive ? 'metro' : 'drive';
         var best = bestMode === 'metro' ? metro.minutes : drive;
         totalMinutes += best;
         worstMinutes = Math.max(worstMinutes, best);

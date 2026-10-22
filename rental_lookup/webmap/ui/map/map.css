@@ -1,5 +1,5 @@
 /* --- Map ------------------------------------------------------------------ */
-#map{flex:1;min-width:0;background:#f1f1ef}
+#map{position:fixed;inset:0;width:100%;height:100%;z-index:0;background:#f1f1ef}
 .leaflet-bar{border:none!important;box-shadow:var(--shadow)!important;border-radius:10px!important;overflow:hidden}
 .leaflet-bar a{width:34px!important;height:34px!important;line-height:34px!important;display:flex!important;align-items:center;justify-content:center;color:var(--text)!important;border-bottom-color:var(--border)!important}
 .leaflet-bar a.on{background:var(--accent)!important;color:#fff!important}

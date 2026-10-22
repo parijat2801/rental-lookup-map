@@ -57,3 +57,10 @@ map.on('click', function(e) {
     deselectListing();
 });
 
+(function() {
+    var panel = byId('listings-panel'), meta = document.querySelector('.list-meta');
+    function syncListScrollShadow() { meta.classList.toggle('is-scrolled', panel.scrollTop > 0); }
+    panel.addEventListener('scroll', syncListScrollShadow, {passive: true});
+    syncListScrollShadow();
+})();
+

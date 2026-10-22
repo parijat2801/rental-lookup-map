@@ -51,17 +51,43 @@ function renderAreas() {
         return '<span class="area-chip"><button type="button" class="area-name" title="Show on map" onclick="focusArea(\'' + area.id + '\')">' +
             icon('flag') + escapeHtml(area.name) + '</button><button type="button" aria-label="Remove ' + escapeHtml(area.name) + '" onclick="removeArea(\'' + area.id + '\')">' + icon('x') + '</button></span>';
     }).join('');
-    document.querySelectorAll('[data-commute-mode]').forEach(function(button) {
-        button.classList.toggle('on', button.dataset.commuteMode === commuteMode);
-    });
+    byId('area-add-label').textContent = areasOfInterest.length ? 'Add' : 'Add place';
+    var count = byId('areas-count');
+    count.hidden = !areasOfInterest.length;
+    count.textContent = areasOfInterest.length ? String(areasOfInterest.length) : '';
+    syncAreaSearchUi();
 }
-function setCommuteMode(mode) {
-    commuteMode = mode;
-    storeValue('rental_commute_mode', mode);
-    renderAreas();
-    refreshCommuteScores();
-    refreshMap();
+function applyAreasPanelCollapsed() {
+    byId('areas-panel').classList.toggle('collapsed', areasPanelCollapsed);
+    byId('areas-toggle').setAttribute('aria-expanded', areasPanelCollapsed ? 'false' : 'true');
+    if (areasPanelCollapsed) closeAreaSearch();
 }
+function toggleAreasPanel() {
+    areasPanelCollapsed = !areasPanelCollapsed;
+    storeValue('rental_areas_panel_collapsed', areasPanelCollapsed);
+    applyAreasPanelCollapsed();
+}
+function syncAreaSearchUi() {
+    var searching = !byId('area-search').hidden;
+    byId('area-add').hidden = searching || areasOfInterest.length >= MAX_AREAS;
+}
+function openAreaSearch() {
+    if (areasPanelCollapsed) {
+        areasPanelCollapsed = false;
+        storeValue('rental_areas_panel_collapsed', false);
+        applyAreasPanelCollapsed();
+    }
+    byId('area-search').hidden = false;
+    syncAreaSearchUi();
+    byId('area-input').focus();
+}
+function closeAreaSearch() {
+    byId('area-input').value = '';
+    showAreaSuggestions([]);
+    byId('area-search').hidden = true;
+    syncAreaSearchUi();
+}
+applyAreasPanelCollapsed();
 
 // Coordinates from a Google Maps URL (place pin, query or viewport) or a bare "lat, lng".
 function parseLatLng(text) {
@@ -103,8 +129,7 @@ function showAreaSuggestions(places) {
 function pickAreaSuggestion(index) {
     var place = areaSuggestions[index];
     if (!place) return;
-    byId('area-input').value = '';
-    showAreaSuggestions([]);
+    closeAreaSearch();
     addArea(place.name, place.lat, place.lng);
 }
 function onAreaInput() {
@@ -130,7 +155,8 @@ function onAreaKeydown(e) {
     var text = e.target.value.trim();
     if (e.key === 'Escape') {
         e.preventDefault();
-        if (areaSuggestions.length) showAreaSuggestions([]); else { e.target.value = ''; e.target.blur(); }
+        if (areaSuggestions.length) showAreaSuggestions([]);
+        else closeAreaSearch();
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         if (!areaSuggestions.length) return;
         e.preventDefault();
@@ -147,7 +173,14 @@ byId('area-suggestions').addEventListener('mousedown', function(e) {
     var option = e.target.closest('.area-suggestion');
     if (option) { e.preventDefault(); pickAreaSuggestion(+option.dataset.index); }
 });
-byId('area-input').addEventListener('blur', function() { showAreaSuggestions([]); });
+byId('area-input').addEventListener('blur', function() {
+    // Defer so suggestion mousedown can run first.
+    setTimeout(function() {
+        if (document.activeElement === byId('area-input')) return;
+        showAreaSuggestions([]);
+        if (!byId('area-input').value.trim()) closeAreaSearch();
+    }, 0);
+});
 
 // Right-click anywhere on the map to add it as an area; the name is filled in by reverse geocoding.
 map.on('contextmenu', function(e) {

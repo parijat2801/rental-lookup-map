@@ -1,29 +1,42 @@
 /* --- Areas of interest (Commute tab) ------------------------------------------ */
-.areas-panel{margin:12px 18px 0;display:grid;gap:8px}
+.areas-panel{margin:14px 0 0;padding:12px 18px 12px;display:grid;gap:10px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .areas-panel[hidden]{display:none}
-.areas-head{display:flex;align-items:center;justify-content:space-between}
-.mode-toggle{display:inline-flex;gap:2px;padding:2px;background:var(--hover);border-radius:8px}
-.mode-toggle button{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:var(--fs-xs);font-weight:500;color:var(--muted)}
-.mode-toggle button:hover{color:var(--text)}
-.mode-toggle button.on{background:var(--bg);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.1)}
-.mode-toggle svg.icon{width:12px;height:12px}
+.areas-panel.collapsed{gap:0}
+.areas-panel.collapsed .areas-body{display:none}
+.areas-head{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:20px;padding:0;text-align:left;line-height:1;border-radius:6px}
+.areas-head:hover .label,.areas-head:hover .chevron{color:var(--text)}
+.areas-head-left,.areas-head-right{display:flex;align-items:center;gap:6px;height:100%;min-width:0}
+.areas-head-right{flex-shrink:1}
+/* Uppercase caps sit optically high in the em-box; nudge down to match the count pill. */
+.areas-head .label{display:block;line-height:16px;transform:translateY(1px)}
+.areas-count{display:inline-flex;align-items:center;justify-content:center;height:16px;padding:0 6px;border-radius:999px;background:var(--border);font-size:var(--fs-xs);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;color:#3f3f46}
+.areas-count[hidden]{display:none}
+.areas-head .chevron{display:block;width:14px;height:14px;color:var(--subtle);flex-shrink:0;transition:transform .15s}
+.areas-panel:not(.collapsed) .areas-head .chevron{transform:rotate(180deg)}
+.areas-status{font-size:var(--fs-xs);color:var(--subtle);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.areas-status:empty{display:none}
+.areas-body{display:grid;gap:6px}
+.area-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.area-list{display:flex;flex-wrap:wrap;gap:6px}
+.area-list:empty{display:none}
+.area-add{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 8px;border-radius:999px;border:1px dashed var(--border-strong);font-size:var(--fs-sm);font-weight:500;color:var(--muted)}
+.area-add:hover{color:var(--text);border-color:var(--text);background:var(--hover)}
+.area-add[hidden]{display:none}
+.area-add svg.icon{width:12px;height:12px}
 .area-search{position:relative;display:flex}
-.area-search .search-box{height:34px}
-.area-suggestions{position:absolute;left:0;right:0;top:38px;z-index:25;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:4px}
+.area-search[hidden]{display:none}
+.area-search .search-box{flex:1;height:32px}
+.area-suggestions{position:absolute;left:0;right:0;top:36px;z-index:25;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:4px}
 .area-suggestions[hidden]{display:none}
 .area-suggestion{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px}
 .area-suggestion:hover,.area-suggestion.on{background:var(--hover)}
 .area-suggestion small{display:block;color:var(--muted);font-size:var(--fs-xs);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.area-list{display:flex;flex-wrap:wrap;gap:6px}
-.area-list:empty{display:none}
-.area-chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:3px 3px 3px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:var(--fs-sm);font-weight:500}
+.area-chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:3px 3px 3px 8px;border-radius:999px;background:var(--border);color:#3f3f46;font-size:var(--fs-sm);font-weight:500}
 .area-chip .area-name{width:auto;height:auto;border-radius:0;display:inline-flex;align-items:center;gap:4px;min-width:0;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.area-chip .area-name:hover{background:none;text-decoration:underline}
+.area-chip .area-name:hover{background:none;color:var(--text);text-decoration:underline}
 .area-chip button{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.area-chip button:hover{background:rgba(55,48,163,.12)}
+.area-chip button:hover{background:var(--border-strong);color:var(--text)}
 .area-chip svg.icon{width:12px;height:12px}
-.areas-status{font-size:var(--fs-xs);color:var(--subtle)}
-.areas-status:empty{display:none}
 .area-marker span{position:absolute;inset:0;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .area-marker svg.icon{width:13px;height:13px}
 .area-popup{display:grid;gap:6px;font:inherit;font-size:var(--fs-sm)}

@@ -4,12 +4,12 @@
   --text:#18181b;--muted:#71717a;--subtle:#a1a1aa;--accent:#18181b;
   --star:#f59e0b;--danger:#e11d48;--success:#059669;
   --radius:12px;--shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.06);
-  --shadow-lg:0 12px 40px rgba(0,0,0,.16);--sidebar:400px;
+  --shadow-lg:0 12px 40px rgba(0,0,0,.16);--sidebar:400px;--sidebar-inset:12px;
   /* Type scale: lg = headings, md = list price & section titles, base = body, sm = secondary, xs = labels & meta */
   --fs-lg:16px;--fs-md:14px;--fs-base:13px;--fs-sm:12px;--fs-xs:11px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:var(--fs-base);line-height:1.45;color:var(--text);display:flex;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:var(--fs-base);line-height:1.45;color:var(--text);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 svg.icon{width:16px;height:16px;flex-shrink:0;stroke-width:1.9}
 .muted{color:var(--muted)}
