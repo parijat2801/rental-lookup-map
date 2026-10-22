@@ -43,6 +43,7 @@ def _fields_used_by_map(detail: dict) -> dict:
         "completeStreetName": detail.get("completeStreetName", ""),
         "availableFrom": detail.get("formattedAvailableFrom", ""),
         "propertyCode": detail.get("propertyCode", ""),
+        "buildingName": detail.get("buildingName") or "",
         "latitude": detail.get("latitude"),
         "longitude": detail.get("longitude"),
     }

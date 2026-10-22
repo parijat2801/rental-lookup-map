@@ -41,13 +41,13 @@ from rental_lookup.paths import (
 )
 from rental_lookup.sources import magicbricks, propertyangel
 from rental_lookup.sources.nobroker import has_real_photo, iter_saved_listings, photo_urls
+from rental_lookup.webmap.dedupe import (
+    GENERIC_SOCIETY_KEYS, SameFlatIndex, coordinate_key, place_key,
+)
 
 MAX_RENT = 150000
 MIN_SQFT = 500
 STACKED_LISTING_THRESHOLD = 3  # more listings than this at one coordinate = likely a fake/centroid location
-# _place_key()s of society names that describe a building type rather than a property
-GENERIC_SOCIETY_KEYS = {"independenthouse", "independentbuilding", "independentfloor", "individualhouse",
-                        "standalonebuilding", "standalone", "villa", "na", "none"}
 PET_PHRASES = ("pet-friendly", "pet friendly", "pets allowed", "pets welcome")
 # NoBroker amenitiesMap code -> map record key
 NOBROKER_AMENITY_KEYS = {
@@ -77,10 +77,6 @@ def load_json(path: Path, default):
     except ValueError as e:
         print(f"  [!] Ignoring unreadable {path.name}: {e}")
         return default
-
-
-def coordinate_key(lat: float, lng: float) -> tuple[float, float]:
-    return round(lat, 4), round(lng, 4)  # ~11m grid
 
 
 def _nobroker_in_scope(raw: dict) -> bool:
@@ -147,9 +143,12 @@ def nobroker_record(raw: dict, details: dict, context: BuildContext) -> dict:
         "street": (details.get("completeStreetName") or "")[:80],
         "availableFrom": details.get("availableFrom", ""),
         "propertyCode": details.get("propertyCode", ""),
+        "buildingName": details.get("buildingName") or "",
         "description": _short_description(description),
         "isStacked": coordinate_key(raw["latitude"], raw["longitude"]) in context.stacked_coordinates,
         "isFakeLocation": raw["id"] in context.fake_location_ids,
+        "isCentroidLocation": False,
+        "floorKnown": raw.get("floor") is not None,
         "daysAgo": 0,
         "coverPhoto": _nobroker_cover_photo(raw, photos),
         "photos": photos,
@@ -203,9 +202,12 @@ def magicbricks_record(listing: Listing, raw: dict, context: BuildContext) -> di
         "street": (raw.get("psmAdd") or "")[:80],
         "availableFrom": raw.get("possStatusD") or "",
         "propertyCode": "",
+        "buildingName": "",
         "description": _short_description(raw.get("auto_desc")),
         "isStacked": coordinate_key(listing.lat, listing.lng) in context.stacked_coordinates,
         "isFakeLocation": False,
+        "isCentroidLocation": not magicbricks.has_property_pin(raw),
+        "floorKnown": raw.get("floorNo") is not None,
         "daysAgo": 0,
         "coverPhoto": photos[0] if photos else (raw.get("image") or ""),
         "photos": photos,
@@ -246,9 +248,12 @@ def propertyangel_record(listing: Listing, raw: dict, context: BuildContext) -> 
         "street": ", ".join(filter(None, (listing.locality, raw.get("Location_Area.parent"))))[:80],
         "availableFrom": raw.get("Available_from") or ("After current tenant" if is_tenanted else ""),
         "propertyCode": f"PA {propertyangel.prop_id(raw)}",
+        "buildingName": "",
         "description": "",
         "isStacked": coordinate_key(listing.lat, listing.lng) in context.stacked_coordinates,
         "isFakeLocation": False,
+        "isCentroidLocation": False,
+        "floorKnown": raw.get("Unit_is_on_Floor_0_for_Ground_floor") is not None,
         "daysAgo": 0,
         "coverPhoto": photos[0] if photos else "",
         "photos": photos,
@@ -260,28 +265,18 @@ def propertyangel_record(listing: Listing, raw: dict, context: BuildContext) -> 
 
 # --- Assembly -------------------------------------------------------------------
 
-def _duplicate_signature(rent, sqft, bhk, locality: str) -> str:
-    return f"{rent}_{sqft}_{bhk}_{locality}"
-
-
-def _place_key(name: str) -> str:
-    """Comparable form of a society/locality name: "Delta - The Signature, X" -> "deltasignature"."""
-    name = re.sub(r"\bthe\b", "", (name or "").split(",")[0].lower())
-    return re.sub(r"[^a-z0-9]", "", name)
-
-
 def _is_single_property(listings: list[tuple[str, str]]) -> bool:
     """Whether (society, locality) pairs sharing a coordinate all name one real property.
 
     Placeholder societies ("Independent House") and societies that just repeat the
     locality ("Indiranagar") don't count: those are area centroids, not buildings.
     """
-    societies = {_place_key(society) for society, _ in listings}
+    societies = {place_key(society) for society, _ in listings}
     if len(societies) != 1:
         return False
     society = societies.pop()
     return (bool(society) and society not in GENERIC_SOCIETY_KEYS
-            and any(_place_key(locality) != society for _, locality in listings))
+            and any(place_key(locality) != society for _, locality in listings))
 
 
 def build_records(today: date, first_seen: dict) -> list[dict]:
@@ -323,46 +318,44 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
     print(f"  Stacked coords (NB+MB+PA): {len(context.stacked_coordinates)} locations")
 
     records = []
+    same_flat_index = SameFlatIndex()
     for raw in filter(_nobroker_in_scope, nobroker_raw):
         record = nobroker_record(raw, details_by_id.get(raw["id"]) or {}, context)
         first_seen.setdefault(record["url"], str(today))
         record["daysAgo"] = days_since_posted_nobroker(raw.get("activationDate", 0), first_seen[record["url"]], today)
         records.append(record)
+        same_flat_index.add(record)
 
-    # MagicBricks: skip listings that look like a NoBroker one already on the map.
-    nobroker_signatures = {
-        _duplicate_signature(r["rent"], r["sqft"], r["bhk"], r["locality"].lower().split(",")[0].strip())
-        for r in records
-    }
-    magicbricks_added = 0
+    # MagicBricks: skip same-flat re-listings of something already on the map.
+    magicbricks_added = magicbricks_dupes = 0
     for listing, raw in magicbricks_listings:
-        signature = _duplicate_signature(listing.rent, listing.sqft, listing.bhk, listing.locality.lower().strip())
-        if signature in nobroker_signatures:
-            continue
         record = magicbricks_record(listing, raw, context)
+        if same_flat_index.has_same_flat(record):
+            magicbricks_dupes += 1
+            continue
         record["daysAgo"] = days_since_posted_magicbricks(raw.get("postDateT"),
                                                           first_seen.setdefault(listing.url, str(today)), today)
         records.append(record)
+        same_flat_index.add(record)
         magicbricks_added += 1
     if magicbricks_listings:
-        print(f"  MagicBricks: {len(magicbricks_listings)} parsed, {magicbricks_added} unique added to map")
+        print(f"  MagicBricks: {len(magicbricks_listings)} parsed, "
+              f"{magicbricks_dupes} same-flat dupes dropped, {magicbricks_added} unique added to map")
 
-    # Property Angel: skip listings that look like a NoBroker or MagicBricks one already on the map.
-    known_signatures = {
-        _duplicate_signature(r["rent"], r["sqft"], r["bhk"], r["locality"].lower().split(",")[0].strip())
-        for r in records
-    }
-    propertyangel_added = 0
+    # Property Angel: skip same-flat re-listings of NoBroker or MagicBricks already on the map.
+    propertyangel_added = propertyangel_dupes = 0
     for listing, raw in propertyangel_listings:
-        signature = _duplicate_signature(listing.rent, listing.sqft, listing.bhk, listing.locality.lower().strip())
-        if signature in known_signatures:
-            continue
         record = propertyangel_record(listing, raw, context)
+        if same_flat_index.has_same_flat(record):
+            propertyangel_dupes += 1
+            continue
         record["daysAgo"] = days_since_posted_propertyangel(first_seen.setdefault(listing.url, str(today)), today)
         records.append(record)
+        same_flat_index.add(record)
         propertyangel_added += 1
     if propertyangel_listings:
-        print(f"  Property Angel: {len(propertyangel_listings)} parsed, {propertyangel_added} unique added to map")
+        print(f"  Property Angel: {len(propertyangel_listings)} parsed, "
+              f"{propertyangel_dupes} same-flat dupes dropped, {propertyangel_added} unique added to map")
 
     current_ids = {raw["id"] for raw in nobroker_raw}
     previous_raw = list(iter_saved_listings(PREVIOUS_NOBROKER_PAGES_DIR))

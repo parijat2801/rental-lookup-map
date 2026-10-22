@@ -5,16 +5,16 @@
 // Quality: general desirability (light, age, amenities, platform scores, ...).
 function qualityScore(d) {
     var s = 0;
-    if (GOOD_FACING.includes(d.facing)) s += 10;
+    if (GOOD_FACING.includes(d.facing)) s += 7;
     if (d.balconies > 0) s += Math.min(d.balconies * 4, 12);
-    if (d.ageYears <= 3) s += 10; else if (d.ageYears <= 7) s += 7; else if (d.ageYears <= 15) s += 3;
+    if (d.ageYears <= 3) s += 8; else if (d.ageYears <= 7) s += 4; else if (d.ageYears <= 15) s += 1;
     if (d.hasPowerBackup) s += 5; if (d.hasSecurity) s += 5; if (d.isGated) s += 4; if (d.hasFireSafety) s += 2;
-    if (d.hasPool) s += 8; if (d.hasGym) s += 5; if (d.hasClubhouse) s += 5;
+    if (d.hasPool) s += 5; if (d.hasGym) s += 5; if (d.hasClubhouse) s += 5;
     if (d.hasPark) s += 3; if (d.hasIntercom) s += 2;
     if (CAR_PARKING_TYPES.includes(d.parking)) s += 5;
     if (d.nbTransit >= 8) s += 5; else if (d.nbTransit >= 7) s += 3;
     if (d.nbLifestyle >= 8) s += 8; else if (d.nbLifestyle >= 6) s += 4;
-    if (RELIABLE_WATER.includes(d.waterSupply)) s += 5;
+    if (RELIABLE_WATER.includes(d.waterSupply)) s += 7;
     if (d.isNegotiable) s += 3;
     if (d.photoCount >= 10) s += 5; else if (d.photoCount >= 5) s += 3;
     if (d.isBrandedBuilder) s += 8;

@@ -2,9 +2,10 @@
 
 Find a flat in Bangalore without tabbing between rental portals.
 
-rental-map scrapes **NoBroker**, **MagicBricks** and **Property Angel**, de-duplicates listings across
-them, scores each one, and puts everything on a single interactive map with real
-filters, rankings and a shared star/dismiss list. It also produces a ranked CSV
+rental-map scrapes **NoBroker**, **MagicBricks** and **Property Angel**, de-duplicates
+same-flat re-listings across them (society + floor + rent/amenities — not merely the
+same building), scores each one, and puts everything on a single interactive map with
+real filters, rankings and a shared star/dismiss list. It also produces a ranked CSV
 scored against distances to parks, lakes and metro stations from OpenStreetMap.
 
 Everything runs locally: listing data and your stars live in plain JSON files in

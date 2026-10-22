@@ -68,6 +68,11 @@ def amenity_names(raw: dict) -> set[str]:
     return {name for name, code in AMENITY_CODES.items() if code in codes}
 
 
+def has_property_pin(raw: dict) -> bool:
+    """True when the listing has its own coordinates (not just a locality centroid)."""
+    return bool(_parse_float(raw.get("pmtLat")) and _parse_float(raw.get("pmtLong")))
+
+
 def parse_coords(raw: dict) -> Optional[tuple[float, float]]:
     """Property coordinates, falling back to the locality centroid (`ltcoordGeo`).
 
@@ -224,39 +229,6 @@ def parse_listings(raw_listings: list[dict]) -> list[Listing]:
         if listing:
             listings.append(listing)
     return listings
-
-
-def drop_nobroker_duplicates(nobroker_listings: list[Listing], magicbricks_listings: list[Listing],
-                             rent_tolerance: float = 0.15, sqft_tolerance: float = 0.15) -> list[Listing]:
-    """Return the MagicBricks listings that don't duplicate a NoBroker listing.
-
-    A duplicate has the same BHK, rent and sqft within tolerance, and a fuzzy
-    (substring) match on locality or society name.
-    """
-    def within(value: int, reference: int, tolerance: float) -> bool:
-        return reference <= 0 or abs(value - reference) / reference <= tolerance
-
-    nobroker_index = [(nb.bhk, nb.rent, nb.sqft,
-                       nb.locality.lower().split(",")[0].strip(), nb.society.lower().strip())
-                      for nb in nobroker_listings]
-
-    unique = []
-    for mb in magicbricks_listings:
-        locality, society = mb.locality.lower().strip(), mb.society.lower().strip()
-        is_duplicate = any(
-            bhk == mb.bhk
-            and within(mb.rent, rent, rent_tolerance)
-            and (mb.sqft <= 0 or within(mb.sqft, sqft, sqft_tolerance))
-            and (locality in nb_locality or nb_locality in locality
-                 or society in nb_society or nb_society in society)
-            for bhk, rent, sqft, nb_locality, nb_society in nobroker_index
-        )
-        if not is_duplicate:
-            unique.append(mb)
-
-    duplicates = len(magicbricks_listings) - len(unique)
-    print(f"  Cross-platform dedup: {len(magicbricks_listings)} MB → {duplicates} dupes → {len(unique)} unique")
-    return unique
 
 
 # --- Fetching ---------------------------------------------------------------
