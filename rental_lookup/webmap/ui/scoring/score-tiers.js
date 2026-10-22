@@ -11,7 +11,7 @@ var TIER_COLORS = ['#ef4444','#f97316','#eab308','#84cc16','#22c55e','#166534'];
 var QUALITY_TIERS = [55, 65, 75, 85, 95];
 // Score pills: [background, text] tints matching TIER_COLORS.
 var TIER_PILLS = [['#fef2f2','#b91c1c'],['#fff7ed','#c2410c'],['#fefce8','#a16207'],['#f7fee7','#4d7c0f'],['#f0fdf4','#15803d'],['#dcfce7','#14532d']];
-// quality/commute are ~0–100; value/deal use different scales and are frozen once below.
+// quality/commute are ~0–100; value uses a different scale and is frozen once below.
 var SCORE_TIERS = {quality: QUALITY_TIERS, commute: QUALITY_TIERS};
 var currentTiers = QUALITY_TIERS;
 function percentileTiers(values) {
@@ -23,7 +23,7 @@ function percentileTiers(values) {
 // Cut-offs for a score field. Same score always maps to the same colour.
 function tiersForScore(scoreName) {
     if (SCORE_TIERS[scoreName]) return SCORE_TIERS[scoreName];
-    // Freeze percentiles of the full dataset once (value/deal aren't on a 0–100 scale).
+    // Freeze percentiles of the full dataset once (value isn't on a 0–100 scale).
     return SCORE_TIERS[scoreName] = percentileTiers(
         LISTINGS.filter(function(d) { return !d.isDelisted; })
             .map(function(d) { return d.scores[scoreName]; })

@@ -5,10 +5,6 @@ function byId(id) { return document.getElementById(id); }
 var HTML_ESCAPES = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'};
 // Escape scraped text before putting it into innerHTML.
 function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return HTML_ESCAPES[c]; }); }
-function mentionsAnyArea(d, areas) {
-    var text = ((d.locality || '') + ' ' + (d.society || '')).toLowerCase();
-    return areas.some(function(area) { return text.indexOf(area) >= 0; });
-}
 function formatRupees(amount) { return '₹' + Math.round(amount).toLocaleString('en-IN'); }
 function formatRupeesShort(amount) {
     if (amount >= 100000) return '₹' + (amount / 100000).toFixed(amount % 100000 ? 1 : 0) + 'L';
@@ -44,8 +40,6 @@ function animateIn(el, from, duration) {
     if (MOTION) gsap.fromTo(el, Object.assign({autoAlpha: 0}, from), {autoAlpha: 1, x: 0, y: 0, scale: 1, duration: duration || 0.22, ease: 'power2.out', overwrite: true});
 }
 
-// Locality keyword lists (substring match on locality + society).
-var CENTRAL_AREAS = ['indiranagar','koramangala','hsr','btm','jayanagar','jp nagar','malleshwaram','domlur','frazer','ulsoor','halasuru','richmond','basavanagudi','wilson','rajajinagar','banashankari'];
 var GOOD_FACING = ['E','SE','S','NE'];
 var CAR_PARKING_TYPES = ['FOUR_WHEELER','BOTH'];
 var RELIABLE_WATER = ['CORPORATION','BOREWELL_AND_CORPORATION','CORP_BORE'];

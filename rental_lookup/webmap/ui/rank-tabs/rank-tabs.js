@@ -2,7 +2,6 @@
 var RANK_MODES = {
     quality: {score: 'quality', label: 'score', sortedBy: 'quality', sort: function(a, b) { return b.scores.quality - a.scores.quality || a.totalCost - b.totalCost; }},
     value: {score: 'value', label: 'value', sortedBy: 'value for money', sort: function(a, b) { return b.scores.value - a.scores.value || b.scores.quality - a.scores.quality; }},
-    deal: {score: 'deal', label: 'deal score', sortedBy: 'best deal', sort: function(a, b) { return b.scores.deal - a.scores.deal || b.scores.dealQuality - a.scores.dealQuality; }},
     commute: {score: 'commute', label: 'commute score', sortedBy: 'commute', sort: function(a, b) {
         return b.scores.commute - a.scores.commute || a.commute.worstMinutes - b.commute.worstMinutes ||
             a.commute.averageMinutes - b.commute.averageMinutes || a.totalCost - b.totalCost;

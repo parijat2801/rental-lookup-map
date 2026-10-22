@@ -45,7 +45,7 @@ function showDetailCard(e, d) {
 
     var rankMode = effectiveRankMode();
     var eyebrow = [d.isDelisted ? '' : '#' + d.rank, SOURCE_LABELS[d.source] || 'NoBroker',
-        rankMode === 'quality' ? '' : 'Quality ' + (rankMode === 'deal' ? d.scores.dealQuality : d.scores.quality)];
+        rankMode === 'quality' ? '' : 'Quality ' + d.scores.quality];
     byId('card-eyebrow').innerHTML = scorePillHtml(d) + '<span class="label">' + eyebrow.filter(Boolean).join(' · ') + '</span>';
     byId('card-title').textContent = d.society || 'Unnamed society';
     byId('card-location').innerHTML = googleMapsLinkHtml(d, escapeHtml((d.locality || '').substring(0, 60)));

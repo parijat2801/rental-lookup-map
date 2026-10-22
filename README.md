@@ -21,9 +21,8 @@ publishes it to GitHub Pages.
 
 - One marker per listing, sized by area and coloured by the active ranking.
 - Three rankings: **Quality** (light, age, amenities, platform scores, ...),
-  **Value** (quality per rupee) and **Best Deals** (amenities and location
-  relative to cost), plus a fourth,
-  **Commute**, driven by your [places of interest](#places-of-interest).
+  **Value** (quality per rupee), and **Commute**, driven by your
+  [places of interest](#places-of-interest).
 - Sliders for total cost (rent + maintenance), area, photo count, deposit
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
   balcony, pool, pet-friendly, branded builder, source and more.

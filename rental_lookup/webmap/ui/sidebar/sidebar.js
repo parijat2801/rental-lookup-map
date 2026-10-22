@@ -1,6 +1,6 @@
 // Sidebar: floating overlay on the map. Drag its right edge to resize, or collapse it.
 // Both are remembered in localStorage.
-var SIDEBAR_MIN = 420, SIDEBAR_MAX = 540, SIDEBAR_DEFAULT = 420, SIDEBAR_INSET = 12;
+var SIDEBAR_MIN = 420, SIDEBAR_MAX = 460, SIDEBAR_DEFAULT = 420, SIDEBAR_INSET = 12;
 function clampSidebarWidth(width) {
     return Math.round(Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, window.innerWidth * 0.6, width)));
 }
