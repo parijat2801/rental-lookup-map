@@ -1,8 +1,11 @@
-"""Merge stars/dismissals from several copies (published stars.json, repo cache, browser).
+"""Merge stars/dismissals from several copies (local file, browser export, …).
 
 Each copy looks like {"starred": {url: ts}, "dismissed": {url: ts}} where `ts` is
 an epoch-ms timestamp. A negative timestamp is a tombstone: the user un-starred /
 un-dismissed at time abs(ts). Corrupted input never destroys valid data.
+
+Stars are personal: the map keeps them in localStorage (and an optional gitignored
+local backup). This module is for merging exports, not for publishing to GitHub.
 """
 from __future__ import annotations
 
@@ -57,7 +60,7 @@ def merge_stars(copies: list, keep_tombstones: bool = False) -> dict:
 
 
 def main(argv: list) -> None:
-    """CLI used by CI: python -m rental_lookup.stars OUTPUT INPUT [INPUT ...]
+    """CLI: python -m rental_lookup.stars OUTPUT INPUT [INPUT ...]
 
     Missing or corrupt inputs count as empty. Refuses to write an empty result,
     since that almost certainly means every input failed to load.

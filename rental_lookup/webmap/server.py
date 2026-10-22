@@ -4,8 +4,9 @@ Run:  python -m rental_lookup.webmap.server [PORT]
 Open: http://localhost:8765/map.html
 
 The page POSTs its full star state to /save_stars on every change; it is merged
-into data/cache/stars_and_dismissals.json (most recent action per URL wins), so
-a fresh browser with no saved state can never wipe the file.
+into the gitignored data/cache/stars_and_dismissals.json (most recent action per
+URL wins). That file is a local backup only — stars live in the browser's
+localStorage and are never published to GitHub.
 
 POST /resync runs scripts/refresh_map.sh in the background (one at a time, output
 in output/resync.log); GET /resync_status reports whether it is still running.

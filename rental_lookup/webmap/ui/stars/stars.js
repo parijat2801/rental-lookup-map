@@ -13,7 +13,9 @@ function mergeLatest(target, entries) {
         if (target[url] === undefined || Math.abs(ts) > Math.abs(target[url])) target[url] = ts;
     }
 }
-// 1. Stars embedded at build time, 2. this browser's localStorage.
+// Personal state: localStorage is authoritative. Optional local-server disk backup
+// (gitignored) and any stars the local builder embedded are merged in; the public
+// Pages deploy does not publish stars.
 LISTINGS.forEach(function(d) {
     if (d.savedStarredAt) starredAt[d.url] = d.savedStarredAt;
     if (d.savedDismissedAt) dismissedAt[d.url] = d.savedDismissedAt;
@@ -22,18 +24,9 @@ try {
     mergeLatest(starredAt, JSON.parse(localStorage.getItem('rental_starred') || '{}'));
     mergeLatest(dismissedAt, JSON.parse(localStorage.getItem('rental_dismissed') || '{}'));
 } catch (e) {}
-// 3. Shared stars.json published next to the page on GitHub Pages.
-fetch('stars.json').then(function(r) { return r.ok ? r.json() : {}; })
-    .then(function(shared) {
-        if (!shared || typeof shared !== 'object') return;
-        mergeLatest(starredAt, shared.starred);
-        mergeLatest(dismissedAt, shared.dismissed);
-        saveStars();
-        refreshMap();
-    }).catch(function() {});
 saveStars();
 
-// Persist to localStorage, and to disk when served by webmap/server.py (no-op elsewhere).
+// Persist to localStorage, and to a gitignored local file when served by webmap/server.py.
 function saveStars() {
     try {
         localStorage.setItem('rental_starred', JSON.stringify(starredAt));

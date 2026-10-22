@@ -36,10 +36,6 @@ jobs:
       - name: Run tests
         run: pytest -q
 
-      # The cache restore below overwrites data/cache, so keep the committed stars for the merge.
-      - name: Keep repo stars
-        run: cp data/cache/stars_and_dismissals.json /tmp/stars_repo.json 2>/dev/null || true
-
       - name: Restore cached data
         uses: actions/cache@v6
         with:
@@ -51,6 +47,10 @@ jobs:
           key: rental-data-${{ github.run_number }}
           restore-keys: |
             rental-data-
+
+      # Stars are personal (browser localStorage / local disk only) — never publish them.
+      - name: Drop personal stars from cache
+        run: rm -f data/cache/stars_and_dismissals.json
 
       - name: Fetch NoBroker listings
         run: |
@@ -72,15 +72,6 @@ jobs:
       - name: Fetch Property Angel listings
         run: python -m rental_lookup.sources propertyangel
 
-      - name: Sync stars (published stars.json + cache + repo → merge)
-        run: |
-          # Published stars.json on gh-pages is the canonical shared copy — it is
-          # what the deployed page reads, and the Deploy step below republishes it.
-          curl -sf "https://parijat2801.github.io/rental-lookup-map/stars.json" -o /tmp/stars_published.json || true
-          cp data/cache/stars_and_dismissals.json /tmp/stars_cached.json 2>/dev/null || true
-          python -m rental_lookup.stars data/cache/stars_and_dismissals.json \
-            /tmp/stars_published.json /tmp/stars_cached.json /tmp/stars_repo.json
-
       - name: Build map
         env:
           CARTO_BASEMAPS_KEY: ${{ secrets.CARTO_BASEMAPS_KEY }}
@@ -91,12 +82,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           cp output/map.html /tmp/map.html
-          cp data/cache/stars_and_dismissals.json /tmp/stars.json
           git stash --include-untracked || true
           git checkout gh-pages
           git reset --hard origin/gh-pages
           cp /tmp/map.html index.html
-          cp /tmp/stars.json stars.json
-          git add index.html stars.json
+          git rm -f stars.json 2>/dev/null || true
+          git add index.html
           git commit -m "Update map $(date -u +%Y-%m-%d)" || echo "No changes"
           git push origin gh-pages

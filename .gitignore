@@ -29,3 +29,5 @@ output/
 # data/cache: tracked JSON state used by CI; generated GeoPackages are not
 data/cache/*.gpkg
 data/cache/*.tmp
+# Personal stars/dismissals (localStorage + optional local backup via the map server)
+data/cache/stars_and_dismissals.json

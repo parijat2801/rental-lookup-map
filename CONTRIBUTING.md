@@ -17,8 +17,8 @@ saved response in `data/spike/nobroker-sample-response.json`.
 
 - Run `pytest` and make sure it passes.
 - Keep changes focused; one fix or feature per pull request.
-- Don't commit scraped data (`data/raw*/`), generated output (`output/`), `.env`
-  or your personal `data/cache/stars_and_dismissals.json` changes.
+- Don't commit scraped data (`data/raw*/`), generated output (`output/`), or
+  `.env`. Stars/dismissals are gitignored (`data/cache/stars_and_dismissals.json`).
 - If you change what the map shows, check it in a browser. `rental-map-dev` rebuilds
   and reloads the page on every save.
 

@@ -61,10 +61,11 @@ scripts/refresh_map.sh   # fetch, enrich and build output/map.html (takes a whil
 rental-map-dev           # serve it at http://localhost:8765/map.html, rebuilding on changes
 ```
 
-Serving the map through the bundled server (rather than opening the file) makes
-every star and dismissal auto-save to `data/cache/stars_and_dismissals.json`.
-It also enables **••• → Resync listings**, which runs `scripts/refresh_map.sh` in
-the background (output in `output/resync.log`) and reloads the page when done.
+Serving the map through the bundled server (rather than opening the file) also
+backs up stars/dismissals to the gitignored `data/cache/stars_and_dismissals.json`
+(browser `localStorage` is the source of truth). It enables **••• → Resync
+listings**, which runs `scripts/refresh_map.sh` in the background (output in
+`output/resync.log`) and reloads the page when done.
 
 ### Build / run commands
 
@@ -102,7 +103,7 @@ Each step can also be run on its own, from the repository root:
 | Serve the map with star auto-save | `rental-map-serve [PORT]` |
 | Serve, watch and rebuild on changes | `rental-map-dev [PORT]` |
 | Regenerate the metro overlay | `python scripts/fetch_metro_lines.py` |
-| Merge star files (used by CI) | `python -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` |
+| Merge star export files | `python -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` |
 
 Notes:
 
@@ -138,16 +139,13 @@ python -m rental_lookup.sources.facebook cookies.txt
 
 [`.github/workflows/update-map.yml`](.github/workflows/update-map.yml) runs on
 every push to `main`, daily at 08:00 IST and on demand. It runs the tests,
-fetches fresh listings, merges stars from the published `stars.json`, the CI cache
-and the repo, builds the map, and pushes `index.html` + `stars.json` to the
-`gh-pages` branch.
+fetches fresh listings, builds the map, and pushes `index.html` to the
+`gh-pages` branch. Personal stars/dismissals are never published.
 
 To use it on your fork:
 
 1. Create a `gh-pages` branch and enable GitHub Pages for it.
 2. Optionally add a `CARTO_BASEMAPS_KEY` repository secret.
-3. Point the published `stars.json` URL in the "Sync stars" step at your own
-   Pages site.
 
 ## Project layout
 
@@ -169,7 +167,7 @@ rental_lookup/
   paths.py         all on-disk locations
 data/
   raw*/            saved API pages (gitignored)
-  cache/           stars, first-seen, detail caches (tracked)
+  cache/           first-seen, detail caches (tracked); stars file is gitignored
 scripts/           refresh_map.sh, fetch_metro_lines.py
 tests/             pytest
 output/            map.html, results.csv (gitignored)
@@ -177,12 +175,15 @@ output/            map.html, results.csv (gitignored)
 
 ## Stars and dismissals
 
-Stars are stored as `{"starred": {url: timestamp}, "dismissed": {url: timestamp}}`.
-A negative timestamp records an un-star / un-dismiss, and when copies are merged
-the most recent action for each URL wins. The map merges three copies on load:
-the stars embedded at build time, the browser's `localStorage`, and a `stars.json`
-published next to the page. The "Saved state" panel can back up and restore them
-as a file.
+Stars are personal and stay on your machine. The browser's `localStorage` is the
+source of truth; when you use `rental-map-dev` / `rental-map-serve`, changes are
+also backed up to the gitignored `data/cache/stars_and_dismissals.json`. Neither
+the repo nor GitHub Pages publishes them.
+
+Format: `{"starred": {url: timestamp}, "dismissed": {url: timestamp}}`. A
+negative timestamp is an un-star / un-dismiss; when copies are merged the most
+recent action per URL wins. The "Saved state" panel can export/import a backup
+file to move stars between browsers.
 
 ## Areas of interest
 

@@ -373,7 +373,7 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
         records.extend(delisted)
         print(f"  Delisted listings added: {len(delisted)}")
 
-    # Embed saved stars/dismissals (the page merges them with localStorage and stars.json).
+    # Embed local stars/dismissals when present (gitignored; page merges with localStorage).
     for record in records:
         if record["url"] in starred:
             record["savedStarredAt"] = starred[record["url"]]
