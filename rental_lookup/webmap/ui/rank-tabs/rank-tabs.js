@@ -21,6 +21,19 @@ var RANK_MODES = {
             );
         },
     },
+    vibe: {
+        score: "vibe",
+        label: "vibe",
+        sortedBy: "greenery",
+        sort: function (a, b) {
+            return (
+                b.scores.vibe - a.scores.vibe ||
+                (a.parkM != null ? a.parkM : 1e9) -
+                    (b.parkM != null ? b.parkM : 1e9) ||
+                a.totalCost - b.totalCost
+            );
+        },
+    },
     commute: {
         score: "commute",
         label: "commute score",

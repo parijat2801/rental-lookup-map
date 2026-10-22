@@ -30,15 +30,20 @@ def main(cookie: str = "") -> None:
         print("No listings passed filters. Try adjusting budget or area.")
         return
 
-    _banner("STEP 2: Loading geospatial data (parks, lakes, metro)")
-    parks, lakes, metro_stations = fetch_osm_features(cache_dir=CACHE_DIR)
-    print(f"  Parks: {len(parks)}, Lakes: {len(lakes)}, Metro stations: {len(metro_stations)}")
+    _banner("STEP 2: Loading geospatial data (parks, lakes, woods, metro)")
+    parks, lakes, metro_stations, woods = fetch_osm_features(cache_dir=CACHE_DIR)
+    print(f"  Parks: {len(parks)}, Lakes: {len(lakes)}, Woods: {len(woods)}, "
+          f"Metro stations: {len(metro_stations)}")
     # Project once up front rather than per listing.
-    parks, lakes, metro_stations = to_metric_crs(parks), to_metric_crs(lakes), to_metric_crs(metro_stations)
+    parks = to_metric_crs(parks)
+    lakes = to_metric_crs(lakes)
+    woods = to_metric_crs(woods)
+    metro_stations = to_metric_crs(metro_stations)
 
     _banner("STEP 3: Scoring listings")
     listings_with_distances = [
-        (listing, measure_nearby_distances(listing.lat, listing.lng, parks, lakes, metro_stations))
+        (listing, measure_nearby_distances(
+            listing.lat, listing.lng, parks, lakes, metro_stations, woods))
         for listing in tqdm(candidates, desc="Scoring")
     ]
     ranked = rank_listings(listings_with_distances)
@@ -58,6 +63,6 @@ def main(cookie: str = "") -> None:
         print(f"   {listing.locality} -- {listing.society}")
         print(f"   Floor: {listing.floor}/{listing.total_floors} | Parking: {listing.parking}")
         print(f"   Metro: {_format_metres(nearby.nearest_metro_m)} | Park: {_format_metres(nearby.nearest_park_m)}"
-              f" | Lake: {_format_metres(nearby.nearest_lake_m)}")
+              f" | Woods: {_format_metres(nearby.nearest_woods_m)} | Lake: {_format_metres(nearby.nearest_lake_m)}")
         print(f"   {' | '.join(features)}")
         print(f"   {listing.url}")

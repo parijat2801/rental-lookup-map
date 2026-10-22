@@ -12,13 +12,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    padding: 7px 8px;
+    gap: 3px;
+    padding: 7px 4px;
     border-radius: 8px;
     font-size: var(--fs-sm);
     font-weight: 500;
     color: var(--muted);
     white-space: nowrap;
+    min-width: 0;
 }
 .rank-tab:hover {
     color: var(--text);

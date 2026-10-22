@@ -130,8 +130,10 @@ def test_scored_listing_combines_listing_and_location():
         "amenitiesMap": {"PB": True, "GP": True, "CPA": True, "SECURITY": True},
     }
     listing = Listing.from_nobroker(raw)
-    nearby = NearbyDistances(nearest_park_m=200, nearest_lake_m=1000, nearest_metro_m=500)
+    nearby = NearbyDistances(
+        nearest_park_m=200, nearest_lake_m=1000, nearest_woods_m=300, nearest_metro_m=500)
     scored = ScoredListing(listing=listing, nearby=nearby, total_score=85)
     assert scored.listing.rent == 40000
     assert scored.nearby.nearest_park_m == 200
+    assert scored.nearby.nearest_woods_m == 300
     assert scored.total_score == 85

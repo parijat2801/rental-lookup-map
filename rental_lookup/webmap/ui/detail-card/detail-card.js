@@ -100,10 +100,16 @@ function showDetailCard(e, d) {
     byId("card-badges").innerHTML = badges.join("");
 
     var rankMode = effectiveRankMode();
+    var eyebrowExtra =
+        rankMode === "quality"
+            ? ""
+            : rankMode === "vibe"
+              ? greeneryEyebrow(d)
+              : "Quality " + d.scores.quality;
     var eyebrow = [
         d.isDelisted ? "" : "#" + d.rank,
         SOURCE_LABELS[d.source] || "NoBroker",
-        rankMode === "quality" ? "" : "Quality " + d.scores.quality,
+        eyebrowExtra,
     ];
     byId("card-eyebrow").innerHTML =
         scorePillHtml(d) +
@@ -164,6 +170,7 @@ function showDetailCard(e, d) {
         (amenities.length
             ? '<div class="tags">' + tagsHtml(amenities, "positive") + "</div>"
             : "") +
+        greeneryHtml(d) +
         commuteHtml(d) +
         samePropertyHtml(d) +
         '<div class="meta">' +

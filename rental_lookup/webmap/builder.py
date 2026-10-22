@@ -6,7 +6,8 @@ Inputs (all optional except the template):
   data/raw_mb/*.json     MagicBricks pages
   data/raw_pa/*.json     Property Angel listings (one detail payload each)
   data/cache/*.json      stars/dismissals, first-seen dates, photo ratings, fake-location ids,
-                         listing details, NoBroker ratings missing from search results
+                         listing details, NoBroker ratings missing from search results;
+                         also OSM GeoPackages used for Vibe (park/lake/woods) distances
   data/metro_lines.json  Namma Metro overlay (regenerate with scripts/fetch_metro_lines.py)
 
 Run: python -m rental_lookup.webmap.builder
@@ -33,11 +34,12 @@ from pathlib import Path
 from rental_lookup.listing_age import (
     days_since_posted_magicbricks, days_since_posted_nobroker, days_since_posted_propertyangel,
 )
+from rental_lookup.location import fetch_osm_features, nearest_distance_m, to_metric_crs
 from rental_lookup.models import NOBROKER_BASE_URL, Listing, mentions_branded_builder, nobroker_platform_scores
 from rental_lookup.paths import (
-    ENV_PATH, FAKE_LOCATION_IDS_PATH, FIRST_SEEN_PATH, LISTING_DETAILS_PATH, MAGICBRICKS_PAGES_DIR,
-    MAP_PAGE_PATH, MAP_TEMPLATE_PATH, METRO_LINES_PATH, NOBROKER_PAGES_DIR, PLATFORM_SCORES_PATH,
-    PREVIOUS_NOBROKER_PAGES_DIR, PROPERTYANGEL_PAGES_DIR, STARS_PATH,
+    CACHE_DIR, ENV_PATH, FAKE_LOCATION_IDS_PATH, FIRST_SEEN_PATH, LISTING_DETAILS_PATH,
+    MAGICBRICKS_PAGES_DIR, MAP_PAGE_PATH, MAP_TEMPLATE_PATH, METRO_LINES_PATH, NOBROKER_PAGES_DIR,
+    PLATFORM_SCORES_PATH, PREVIOUS_NOBROKER_PAGES_DIR, PROPERTYANGEL_PAGES_DIR, STARS_PATH,
 )
 from rental_lookup.sources import magicbricks, propertyangel
 from rental_lookup.sources.nobroker import has_real_photo, iter_saved_listings, photo_urls
@@ -256,6 +258,29 @@ def propertyangel_record(listing: Listing, raw: dict, context: BuildContext) -> 
     }
 
 
+# --- Greenery (Vibe ranking) ----------------------------------------------------
+
+def _metres_or_none(distance) -> int | None:
+    return round(distance) if distance is not None else None
+
+
+def attach_greenery(records: list[dict]) -> None:
+    """Set parkM / lakeM / woodsM (metres to nearest OSM feature) on every record.
+
+    Used by the Vibe rank mode. Missing OSM data leaves the fields null so the
+    client score falls back to society-park amenity only.
+    """
+    print("  Loading OSM greenery (parks, lakes, woods)...")
+    parks, lakes, _metro, woods = fetch_osm_features(cache_dir=CACHE_DIR)
+    parks, lakes, woods = to_metric_crs(parks), to_metric_crs(lakes), to_metric_crs(woods)
+    print(f"  Greenery features: {len(parks)} parks, {len(lakes)} lakes, {len(woods)} woods")
+    for record in records:
+        lat, lng = record["lat"], record["lng"]
+        record["parkM"] = _metres_or_none(nearest_distance_m(lat, lng, parks))
+        record["lakeM"] = _metres_or_none(nearest_distance_m(lat, lng, lakes))
+        record["woodsM"] = _metres_or_none(nearest_distance_m(lat, lng, woods))
+
+
 # --- Assembly -------------------------------------------------------------------
 
 def _is_single_property(listings: list[tuple[str, str]]) -> bool:
@@ -430,6 +455,7 @@ def main() -> None:
     today = date.today()
     first_seen = load_json(FIRST_SEEN_PATH, {})
     records = build_records(today, first_seen)
+    attach_greenery(records)
 
     FIRST_SEEN_PATH.parent.mkdir(parents=True, exist_ok=True)
     FIRST_SEEN_PATH.write_text(json.dumps(first_seen))

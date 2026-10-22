@@ -75,6 +75,11 @@ def test_score_closer_park_higher():
     far = score_listing(_make_listing(), _make_distances(nearest_park_m=800))
     assert close.total_score > far.total_score
 
+def test_score_closer_woods_higher():
+    close = score_listing(_make_listing(), _make_distances(nearest_woods_m=200))
+    far = score_listing(_make_listing(), _make_distances(nearest_woods_m=1200))
+    assert close.total_score > far.total_score
+
 def test_score_closer_metro_higher():
     close = score_listing(_make_listing(), _make_distances(nearest_metro_m=300))
     far = score_listing(_make_listing(), _make_distances(nearest_metro_m=2000))

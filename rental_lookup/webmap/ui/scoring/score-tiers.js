@@ -30,7 +30,8 @@ var TIER_PILLS = [
     ["#f0fdf4", "#15803d"],
     ["#dcfce7", "#14532d"],
 ];
-// quality/commute are ~0–100; value uses a different scale and is frozen once below.
+// quality/commute are ~0–100 with fixed cut-offs; vibe uses percentiles of the
+// dataset (spread depends on OSM greenery density) so colours stay discriminative.
 var SCORE_TIERS = { quality: QUALITY_TIERS, commute: QUALITY_TIERS };
 var currentTiers = QUALITY_TIERS;
 function percentileTiers(values) {

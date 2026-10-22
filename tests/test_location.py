@@ -51,23 +51,33 @@ def test_compute_location_scores():
     parks = _make_point_gdf([(12.9829, 77.6408)])
     lakes = _make_point_gdf([(12.9600, 77.6400)])
     metro = _make_point_gdf([(12.9784, 77.6350)])
+    woods = _make_point_gdf([(12.9790, 77.6410)])
 
-    score = measure_nearby_distances(12.9784, 77.6408, parks, lakes, metro)
+    score = measure_nearby_distances(12.9784, 77.6408, parks, lakes, metro, woods)
     assert isinstance(score, NearbyDistances)
     assert score.nearest_park_m is not None
     assert 400 < score.nearest_park_m < 600
     assert score.nearest_lake_m is not None
     assert score.nearest_lake_m > 1500
+    assert score.nearest_woods_m is not None
+    assert score.nearest_woods_m < 200
     assert score.nearest_metro_m is not None
     assert 500 < score.nearest_metro_m < 700
 
 
 def test_compute_location_scores_no_data():
     empty = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
-    score = measure_nearby_distances(12.97, 77.64, empty, empty, empty)
+    score = measure_nearby_distances(12.97, 77.64, empty, empty, empty, empty)
     assert score.nearest_park_m is None
     assert score.nearest_lake_m is None
+    assert score.nearest_woods_m is None
     assert score.nearest_metro_m is None
+
+
+def test_compute_location_scores_woods_optional():
+    empty = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
+    score = measure_nearby_distances(12.97, 77.64, empty, empty, empty)
+    assert score.nearest_woods_m is None
 
 
 def test_osm_bbox_covers_every_search_anchor():
@@ -93,3 +103,25 @@ def test_operating_stations_drops_track_and_unbuilt_stations():
     }, geometry=[Point(77.64, 12.97)] * 5, crs="EPSG:4326")
 
     assert list(operating_stations(features)["name"]) == ["Indiranagar", "Hoodi"]
+
+
+def test_filter_by_min_area_drops_pocket_parks_and_points():
+    from rental_lookup.location import METRIC_CRS, filter_by_min_area
+
+    # ~50x50 m pocket (~2500 m²) vs ~100x100 m neighbourhood park (~10000 m²), in metres.
+    pocket = Polygon([(0, 0), (50, 0), (50, 50), (0, 50)])
+    real = Polygon([(0, 0), (100, 0), (100, 100), (0, 100)])
+    features = gpd.GeoDataFrame(
+        geometry=[pocket, real, Point(10, 10)],
+        crs=METRIC_CRS,
+    )
+    kept = filter_by_min_area(features, 5_000)
+    assert len(kept) == 1
+    assert kept.crs.to_string() == "EPSG:4326"
+
+
+def test_filter_by_min_area_noop_when_zero():
+    from rental_lookup.location import filter_by_min_area
+
+    features = _make_point_gdf([(12.97, 77.64)])
+    assert len(filter_by_min_area(features, 0)) == 1

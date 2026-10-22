@@ -113,9 +113,10 @@ class Listing:
 
 @dataclass
 class NearbyDistances:
-    """Metres to the nearest park / lake / metro station; None when there is no data."""
+    """Metres to the nearest park / lake / woods / metro; None when there is no data."""
     nearest_park_m: Optional[float] = None
     nearest_lake_m: Optional[float] = None
+    nearest_woods_m: Optional[float] = None
     nearest_metro_m: Optional[float] = None
 
 

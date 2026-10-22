@@ -47,9 +47,10 @@ def _linear_falloff(distance: Optional[float], full_until: float, zero_at: float
 
 
 def _score_greenery(nearby: NearbyDistances) -> float:
-    """0-15: proximity to parks (10) and lakes (5)."""
-    return (_linear_falloff(nearby.nearest_park_m, 500, 1000, 10.0)
-            + _linear_falloff(nearby.nearest_lake_m, 1500, 3000, 5.0))
+    """0-20: proximity to neighbourhood-scale parks (10), woods (5) and lakes (5)."""
+    return (_linear_falloff(nearby.nearest_park_m, 250, 800, 10.0)
+            + _linear_falloff(nearby.nearest_woods_m, 300, 1000, 5.0)
+            + _linear_falloff(nearby.nearest_lake_m, 600, 1800, 5.0))
 
 
 def _score_metro(nearby: NearbyDistances) -> float:
@@ -147,7 +148,7 @@ def _whole_metres(distance: Optional[float]):
 CSV_FIELDS = (
     "score", "rent", "deposit", "sqft", "bhk", "locality", "society",
     "floor", "total_floor", "facing", "balconies", "age",
-    "metro_dist_m", "park_dist_m", "lake_dist_m",
+    "metro_dist_m", "park_dist_m", "woods_dist_m", "lake_dist_m",
     "car_parking", "power_backup", "gated_community", "security",
     "nb_transit", "nb_lifestyle", "water_supply", "negotiable",
     "pet_signal", "photo_url", "url",
@@ -174,6 +175,7 @@ def write_csv(ranked: list[ScoredListing], output_path: Path) -> None:
             "age": listing.age_years,
             "metro_dist_m": _whole_metres(nearby.nearest_metro_m),
             "park_dist_m": _whole_metres(nearby.nearest_park_m),
+            "woods_dist_m": _whole_metres(nearby.nearest_woods_m),
             "lake_dist_m": _whole_metres(nearby.nearest_lake_m),
             "car_parking": _yes_no(listing.has_car_parking),
             "power_backup": _yes_no(listing.has_power_backup),

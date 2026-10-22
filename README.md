@@ -20,8 +20,9 @@ publishes it to GitHub Pages.
 **Interactive map** (`output/map.html`)
 
 - One marker per listing, sized by area and coloured by the active ranking.
-- Three rankings: **Quality** (light, age, amenities, platform scores, ...),
-  **Value** (quality per rupee), and **Commute**, driven by your
+- Four rankings: **Quality** (light, age, amenities, platform scores, ...),
+  **Value** (quality per rupee), **Vibe** (parks, woods/tree cover and lakes
+  nearby), and **Commute**, driven by your
   [places of interest](#places-of-interest).
 - Sliders for total cost (rent + maintenance), area, photo count, deposit
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
@@ -42,7 +43,7 @@ publishes it to GitHub Pages.
 
 **CLI ranking** (`output/results.csv`): NoBroker listings within a budget, scored
 0–100+ on pet-friendliness, space, light, freshness, amenities and distance to the
-nearest park, lake and metro station.
+nearest park, woods/tree cover, lake and metro station.
 
 ## Requirements
 

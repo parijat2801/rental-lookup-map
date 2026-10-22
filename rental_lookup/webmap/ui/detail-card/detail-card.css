@@ -139,6 +139,38 @@
     gap: 4px;
     margin-top: 12px;
 }
+#detail-card .greenery {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hover);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 12px;
+    font-size: var(--fs-sm);
+    color: var(--muted);
+}
+#detail-card .greenery-row {
+    display: contents;
+}
+#detail-card .greenery .area-label {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    font-weight: 500;
+    white-space: nowrap;
+}
+#detail-card .greenery .area-label svg.icon {
+    width: 13px;
+    height: 13px;
+    color: #15803d;
+}
+#detail-card .greenery-dist {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
 #detail-card .commute {
     margin-top: 12px;
     padding-top: 10px;

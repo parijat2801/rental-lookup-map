@@ -2,6 +2,12 @@
 // Scoring. Every score depends only on the listing itself, so it is computed
 // once at load into d.scores; filters and colour tiers are applied per render.
 // ===========================================================================
+// Full points up to fullUntil metres, then linearly down to 0 at zeroAt.
+function linearFalloff(metres, fullUntil, zeroAt, points) {
+    if (metres == null || metres >= zeroAt) return 0;
+    if (metres < fullUntil) return points;
+    return points * (1 - (metres - fullUntil) / (zeroAt - fullUntil));
+}
 // Quality: general desirability (light, age, amenities, platform scores, ...).
 function qualityScore(d) {
     var s = 0;
@@ -35,6 +41,17 @@ function qualityScore(d) {
     if (d.cupboards >= 5) s += 5;
     return s;
 }
+// Vibe: greenery near the listing. Distances are to neighbourhood-scale OSM parks /
+// woods / lakes only (tiny gardens and scrub are filtered out at build time).
+// Society "park" amenity only counts in gated communities — the flag is noisy otherwise.
+function vibeScore(d) {
+    return Math.round(
+        linearFalloff(d.parkM, 250, 800, 45) +
+            linearFalloff(d.woodsM, 300, 1000, 30) +
+            linearFalloff(d.lakeM, 600, 1800, 20) +
+            (d.hasPark && d.isGated ? 5 : 0),
+    );
+}
 function computeScores(d) {
     try {
         var quality = qualityScore(d);
@@ -45,9 +62,10 @@ function computeScores(d) {
                     ? Math.round((quality / d.totalCost) * 100000)
                     : 0,
             commute: 0, // depends on the places of interest; see refreshCommuteScores()
+            vibe: vibeScore(d),
         };
     } catch (e) {
-        d.scores = { quality: 0, value: 0, commute: 0 };
+        d.scores = { quality: 0, value: 0, commute: 0, vibe: 0 };
     }
 }
 LISTINGS.forEach(computeScores);
