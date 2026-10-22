@@ -1,4 +1,4 @@
-// Commute bonus for the other rank modes. At 0 they ignore the areas of interest; to blend,
+// Commute bonus for the other rank modes. At 0 they ignore the places of interest; to blend,
 // raise the weight (0-1) and wrap their scores with this in computeScores / refreshCommuteScores.
 var COMMUTE_BLEND_WEIGHT = 0;
 function withCommuteBlend(score, d) {

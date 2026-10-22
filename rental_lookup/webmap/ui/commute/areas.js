@@ -10,7 +10,7 @@ function onAreasChanged(showCommuteTab) {
     else refreshMap();
 }
 function addArea(name, lat, lng) {
-    if (areasOfInterest.length >= MAX_AREAS) { toast('Up to ' + MAX_AREAS + ' areas of interest'); return null; }
+    if (areasOfInterest.length >= MAX_AREAS) { toast('Up to ' + MAX_AREAS + ' places of interest'); return null; }
     var area = {id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name, lat: lat, lng: lng,
                 stations: nearestStations(lat, lng)};
     areasOfInterest.push(area);
@@ -186,7 +186,7 @@ byId('area-input').addEventListener('blur', function() {
 map.on('contextmenu', function(e) {
     var lat = e.latlng.lat, lng = e.latlng.lng;
     var popup = L.DomUtil.create('div', 'area-popup');
-    popup.innerHTML = '<button type="button">' + icon('map-pin-plus') + 'Add as area of interest</button>';
+    popup.innerHTML = '<button type="button">' + icon('map-pin-plus') + 'Add as place of interest</button>';
     popup.querySelector('button').onclick = function() {
         map.closePopup();
         var area = addArea('Pinned location', lat, lng);

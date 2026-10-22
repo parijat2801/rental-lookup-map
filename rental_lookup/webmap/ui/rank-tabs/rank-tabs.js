@@ -15,7 +15,7 @@ function setRankMode(mode) {
     byId('areas-panel').hidden = mode !== 'commute';
     refreshMap();
 }
-// The Commute tab ranks by quality until at least one area of interest is set.
+// The Commute tab ranks by quality until at least one place of interest is set.
 function effectiveRankMode() {
     return activeRankMode === 'commute' && !areasOfInterest.length ? 'quality' : activeRankMode;
 }

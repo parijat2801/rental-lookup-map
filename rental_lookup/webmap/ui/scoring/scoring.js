@@ -44,7 +44,7 @@ function computeScores(d) {
             value: d.totalCost > 0 ? Math.round(quality / d.totalCost * 100000) : 0,
             dealQuality: dealQuality,
             deal: d.totalCost > 0 ? Math.round(dealQuality * dealQuality / d.totalCost * 1000) : 0,
-            commute: 0  // depends on the areas of interest; see refreshCommuteScores()
+            commute: 0  // depends on the places of interest; see refreshCommuteScores()
         };
     } catch (e) {
         d.scores = {quality: 0, value: 0, dealQuality: 0, deal: 0, commute: 0};

@@ -1,4 +1,4 @@
-/* --- Areas of interest (Commute tab) ------------------------------------------ */
+/* --- Places of interest (Commute tab) ------------------------------------------ */
 .areas-panel{margin:14px 0 0;padding:12px 18px 12px;display:grid;gap:10px;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .areas-panel[hidden]{display:none}
 .areas-panel.collapsed{gap:0}

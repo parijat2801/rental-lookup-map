@@ -22,7 +22,7 @@ publishes it to GitHub Pages.
 - Three rankings: **Quality** (light, age, amenities, platform scores, ...),
   **Value** (quality per rupee) and **Best Deals** (amenities and location
   relative to cost), plus a fourth,
-  **Commute**, driven by your [areas of interest](#areas-of-interest).
+  **Commute**, driven by your [places of interest](#places-of-interest).
 - Sliders for total cost (rent + maintenance), area, photo count, deposit
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
   balcony, pool, pet-friendly, branded builder, source and more.
@@ -185,13 +185,13 @@ negative timestamp is an un-star / un-dismiss; when copies are merged the most
 recent action per URL wins. The "Saved state" panel can export/import a backup
 file to move stars between browsers.
 
-## Areas of interest
+## Places of interest
 
 On the **Commute** tab, add the places you want to get to easily (office, gym,
 friends): search for a place, paste a full Google Maps URL or `lat, lng`, or
 right-click anywhere on the map. Short `maps.app.goo.gl` links can't be read from
 the page; open them and paste the full URL instead. Each listing then gets two
-commute times per area:
+commute times per place:
 
 - **Drive**: road time from the public [OSRM](https://project-osrm.org) server,
   multiplied by `DRIVE_TRAFFIC_FACTOR` (1.6) because OSRM assumes empty roads.
@@ -201,14 +201,14 @@ commute times per area:
 - **Metro**: computed in the page from the Namma Metro stations in
   `data/metro_lines.json`: walk (up to 1.5 km) or take an auto to one of the
   three nearest stations, wait, ride (including changes between lines), then walk
-  or take an auto to the area. Lines that open after the last
+  or take an auto to the place. Lines that open after the last
   `python scripts/fetch_metro_lines.py` run aren't counted.
 
-Ranking uses the faster of drive and metro for each area; both times are shown.
-Areas combine with AND: a listing has to be easy to reach from every area, so its
+Ranking uses the faster of drive and metro for each place; both times are shown.
+Places combine with AND: a listing has to be easy to reach from every place, so its
 commute score comes from its longest commute (100 at 10 minutes or less, falling
 to 0 at 60 minutes). Ties go to the shorter average commute, then the lower cost.
-Areas and drive times are kept per browser.
+Places and drive times are kept per browser.
 All speeds and penalties are constants at the top of
 `rental_lookup/webmap/ui/commute/metro.js`. `COMMUTE_BLEND_WEIGHT` in
 `ui/scoring/score-tiers.js` (currently 0) is where commute can later be blended into the other rankings.

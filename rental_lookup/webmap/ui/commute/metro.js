@@ -1,5 +1,5 @@
 // ===========================================================================
-// Areas of interest and commute
+// Places of interest and commute
 //   Each listing gets a drive time (OSRM, cached) and a metro time (computed
 //   from the METRO_LINES station graph) to every area; the Commute tab ranks
 //   by them. Areas, drive times and the mode are kept in localStorage.
