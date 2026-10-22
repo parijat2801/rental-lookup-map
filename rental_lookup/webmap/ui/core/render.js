@@ -78,8 +78,7 @@ function refreshMap() {
         // 90 = "Any"; otherwise listings with unknown age (delisted, -1) are hidden
         return sliders.maxDaysAgo >= 90 || (d.daysAgo >= 0 && d.daysAgo <= sliders.maxDaysAgo);
     });
-    var tiers = currentTiers = rankMode === 'quality' ? QUALITY_TIERS
-        : percentileTiers(matches.map(function(d) { return d.scores[mode.score]; }));
+    var tiers = currentTiers = tiersForScore(mode.score);
     matches.sort(mode.sort);
     filteredListings = matches;
 
