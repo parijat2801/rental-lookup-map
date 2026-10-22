@@ -1,0 +1,83 @@
+/* --- Resync progress card ---------------------------------------------------- */
+.resync-progress {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 24px;
+    margin: 0 auto;
+    width: min(360px, calc(100vw - 32px));
+    z-index: 2100;
+    display: grid;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    pointer-events: none;
+}
+.resync-progress[hidden] {
+    display: none;
+}
+.resync-progress-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+}
+.resync-progress-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    color: var(--muted);
+    animation: resync-spin 1s linear infinite;
+}
+.resync-progress-icon svg.icon {
+    width: 18px;
+    height: 18px;
+}
+@keyframes resync-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .resync-progress-icon {
+        animation: none;
+    }
+}
+.resync-progress-copy {
+    min-width: 0;
+}
+.resync-progress-title {
+    font-size: var(--fs-md);
+    font-weight: 600;
+}
+.resync-progress-step {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.resync-progress-track {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--hover);
+    overflow: hidden;
+}
+.resync-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 0.35s ease;
+}
+.resync-progress-meta {
+    font-size: var(--fs-xs);
+    color: var(--subtle);
+    font-variant-numeric: tabular-nums;
+}

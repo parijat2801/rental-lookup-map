@@ -9,9 +9,11 @@ URL wins). That file is a local backup only — stars live in the browser's
 localStorage and are never published to GitHub.
 
 POST /resync runs scripts/refresh_map.sh in the background (one at a time, output
-in output/resync.log); GET /resync_status reports whether it is still running.
+in output/resync.log); GET /resync_status reports whether it is still running and
+which refresh step it has reached (parsed from the log).
 """
 import json
+import re
 import subprocess
 import sys
 import threading
@@ -25,6 +27,9 @@ from rental_lookup.stars import merge_stars, parse_json_object
 
 DEFAULT_PORT = 8765
 MAX_REQUEST_BYTES = 10 * 1024 * 1024
+# Matches `=== Step N: label ===` lines written by scripts/refresh_map.sh.
+RESYNC_STEP_RE = re.compile(r"^=== Step (\d+):\s*(.+?)\s*===\s*$", re.MULTILINE)
+RESYNC_TOTAL_STEPS = 7
 _save_lock = threading.Lock()  # requests are handled on separate threads
 
 _resync_lock = threading.Lock()
@@ -32,12 +37,35 @@ _resync_process = None
 _resync_started_at = None
 
 
+def parse_resync_progress(log_text: str) -> dict:
+    """Current refresh step from the script's banner lines in the log."""
+    step, label = 0, "Starting…"
+    for match in RESYNC_STEP_RE.finditer(log_text):
+        step, label = int(match.group(1)), match.group(2)
+    if "=== Done!" in log_text:
+        step, label = RESYNC_TOTAL_STEPS, "Done"
+    return {"step": step, "totalSteps": RESYNC_TOTAL_STEPS, "stepLabel": label}
+
+
 def resync_status() -> dict:
     with _resync_lock:
         if _resync_process is None:
-            return {"running": False, "exitCode": None, "startedAt": None}
-        exit_code = _resync_process.poll()
-        return {"running": exit_code is None, "exitCode": exit_code, "startedAt": _resync_started_at}
+            status = {"running": False, "exitCode": None, "startedAt": None}
+        else:
+            exit_code = _resync_process.poll()
+            status = {
+                "running": exit_code is None,
+                "exitCode": exit_code,
+                "startedAt": _resync_started_at,
+            }
+    progress = {"step": 0, "totalSteps": RESYNC_TOTAL_STEPS, "stepLabel": "Starting…"}
+    try:
+        progress = parse_resync_progress(RESYNC_LOG_PATH.read_text(encoding="utf-8", errors="replace"))
+    except FileNotFoundError:
+        pass
+    except OSError:
+        pass
+    return {**status, **progress}
 
 
 def start_resync() -> bool:

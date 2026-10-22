@@ -1,15 +1,51 @@
 // Resync: webmap/server.py re-runs scripts/refresh_map.sh, then the page reloads
-// with the rebuilt map. Polling resumes after a reload mid-sync.
+// with the rebuilt map. Polling resumes after a reload mid-sync. Progress comes
+// from === Step N === banners in output/resync.log via /resync_status.
 var resyncPollTimer = null;
+var RESYNC_POLL_MS = 1500;
+var RESYNC_STEP_LABELS = {
+    0: "Starting…",
+    1: "Fetching NoBroker",
+    2: "Fetching MagicBricks",
+    3: "Fetching Property Angel",
+    4: "Ranking listings",
+    5: "Enriching top listings",
+    6: "Fetching ratings",
+    7: "Rebuilding map",
+};
 function toggleResyncConfirm(show) {
     setOverlayOpen(byId("resync-overlay"), show);
     if (show) byId("resync-confirm-button").focus();
 }
-function setResyncRunning(running) {
+function formatResyncElapsed(startedAt) {
+    if (!startedAt) return "";
+    var seconds = Math.max(0, Math.round((Date.now() - Date.parse(startedAt)) / 1000));
+    if (seconds < 60) return seconds + "s";
+    var minutes = Math.floor(seconds / 60);
+    return minutes + "m " + (seconds % 60) + "s";
+}
+function updateResyncProgress(status) {
+    var card = byId("resync-progress");
+    var running = !!status.running;
+    card.hidden = !running;
     byId("resync-button").disabled = running;
     byId("resync-label").textContent = running
         ? "Resyncing listings…"
         : "Resync listings";
+    if (!running) return;
+
+    var step = Math.max(0, Math.min(status.step || 0, status.totalSteps || 7));
+    var total = status.totalSteps || 7;
+    var label =
+        RESYNC_STEP_LABELS[step] || status.stepLabel || RESYNC_STEP_LABELS[0];
+    byId("resync-progress-step").textContent =
+        (step > 0 ? "Step " + step + " of " + total + " · " : "") + label;
+    byId("resync-progress-fill").style.width =
+        Math.round((step / total) * 100) + "%";
+    var elapsed = formatResyncElapsed(status.startedAt);
+    byId("resync-progress-meta").textContent = elapsed
+        ? "Elapsed " + elapsed
+        : "";
 }
 function pollResync() {
     fetch("/resync_status")
@@ -18,18 +54,18 @@ function pollResync() {
         })
         .then(function (status) {
             if (status.running) {
-                setResyncRunning(true);
-                resyncPollTimer = setTimeout(pollResync, 5000);
+                updateResyncProgress(status);
+                resyncPollTimer = setTimeout(pollResync, RESYNC_POLL_MS);
                 return;
             }
-            setResyncRunning(false);
+            updateResyncProgress(status);
             if (resyncPollTimer === null) return; // nothing was running when the page loaded
             resyncPollTimer = null;
             if (status.exitCode === 0) location.reload();
             else toast("Resync failed. See output/resync.log");
         })
         .catch(function () {
-            setResyncRunning(false);
+            updateResyncProgress({ running: false });
         });
 }
 function startResync() {
@@ -44,8 +80,14 @@ function startResync() {
                     ? "A resync is already running"
                     : "Resyncing listings. This takes a few minutes.",
             );
-            resyncPollTimer = setTimeout(pollResync, 5000);
-            setResyncRunning(true);
+            updateResyncProgress({
+                running: true,
+                step: 0,
+                totalSteps: 7,
+                stepLabel: "Starting…",
+                startedAt: new Date().toISOString(),
+            });
+            resyncPollTimer = setTimeout(pollResync, RESYNC_POLL_MS);
         })
         .catch(function () {
             toast("Resync needs the local server: run rental-map-dev");
@@ -57,8 +99,8 @@ fetch("/resync_status")
     })
     .then(function (status) {
         if (status.running) {
-            setResyncRunning(true);
-            resyncPollTimer = setTimeout(pollResync, 5000);
+            updateResyncProgress(status);
+            resyncPollTimer = setTimeout(pollResync, RESYNC_POLL_MS);
         }
     })
     .catch(function () {});
