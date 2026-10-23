@@ -39,6 +39,8 @@ var SLIDER_IDS = [
     "filter-score",
     "filter-days",
 ];
+// Sliders that stop filtering at their max end; the rest stop filtering at their min end.
+var SLIDERS_OFF_AT_MAX = ["filter-cost-max", "filter-deposit", "filter-days"];
 // Chips shown outside the sheet; they don't count towards the "Filters" badge.
 var QUICK_FILTERS = ["starredOnly"];
 
@@ -54,14 +56,17 @@ function syncChips() {
         chip.setAttribute("aria-pressed", on);
     });
 }
+// Clear every filter (chips off, sliders at their no-op end, search empty).
+// Page-load defaults stay in DEFAULT_FILTER_CHIPS for the "changed" counts.
 function resetFilters() {
-    Object.keys(DEFAULT_FILTER_CHIPS).forEach(function (name) {
-        if (QUICK_FILTERS.indexOf(name) < 0)
-            filterChips[name] = DEFAULT_FILTER_CHIPS[name];
+    Object.keys(filterChips).forEach(function (name) {
+        filterChips[name] = false;
     });
     SLIDER_IDS.forEach(function (id) {
-        byId(id).value = byId(id).defaultValue;
+        var el = byId(id);
+        el.value = SLIDERS_OFF_AT_MAX.indexOf(id) >= 0 ? el.max : el.min;
     });
+    byId("search-input").value = "";
     syncChips();
     refreshMap();
 }
@@ -120,8 +125,6 @@ function isNonDefault(el) {
         );
     return +el.value !== +el.defaultValue;
 }
-// Sliders that stop filtering at their max end; the rest stop filtering at their min end.
-var SLIDERS_OFF_AT_MAX = ["filter-cost-max", "filter-deposit", "filter-days"];
 function sliderApplied(id) {
     var el = byId(id);
     return SLIDERS_OFF_AT_MAX.indexOf(id) >= 0

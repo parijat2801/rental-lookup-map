@@ -14,48 +14,79 @@ function commuteHtml(d) {
             "</span>"
         );
     }
+    var perArea = d.commute.perArea;
+    var rows = perArea
+        .map(function (c) {
+            var drive = time(
+                "car",
+                (c.estimated ? "~" : "") + formatMinutes(c.drive),
+                "Drive, " +
+                    c.driveKm.toFixed(1) +
+                    " km" +
+                    (c.estimated ? " (estimate)" : ""),
+            );
+            var metro = c.metro
+                ? time(
+                      "train-front",
+                      formatMinutes(c.metro.minutes),
+                      "Metro: " +
+                          c.metro.fromStation +
+                          " → " +
+                          c.metro.toStation +
+                          (c.metro.transfers
+                              ? ", " +
+                                c.metro.transfers +
+                                (c.metro.transfers === 1
+                                    ? " change"
+                                    : " changes")
+                              : ""),
+                  )
+                : "<span></span>";
+            return (
+                '<div class="commute-row"><span class="area-label">' +
+                icon("flag") +
+                "<span>" +
+                escapeHtml(c.area.name) +
+                "</span></span>" +
+                drive +
+                metro +
+                "</div>"
+            );
+        })
+        .join("");
+    var estimated = perArea.some(function (c) {
+        return c.bestMode === "drive" && c.estimated;
+    })
+        ? "~"
+        : "";
+    var hint =
+        perArea.length === 1
+            ? estimated +
+              formatMinutes(perArea[0].best) +
+              " to " +
+              escapeHtml(perArea[0].area.name)
+            : "avg " +
+              formatMinutes(d.commute.averageMinutes) +
+              " · " +
+              perArea.length +
+              " places";
+    var open = effectiveRankMode() === "commute" ? " open" : "";
     return (
-        '<div class="commute">' +
-        d.commute.perArea
-            .map(function (c) {
-                var drive = time(
-                    "car",
-                    (c.estimated ? "~" : "") + formatMinutes(c.drive),
-                    "Drive, " +
-                        c.driveKm.toFixed(1) +
-                        " km" +
-                        (c.estimated ? " (estimate)" : ""),
-                );
-                var metro = c.metro
-                    ? time(
-                          "train-front",
-                          formatMinutes(c.metro.minutes),
-                          "Metro: " +
-                              c.metro.fromStation +
-                              " → " +
-                              c.metro.toStation +
-                              (c.metro.transfers
-                                  ? ", " +
-                                    c.metro.transfers +
-                                    (c.metro.transfers === 1
-                                        ? " change"
-                                        : " changes")
-                                  : ""),
-                      )
-                    : "<span></span>";
-                return (
-                    '<div class="commute-row"><span class="area-label">' +
-                    icon("flag") +
-                    "<span>" +
-                    escapeHtml(c.area.name) +
-                    "</span></span>" +
-                    drive +
-                    metro +
-                    "</div>"
-                );
-            })
-            .join("") +
-        "</div>"
+        '<details class="card-fold commute"' +
+        open +
+        ">" +
+        "<summary>" +
+        '<span class="fold-title">' +
+        icon("route") +
+        "<span>Commute</span></span>" +
+        '<span class="fold-hint">' +
+        hint +
+        "</span>" +
+        icon("chevron-down").replace('class="icon"', 'class="icon chevron"') +
+        "</summary>" +
+        '<div class="fold-body">' +
+        rows +
+        "</div></details>"
     );
 }
 function commuteLineHtml(d) {

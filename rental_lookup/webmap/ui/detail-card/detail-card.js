@@ -60,6 +60,13 @@ function ageLabel(d) {
           ? "New"
           : d.ageYears + " yr old";
 }
+// How long the listing has been posted (`daysAgo`); used in the detail-card eyebrow.
+function listingAgeLabel(d) {
+    if (d.daysAgo == null || d.daysAgo < 0) return "";
+    if (d.daysAgo === 0) return "Today";
+    if (d.daysAgo === 1) return "1 day ago";
+    return d.daysAgo + " days ago";
+}
 function ratingLabel(value) {
     return value == null ? "-" : value;
 } // null = NoBroker has no rating
@@ -99,17 +106,10 @@ function showDetailCard(e, d) {
         );
     byId("card-badges").innerHTML = badges.join("");
 
-    var rankMode = effectiveRankMode();
-    var eyebrowExtra =
-        rankMode === "quality"
-            ? ""
-            : rankMode === "vibe"
-              ? greeneryEyebrow(d)
-              : "Quality " + d.scores.quality;
     var eyebrow = [
         d.isDelisted ? "" : "#" + d.rank,
         SOURCE_LABELS[d.source] || "NoBroker",
-        eyebrowExtra,
+        listingAgeLabel(d),
     ];
     byId("card-eyebrow").innerHTML =
         scorePillHtml(d) +
@@ -206,7 +206,10 @@ function showDetailCard(e, d) {
         : "";
     byId("card-extras").innerHTML = actionsHtml;
 
-    if (!e) return;
+    if (!e) {
+        rememberDetailCardHeight();
+        return;
+    }
     var wasHidden = detailCard.style.display !== "block";
     detailCard.style.display = "block";
     detailCard.style.visibility = "";
@@ -260,6 +263,39 @@ detailCard.addEventListener("click", function (e) {
     });
     if (d) selectListing(d, {});
 });
+// Keep the card's vertical centre fixed when Vibe/Commute folds open or close.
+var detailCardHeight = 0;
+function rememberDetailCardHeight() {
+    detailCardHeight = detailCard.offsetHeight;
+}
+// toggle does not bubble; capture so we see fold open/close on the card.
+detailCard.addEventListener(
+    "toggle",
+    function (e) {
+        if (!e.target.classList.contains("card-fold")) return;
+        var oldHeight = detailCardHeight || detailCard.offsetHeight;
+        var newHeight = detailCard.offsetHeight;
+        if (newHeight === oldHeight) return;
+        var top = parseFloat(detailCard.style.top) || 0;
+        var center = top + oldHeight / 2;
+        var nextTop = Math.max(
+            10,
+            Math.min(center - newHeight / 2, window.innerHeight - newHeight - 10),
+        );
+        if (MOTION) {
+            gsap.killTweensOf(detailCard, "top");
+            gsap.to(detailCard, {
+                top: nextTop,
+                duration: 0.2,
+                ease: "power2.out",
+            });
+        } else {
+            detailCard.style.top = nextTop + "px";
+        }
+        detailCardHeight = newHeight;
+    },
+    true,
+);
 // Card position for an anchor at viewport (x, y): beside it, on screen and clear of the sidebar.
 function cardPosition(anchorX, anchorY) {
     var x = anchorX + 20,
@@ -277,6 +313,7 @@ function placeDetailCard(anchorX, anchorY) {
     if (MOTION) gsap.killTweensOf(detailCard, "left,top");
     detailCard.style.left = pos.left + "px";
     detailCard.style.top = pos.top + "px";
+    rememberDetailCardHeight();
 }
 // Viewport position of listing d's marker, optionally at a future map center/zoom.
 function markerScreenPoint(d, center, zoom) {

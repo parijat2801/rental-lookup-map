@@ -139,16 +139,69 @@
     gap: 4px;
     margin-top: 12px;
 }
-#detail-card .greenery {
+#detail-card .card-fold {
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid var(--hover);
+    font-size: var(--fs-sm);
+    color: var(--muted);
+}
+#detail-card .card-fold > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+#detail-card .card-fold > summary::-webkit-details-marker {
+    display: none;
+}
+#detail-card .card-fold .fold-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    font-weight: 600;
+    white-space: nowrap;
+}
+#detail-card .card-fold .fold-title svg.icon {
+    width: 13px;
+    height: 13px;
+}
+#detail-card .greenery .fold-title svg.icon {
+    color: #15803d;
+}
+#detail-card .commute .fold-title svg.icon {
+    color: #4f46e5;
+}
+#detail-card .card-fold .fold-hint {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+#detail-card .card-fold[open] > summary .fold-hint {
+    visibility: hidden;
+}
+#detail-card .card-fold .chevron {
+    width: 14px;
+    height: 14px;
+    color: var(--subtle);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+#detail-card .card-fold[open] > summary .chevron {
+    transform: rotate(180deg);
+}
+#detail-card .greenery .fold-body {
+    margin-top: 8px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 4px 12px;
-    font-size: var(--fs-sm);
-    color: var(--muted);
 }
 #detail-card .greenery-row {
     display: contents;
@@ -171,16 +224,12 @@
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
-#detail-card .commute {
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid var(--hover);
+#detail-card .commute .fold-body {
+    margin-top: 8px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 4px 12px;
-    font-size: var(--fs-sm);
-    color: var(--muted);
 }
 #detail-card .commute-row {
     display: contents;

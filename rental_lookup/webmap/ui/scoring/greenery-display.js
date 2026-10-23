@@ -15,16 +15,6 @@ function greeneryParts(d) {
         parts.push({ icon: "waves", label: "Lake", metres: d.lakeM });
     return parts;
 }
-// Compact hint for the detail-card eyebrow when Vibe is active.
-function greeneryEyebrow(d) {
-    var parts = greeneryParts(d);
-    if (!parts.length)
-        return d.hasPark && d.isGated ? "Society park" : "No greenery data";
-    parts.sort(function (a, b) {
-        return a.metres - b.metres;
-    });
-    return parts[0].label + " " + formatMetres(parts[0].metres);
-}
 // Detail card block: park / woods / lake distances (always, when present).
 function greeneryHtml(d) {
     var parts = greeneryParts(d);
@@ -50,7 +40,30 @@ function greeneryHtml(d) {
             "<span>Society park</span></span>" +
             '<span class="greenery-dist">On site</span></div>';
     }
-    return '<div class="greenery">' + rows + "</div>";
+    var nearest = parts.slice().sort(function (a, b) {
+        return a.metres - b.metres;
+    })[0];
+    var hint = nearest
+        ? nearest.label + " " + formatMetres(nearest.metres)
+        : d.hasPark && d.isGated
+          ? "Society park"
+          : "";
+    var open = effectiveRankMode() === "vibe" ? " open" : "";
+    return (
+        '<details class="card-fold greenery"' +
+        open +
+        ">" +
+        "<summary>" +
+        '<span class="fold-title">' +
+        icon("trees") +
+        "<span>Vibe</span></span>" +
+        (hint ? '<span class="fold-hint">' + hint + "</span>" : "") +
+        icon("chevron-down").replace('class="icon"', 'class="icon chevron"') +
+        "</summary>" +
+        '<div class="fold-body">' +
+        rows +
+        "</div></details>"
+    );
 }
 // Sidebar list line, only while the Vibe tab is active.
 function greeneryLineHtml(d) {
