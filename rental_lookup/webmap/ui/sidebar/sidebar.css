@@ -58,16 +58,25 @@ body.resizing {
 body.resizing #sidebar {
     transition: none;
 }
-body.sidebar-collapsed #sidebar {
-    transform: translateX(calc(-100% - var(--sidebar-inset) - 4px));
-    opacity: 0;
-    pointer-events: none;
-}
-.sidebar-open-control {
-    display: none;
-}
-body.sidebar-collapsed .sidebar-open-control {
-    display: block;
+/* Desktop collapsed: keep the header bar, hide everything below it. */
+@media (min-width: 821px) {
+    body.sidebar-collapsed #sidebar {
+        bottom: auto;
+        transform: none;
+        opacity: 1;
+        pointer-events: auto;
+        /* Let the ••• menu extend below the header bar. */
+        overflow: visible;
+    }
+    body.sidebar-collapsed .sidebar-inner {
+        overflow: visible;
+    }
+    body.sidebar-collapsed .sidebar-inner > :not(.sidebar-header) {
+        display: none;
+    }
+    body.sidebar-collapsed .resize-handle {
+        display: none;
+    }
 }
 .sidebar-header {
     display: flex;

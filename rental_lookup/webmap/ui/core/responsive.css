@@ -35,8 +35,7 @@
         width: 100%;
     }
     .resize-handle,
-    .sidebar-collapse-button,
-    body.sidebar-collapsed .sidebar-open-control {
+    .sidebar-collapse-button {
         display: none;
     }
     .floating-bar {

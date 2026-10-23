@@ -1,4 +1,4 @@
-// Bottom-left legend: colour ramp always visible, marker styles on demand.
+// Top-right legend: colour ramp always visible, marker styles on demand.
 var legend = L.control({ position: "topright" });
 legend.onAdd = function () {
     var container = L.DomUtil.create("details", "map-legend");

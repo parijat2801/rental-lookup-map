@@ -38,14 +38,13 @@ function updateResyncProgress(status) {
     var total = status.totalSteps || 7;
     var label =
         RESYNC_STEP_LABELS[step] || status.stepLabel || RESYNC_STEP_LABELS[0];
-    byId("resync-progress-step").textContent =
-        (step > 0 ? "Step " + step + " of " + total + " · " : "") + label;
+    var parts = [label];
+    if (step > 0) parts.push(step + "/" + total);
+    var elapsed = formatResyncElapsed(status.startedAt);
+    if (elapsed) parts.push(elapsed);
+    byId("resync-progress-step").textContent = parts.join(" · ");
     byId("resync-progress-fill").style.width =
         Math.round((step / total) * 100) + "%";
-    var elapsed = formatResyncElapsed(status.startedAt);
-    byId("resync-progress-meta").textContent = elapsed
-        ? "Elapsed " + elapsed
-        : "";
 }
 function pollResync() {
     fetch("/resync_status")

@@ -16,11 +16,22 @@ var sidebarWidth = clampSidebarWidth(
     +localStorage.getItem("rental_sidebar_width") || SIDEBAR_DEFAULT,
 );
 var sidebarCollapsed = localStorage.getItem("rental_sidebar_collapsed") === "1";
+function syncSidebarCollapseButton() {
+    var btn = byId("sidebar-collapse-button");
+    if (!btn) return;
+    var label = sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+    btn.title = label;
+    btn.setAttribute("aria-label", label);
+    btn.innerHTML = icon(
+        sidebarCollapsed ? "panel-left-open" : "panel-left-close",
+    );
+}
 function applySidebar() {
     var root = document.documentElement.style;
     root.setProperty("--sidebar-open", sidebarWidth + "px");
     root.setProperty("--sidebar", (sidebarCollapsed ? 0 : sidebarWidth) + "px");
     document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
+    syncSidebarCollapseButton();
 }
 // Left edge clearance for map UI (sidebar width + inset); 0 when collapsed or stacked on mobile.
 function sidebarOffset() {

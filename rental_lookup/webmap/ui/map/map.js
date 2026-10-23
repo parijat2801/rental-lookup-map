@@ -185,20 +185,3 @@ layersControl.onAdd = function () {
     return container;
 };
 layersControl.addTo(map);
-
-// Top-left button bringing a collapsed sidebar back.
-var sidebarToggle = L.control({ position: "topleft" });
-sidebarToggle.onAdd = function () {
-    var container = L.DomUtil.create("div", "leaflet-bar sidebar-open-control");
-    var button = L.DomUtil.create("a", "", container);
-    button.href = "#";
-    button.title = "Show sidebar";
-    button.innerHTML = icon("panel-left-open");
-    button.onclick = function (e) {
-        e.preventDefault();
-        toggleSidebar(false);
-    };
-    L.DomEvent.disableClickPropagation(container);
-    return container;
-};
-sidebarToggle.addTo(map);
