@@ -11,6 +11,7 @@ dist/
 # Scraped data (re-fetched every run)
 data/raw/
 data/raw_mb/
+data/raw_9a/
 data/raw_pa/
 data/raw_mygate/
 data/raw_prev/

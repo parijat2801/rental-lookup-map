@@ -1,7 +1,7 @@
-"""BHK coverage: scrapers must request 1, 2 and 3 BHK from both sources."""
+"""BHK coverage: scrapers must request 1, 2 and 3 BHK from listing sources."""
 import re
 
-from rental_lookup.sources import magicbricks, nobroker
+from rental_lookup.sources import acres99, magicbricks, nobroker
 from rental_lookup.webmap.builder import load_template
 
 
@@ -11,6 +11,10 @@ def test_nobroker_requests_1bhk():
 
 def test_magicbricks_requests_1bhk():
     assert set(magicbricks.BHK_TYPES.split(",")) == {"1", "2", "3"}
+
+
+def test_acres99_requests_1bhk():
+    assert set(acres99.BHK_TYPES.split(",")) == {"1", "2", "3"}
 
 
 def test_magicbricks_normalizes_1bhk():
@@ -23,6 +27,19 @@ def test_magicbricks_normalizes_1bhk():
         "propertyTypeD": "Apartment",
         "lmtDName": "Indiranagar",
         "pdUrl": "/propertyDetails/mb-1bhk",
+    })
+    assert listing is not None
+    assert listing.bhk == "BHK1"
+
+
+def test_acres99_normalizes_1bhk():
+    listing = acres99.normalize_listing({
+        "PROP_ID": "R1",
+        "BEDROOM_NUM": "1",
+        "MIN_PRICE": 20000,
+        "MAP_DETAILS": {"LATITUDE": "12.9716", "LONGITUDE": "77.6412"},
+        "LOCALITY": "Indiranagar",
+        "PD_URL": "/listing-spid-R1",
     })
     assert listing is not None
     assert listing.bhk == "BHK1"

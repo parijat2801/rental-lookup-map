@@ -4,6 +4,18 @@
         <meta charset="utf-8" />
         <title>Rentals — Bangalore</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script>
+            (function () {
+                try {
+                    var t = localStorage.getItem("rental_theme");
+                    if (t !== "light" && t !== "dark")
+                        t = matchMedia("(prefers-color-scheme: dark)").matches
+                            ? "dark"
+                            : "light";
+                    document.documentElement.setAttribute("data-theme", t);
+                } catch (e) {}
+            })();
+        </script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -52,6 +64,7 @@
             // code can only use what the files above it have set up.
             // @include ui/core/data.js
             // @include ui/core/helpers.js
+            // @include ui/core/theme.js
             // @include ui/toast/toast.js
             // @include ui/sidebar/sidebar.js
             // @include ui/map/map.js

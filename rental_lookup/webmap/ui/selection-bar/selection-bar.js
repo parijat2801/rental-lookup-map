@@ -14,7 +14,9 @@ map.on("mousemove", function (e) {
     if (!boxStart || !e.originalEvent.shiftKey) return;
     if (boxOutline) map.removeLayer(boxOutline);
     boxOutline = L.rectangle([boxStart, e.latlng], {
-        color: "#18181b",
+        color: getComputedStyle(document.documentElement)
+            .getPropertyValue("--text")
+            .trim(),
         weight: 1.5,
         fillOpacity: 0.06,
         dashArray: "6 4",

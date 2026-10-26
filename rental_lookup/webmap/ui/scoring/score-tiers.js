@@ -30,6 +30,14 @@ var TIER_PILLS = [
     ["#f0fdf4", "#15803d"],
     ["#dcfce7", "#14532d"],
 ];
+var TIER_PILLS_DARK = [
+    ["#450a0a", "#fca5a5"],
+    ["#431407", "#fdba74"],
+    ["#422006", "#fde047"],
+    ["#1a2e05", "#bef264"],
+    ["#052e16", "#86efac"],
+    ["#052e16", "#4ade80"],
+];
 // quality/commute are ~0–100 with fixed cut-offs; vibe uses percentiles of the
 // dataset (spread depends on OSM greenery density) so colours stay discriminative.
 var SCORE_TIERS = { quality: QUALITY_TIERS, commute: QUALITY_TIERS };
@@ -73,7 +81,8 @@ function scorePillHtml(d) {
             '<span class="score-badge" title="Delisted">' + value + "</span>"
         );
     var i = tierIndex(value, currentTiers),
-        pill = TIER_PILLS[i];
+        pills = currentTheme() === "dark" ? TIER_PILLS_DARK : TIER_PILLS,
+        pill = pills[i];
     return (
         '<span class="score-badge" title="' +
         mode.label.charAt(0).toUpperCase() +

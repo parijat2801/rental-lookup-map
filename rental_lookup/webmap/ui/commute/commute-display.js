@@ -44,7 +44,7 @@ function commuteHtml(d) {
                 : "<span></span>";
             return (
                 '<div class="commute-row"><span class="area-label">' +
-                icon("flag") +
+                icon("map-pin") +
                 "<span>" +
                 escapeHtml(c.area.name) +
                 "</span></span>" +

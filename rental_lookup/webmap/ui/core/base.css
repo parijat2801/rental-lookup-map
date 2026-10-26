@@ -1,5 +1,6 @@
 /* --- Design tokens, reset and shared controls ----------------------------------- */
 :root {
+    color-scheme: light;
     --bg: #fff;
     --surface: #fafafa;
     --hover: #f4f4f5;
@@ -9,9 +10,26 @@
     --muted: #71717a;
     --subtle: #a1a1aa;
     --accent: #18181b;
+    --accent-fg: #fff;
+    --accent-hover: #3f3f46;
     --star: #f59e0b;
     --danger: #e11d48;
     --success: #059669;
+    --map-bg: #f1f1ef;
+    --glass: rgba(255, 255, 255, 0.94);
+    --overlay: rgba(9, 9, 11, 0.45);
+    --chip-fg: #52525b;
+    --tag-positive-bg: #ecfdf5;
+    --tag-positive-fg: #047857;
+    --tag-warning-bg: #fff1f2;
+    --tag-warning-fg: #be123c;
+    --active-bg: #fff7ed;
+    --active-border: #fed7aa;
+    --star-on-bg: #fffbeb;
+    --star-on-border: #fde68a;
+    --star-on-fg: #b45309;
+    --green: #15803d;
+    --indigo: #4f46e5;
     --radius: 12px;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.16);
@@ -23,6 +41,37 @@
     --fs-base: 13px;
     --fs-sm: 12px;
     --fs-xs: 11px;
+}
+[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #18181b;
+    --surface: #09090b;
+    --hover: #27272a;
+    --border: #27272a;
+    --border-strong: #3f3f46;
+    --text: #fafafa;
+    --muted: #a1a1aa;
+    --subtle: #71717a;
+    --accent: #fafafa;
+    --accent-fg: #18181b;
+    --accent-hover: #e4e4e7;
+    --map-bg: #09090b;
+    --glass: rgba(24, 24, 27, 0.92);
+    --overlay: rgba(0, 0, 0, 0.6);
+    --chip-fg: #d4d4d8;
+    --tag-positive-bg: #052e16;
+    --tag-positive-fg: #6ee7b7;
+    --tag-warning-bg: #4c0519;
+    --tag-warning-fg: #fda4af;
+    --active-bg: #422006;
+    --active-border: #92400e;
+    --star-on-bg: #451a03;
+    --star-on-border: #b45309;
+    --star-on-fg: #fbbf24;
+    --green: #4ade80;
+    --indigo: #818cf8;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55);
 }
 * {
     box-sizing: border-box;
@@ -39,6 +88,7 @@ body {
     font-size: var(--fs-base);
     line-height: 1.45;
     color: var(--text);
+    background: var(--bg);
     height: 100vh;
     overflow: hidden;
     -webkit-font-smoothing: antialiased;
@@ -90,11 +140,11 @@ svg.icon {
 }
 .primary-button {
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-fg);
     font-weight: 600;
     padding: 11px 18px;
     border-radius: 10px;
 }
 .primary-button:hover {
-    background: #3f3f46;
+    background: var(--accent-hover);
 }

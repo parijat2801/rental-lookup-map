@@ -1,9 +1,9 @@
 """Same-flat cross-platform dedupe for map records.
 
-Drops MagicBricks / Property Angel re-listings of a flat already kept (usually
-NoBroker). Requires a named society and matching floor so different units in the
-same building are not collapsed. Platform IDs and photo URLs are not comparable
-across sources.
+Drops MagicBricks / 99acres / Property Angel re-listings of a flat already kept
+(usually NoBroker). Requires a named society and matching floor so different
+units in the same building are not collapsed. Platform IDs and photo URLs are
+not comparable across sources.
 """
 from __future__ import annotations
 

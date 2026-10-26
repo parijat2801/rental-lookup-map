@@ -131,18 +131,18 @@ input[type="range"]::-webkit-slider-thumb {
     height: 18px;
     margin-top: -7px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--bg);
     border: 1px solid var(--border-strong);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow);
     cursor: grab;
 }
 input[type="range"]::-moz-range-thumb {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--bg);
     border: 1px solid var(--border-strong);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow);
     cursor: grab;
 }
 .dual-range {

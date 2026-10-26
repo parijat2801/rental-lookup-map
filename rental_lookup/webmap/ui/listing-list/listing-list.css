@@ -57,8 +57,8 @@
     background: var(--surface);
 }
 .listing-card.active {
-    background: #fff7ed;
-    border-color: #fed7aa;
+    background: var(--active-bg);
+    border-color: var(--active-border);
 }
 .listing-card img,
 .listing-card .thumb-placeholder {
@@ -145,18 +145,18 @@
     padding: 2px 7px;
     border-radius: 6px;
     background: var(--hover);
-    color: #52525b;
+    color: var(--chip-fg);
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 .tag.positive {
-    background: #ecfdf5;
-    color: #047857;
+    background: var(--tag-positive-bg);
+    color: var(--tag-positive-fg);
 }
 .tag.warning {
-    background: #fff1f2;
-    color: #be123c;
+    background: var(--tag-warning-bg);
+    color: var(--tag-warning-fg);
 }
 .tag svg.icon {
     width: 11px;

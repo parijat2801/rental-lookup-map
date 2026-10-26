@@ -81,17 +81,26 @@ function passesFilters(d, sliders) {
     if (filterChips.requireRealPhoto && !d.hasRealPhoto) return false;
     if (filterChips.petFriendlyOnly && !d.isPetFriendly) return false;
     if (filterChips.poolOnly && !d.hasPool) return false;
+    if (filterChips.requireGym && !d.hasGym) return false;
+    if (filterChips.requireClubhouse && !d.hasClubhouse) return false;
+    if (filterChips.requirePark && !d.hasPark) return false;
+    if (filterChips.requireGated && !d.isGated) return false;
+    if (filterChips.requireSecurity && !d.hasSecurity) return false;
+    if (filterChips.requirePowerBackup && !d.hasPowerBackup) return false;
+    if (filterChips.requireIntercom && !d.hasIntercom) return false;
     if (filterChips.brandedBuilderOnly && !d.isBrandedBuilder) return false;
     if (filterChips.excludeFakeLocations && d.isFakeLocation) return false;
     // Source chips are an OR-set: none selected = show all
     if (
         filterChips.sourceNoBroker ||
         filterChips.sourceMagicBricks ||
+        filterChips.source99acres ||
         filterChips.sourcePropertyAngel
     ) {
         if (!(
             (filterChips.sourceNoBroker && d.source === "nb") ||
             (filterChips.sourceMagicBricks && d.source === "mb") ||
+            (filterChips.source99acres && d.source === "9a") ||
             (filterChips.sourcePropertyAngel && d.source === "pa")
         ))
             return false;

@@ -40,7 +40,7 @@ function removeArea(id) {
         if (key.slice(-suffix.length) === suffix) delete driveCache[key];
     });
     saveDriveCacheSoon();
-    map.closePopup();
+    closeAreaContextMenu();
     onAreasChanged();
 }
 function renameArea(id, name) {
@@ -63,30 +63,33 @@ function focusArea(id) {
 function renderAreas() {
     areaLayer.clearLayers();
     areasOfInterest.forEach(function (area) {
-        var popup = L.DomUtil.create("div", "area-popup");
-        popup.innerHTML =
-            "<b>" +
-            escapeHtml(area.name) +
-            '</b><button type="button">' +
-            icon("x") +
-            "Remove area</button>";
-        popup.querySelector("button").onclick = function () {
-            removeArea(area.id);
-        };
         L.marker([area.lat, area.lng], {
             icon: L.divIcon({
                 className: "area-marker",
-                html: "<span>" + icon("flag") + "</span>",
-                iconSize: [26, 26],
+                html: "<span>" + icon("map-pin") + "</span>",
+                iconSize: [28, 28],
+                iconAnchor: [14, 28],
             }),
             zIndexOffset: 2000,
             keyboard: false,
         })
             .bindTooltip(escapeHtml(area.name), {
                 direction: "top",
-                offset: [0, -12],
+                offset: [0, -28],
             })
-            .bindPopup(popup)
+            .on("click", function (e) {
+                L.DomEvent.stopPropagation(e);
+                openAreaContextMenu(
+                    e.originalEvent.clientX,
+                    e.originalEvent.clientY,
+                    '<button type="button" class="area-menu-item" role="menuitem">' +
+                        icon("map-pin-minus") +
+                        "Remove place of interest</button>",
+                    function () {
+                        removeArea(area.id);
+                    },
+                );
+            })
             .addTo(areaLayer);
     });
     byId("area-list").innerHTML = areasOfInterest
@@ -95,7 +98,7 @@ function renderAreas() {
                 '<span class="area-chip"><button type="button" class="area-name" title="Show on map" onclick="focusArea(\'' +
                 area.id +
                 "')\">" +
-                icon("flag") +
+                icon("map-pin") +
                 escapeHtml(area.name) +
                 '</button><button type="button" aria-label="Remove ' +
                 escapeHtml(area.name) +
@@ -322,31 +325,71 @@ byId("area-input").addEventListener("blur", function () {
     }, 0);
 });
 
-// Right-click anywhere on the map to add it as an area; the name is filled in by reverse geocoding.
+// Context menu for adding (right-click map) or removing (click pin) a place.
+var areaContextMenu = null;
+function closeAreaContextMenu() {
+    if (!areaContextMenu) return;
+    areaContextMenu.remove();
+    areaContextMenu = null;
+}
+function placeAreaContextMenu(menu, x, y) {
+    // Cursor is the top-left corner; flip if that would clip the viewport.
+    var pad = 8,
+        w = menu.offsetWidth,
+        h = menu.offsetHeight,
+        vw = window.innerWidth,
+        vh = window.innerHeight;
+    if (x + w + pad > vw) x = Math.max(pad, x - w);
+    if (y + h + pad > vh) y = Math.max(pad, y - h);
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+}
+function openAreaContextMenu(x, y, html, onPick) {
+    closeAreaContextMenu();
+    var menu = L.DomUtil.create("div", "area-context-menu", document.body);
+    menu.setAttribute("role", "menu");
+    menu.innerHTML = html;
+    menu.querySelector("button").onclick = function () {
+        closeAreaContextMenu();
+        onPick();
+    };
+    placeAreaContextMenu(menu, x, y);
+    areaContextMenu = menu;
+}
 map.on("contextmenu", function (e) {
+    L.DomEvent.preventDefault(e.originalEvent);
     var lat = e.latlng.lat,
         lng = e.latlng.lng;
-    var popup = L.DomUtil.create("div", "area-popup");
-    popup.innerHTML =
-        '<button type="button">' +
-        icon("map-pin-plus") +
-        "Add as place of interest</button>";
-    popup.querySelector("button").onclick = function () {
-        map.closePopup();
-        var area = addArea("Pinned location", lat, lng);
-        if (!area) return;
-        fetch(PHOTON_URL + "reverse?lat=" + lat + "&lon=" + lng)
-            .then(function (r) {
-                return r.json();
-            })
-            .then(function (body) {
-                if (body.features && body.features.length)
-                    renameArea(area.id, photonPlace(body.features[0]).name);
-            })
-            .catch(function () {});
-    };
-    L.popup({ closeButton: false })
-        .setLatLng(e.latlng)
-        .setContent(popup)
-        .openOn(map);
+    openAreaContextMenu(
+        e.originalEvent.clientX,
+        e.originalEvent.clientY,
+        '<button type="button" class="area-menu-item" role="menuitem">' +
+            icon("map-pin-plus") +
+            "Add as place of interest</button>",
+        function () {
+            var area = addArea("Pinned location", lat, lng);
+            if (!area) return;
+            fetch(PHOTON_URL + "reverse?lat=" + lat + "&lon=" + lng)
+                .then(function (r) {
+                    return r.json();
+                })
+                .then(function (body) {
+                    if (body.features && body.features.length)
+                        renameArea(area.id, photonPlace(body.features[0]).name);
+                })
+                .catch(function () {});
+        },
+    );
 });
+map.on("mousedown zoomstart movestart", closeAreaContextMenu);
+document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeAreaContextMenu();
+});
+document.addEventListener(
+    "mousedown",
+    function (e) {
+        if (areaContextMenu && !areaContextMenu.contains(e.target))
+            closeAreaContextMenu();
+    },
+    true,
+);

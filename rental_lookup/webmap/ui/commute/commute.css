@@ -62,7 +62,7 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     line-height: 1;
-    color: #3f3f46;
+    color: var(--chip-fg);
 }
 .areas-count[hidden] {
     display: none;
@@ -183,7 +183,7 @@
     padding: 3px 3px 3px 8px;
     border-radius: 999px;
     background: var(--border);
-    color: #3f3f46;
+    color: var(--chip-fg);
     font-size: var(--fs-sm);
     font-weight: 500;
 }
@@ -225,38 +225,55 @@
 .area-marker span {
     position: absolute;
     inset: 0;
-    border-radius: 50%;
-    background: #4f46e5;
-    color: #fff;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    color: var(--indigo);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 .area-marker svg.icon {
-    width: 13px;
-    height: 13px;
+    width: 28px;
+    height: 28px;
+    fill: var(--indigo);
+    stroke: var(--bg);
+    stroke-width: 1.5;
 }
-.area-popup {
+.area-marker svg.icon circle {
+    fill: var(--bg);
+    stroke: none;
+}
+/* Cursor is the top-left corner (flips near edges). */
+.area-context-menu {
+    position: fixed;
+    z-index: 1200;
     display: grid;
-    gap: 6px;
-    font: inherit;
-    font-size: var(--fs-sm);
-}
-.area-popup b {
-    font-weight: 600;
-}
-.area-popup button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 9px;
+    min-width: 200px;
+    padding: 4px;
     border-radius: 8px;
     border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: var(--shadow-lg);
+}
+.area-context-menu .area-menu-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 6px;
     font-weight: 500;
     font-size: var(--fs-sm);
+    white-space: nowrap;
+    text-align: left;
 }
-.area-popup button:hover {
+.area-context-menu .area-menu-item:hover,
+.area-context-menu .area-menu-item:focus-visible {
     background: var(--hover);
+}
+.area-context-menu .area-menu-item svg.icon {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
 }

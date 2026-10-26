@@ -2,15 +2,33 @@
 
 Find a flat in Bangalore without tabbing between rental portals.
 
-rental-map scrapes **NoBroker**, **MagicBricks** and **Property Angel**, de-duplicates
-same-flat re-listings across them (society + floor + rent/amenities — not merely the
-same building), scores each one, and puts everything on a single interactive map with
-real filters, rankings and a shared star/dismiss list. It also produces a ranked CSV
-scored against distances to parks, lakes and metro stations from OpenStreetMap.
+rental-map scrapes **NoBroker**, **MagicBricks**, **99acres** and **Property Angel**,
+de-duplicates same-flat re-listings across them (society + floor + rent/amenities —
+not merely the same building), scores each one, and puts everything on a single
+interactive map with real filters, rankings and a shared star/dismiss list. It also
+produces a ranked CSV scored against distances to parks, lakes and metro stations
+from OpenStreetMap.
 
 Everything runs locally: listing data and your stars live in plain JSON files in
 this repo. An optional GitHub Actions workflow refreshes the map daily and
 publishes it to GitHub Pages.
+
+### Why this exists
+
+- **Fragmented Inventory**: Inventory is split across NoBroker, MagicBricks, 99acres and Property Angel —
+  each portal has listings the others don't, so you miss flats if you only use one.
+- **Cross-portal dupes**: The same flat is often re-listed under different titles, photos and prices;
+  without cross-portal de-dupe you waste time chasing duplicates.
+- **Total cost vs Rent**: "Rent" alone is misleading: maintenance, deposit multiples and total monthly
+  cost matter, but portals bury or omit them from filters.
+- **Quality vs value** vs location trade-offs aren't ranked; portals sort by
+  "relevance" or newest, which pushes sponsored and stale inventory.
+- **Shortlist chaos**: Shortlists live in WhatsApp threads, screenshots and open tabs — there's no
+  shared star/dismiss list that survives closing the browser.
+- **Privacy**: Everything you star becomes a profile for the portal; a local-first tool keeps
+  your shortlist on your machine instead of on theirs.
+- **Tab fatigue**: Comparing options means tabbing forever — this project puts one map, real
+  rankings and your shortlist in a single place so you can decide.
 
 > **Heads-up:** the scrapers call undocumented internal APIs. They work today and
 > may break without notice when a portal changes. See [Disclaimer](#disclaimer).
@@ -48,7 +66,7 @@ nearest park, woods/tree cover, lake and metro station.
 ## Requirements
 
 - Python 3.9+ (CI uses 3.13)
-- Network access to NoBroker, MagicBricks, Property Angel and the OpenStreetMap Overpass API
+- Network access to NoBroker, MagicBricks, 99acres, Property Angel and the OpenStreetMap Overpass API
 
 ## Quick start
 
@@ -74,7 +92,7 @@ Installing the package adds these commands:
 
 | Command | Same as | What it does |
 | --- | --- | --- |
-| `rental-map-fetch SOURCE` | `python -m rental_lookup.sources SOURCE` | Fetch listings from `nobroker`, `magicbricks`, `propertyangel` or `all` into `data/`. |
+| `rental-map-fetch SOURCE` | `python -m rental_lookup.sources SOURCE` | Fetch listings from `nobroker`, `magicbricks`, `99acres`, `propertyangel` or `all` into `data/`. |
 | `rental-map-rank` | `python -m rental_lookup` | Score NoBroker listings into `output/results.csv`. |
 | `rental-map-build` | `python -m rental_lookup.webmap.builder` | Build `output/map.html` once. |
 | `rental-map-serve [PORT]` | `python -m rental_lookup.webmap.server` | Serve the map without the watcher. |
@@ -95,6 +113,7 @@ Each step can also be run on its own, from the repository root:
 | --- | --- |
 | Fetch NoBroker listings | `rental-map-fetch nobroker [--cookie COOKIE]` |
 | Fetch MagicBricks listings | `rental-map-fetch magicbricks` |
+| Fetch 99acres listings | `rental-map-fetch 99acres [--cookie COOKIE]` |
 | Fetch Property Angel listings | `rental-map-fetch propertyangel` |
 | Fetch from every source | `rental-map-fetch all [--cookie COOKIE]` |
 | Rank NoBroker listings into `output/results.csv` | `rental-map-rank [--cookie COOKIE]` |
@@ -111,8 +130,8 @@ Notes:
 - NoBroker pages already saved under `data/raw/` are reused; empty that folder (as
   `scripts/refresh_map.sh` does) to force a fresh fetch. The previous run is moved
   to `data/raw_prev/` so the map can show delisted listings.
-- `COOKIE` is an optional NoBroker `Cookie` header, only needed if requests start
-  getting blocked.
+- `COOKIE` is an optional browser `Cookie` header for NoBroker / 99acres, only
+  needed if requests start getting blocked (99acres often needs one behind Akamai).
 - The map builder works with whatever data is present; every input except the
   template is optional.
 
@@ -156,7 +175,7 @@ sources → data/ → enrichment → webmap builder → output/map.html
 
 ```
 rental_lookup/
-  sources/         scrapers (nobroker, magicbricks, propertyangel)
+  sources/         scrapers (nobroker, magicbricks, acres99, propertyangel)
   enrichment/      per-listing extras (detail pages, scores)
   webmap/
     builder.py     data/ + ui/ → output/map.html
@@ -225,11 +244,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and how to add a new sour
 
 ## Disclaimer
 
-This project is not affiliated with NoBroker, MagicBricks, Property Angel, Facebook or any other
-listing platform. The scrapers use undocumented endpoints that may change or be
-blocked at any time, and automated access may be against those sites' terms of
-service. You are responsible for how you use this software. Be polite: the
-scrapers already pause between requests, so please don't remove that.
+This project is not affiliated with NoBroker, MagicBricks, 99acres, Property Angel,
+Facebook or any other listing platform. The scrapers use undocumented endpoints
+that may change or be blocked at any time, and automated access may be against
+those sites' terms of service. You are responsible for how you use this software.
+Be polite: the scrapers already pause between requests, so please don't remove that.
 
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
 

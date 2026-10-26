@@ -1,7 +1,9 @@
 """Listing age (daysAgo): platform posting date first, first_seen as fallback."""
 from datetime import date, datetime
 
-from rental_lookup.listing_age import days_since_posted_magicbricks, days_since_posted_nobroker
+from rental_lookup.listing_age import (
+    days_since_posted_acres99, days_since_posted_magicbricks, days_since_posted_nobroker,
+)
 
 
 # --- NoBroker (activationDate is epoch ms) ---
@@ -75,3 +77,25 @@ def test_magicbricks_both_missing():
     today = date(2026, 4, 29)
     result = days_since_posted_magicbricks(None, None, today)
     assert result == 0
+
+
+# --- 99acres (POSTING_DATE is epoch ms) ---
+
+def test_acres99_uses_posting_date():
+    today = date(2026, 4, 29)
+    posted = int(datetime(2026, 4, 20).timestamp() * 1000)
+    result = days_since_posted_acres99(posted, None, today)
+    assert result == 9
+
+
+def test_acres99_falls_back_to_first_seen():
+    today = date(2026, 4, 29)
+    result = days_since_posted_acres99(0, "2026-04-25", today)
+    assert result == 4
+
+
+def test_acres99_string_posting_date():
+    today = date(2026, 4, 29)
+    posted = str(int(datetime(2026, 4, 27).timestamp() * 1000))
+    result = days_since_posted_acres99(posted, None, today)
+    assert result == 2

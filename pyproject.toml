@@ -26,6 +26,8 @@ dependencies = [
 dev = ["pytest>=8.0"]
 # Only for the experimental rental_lookup.sources.facebook
 facebook = ["facebook-scraper>=0.2.59"]
+# Chrome SSR fallback when the 99acres JSON API is blocked (401/403).
+acres99 = ["playwright>=1.40"]
 
 [project.scripts]
 rental-map-fetch = "rental_lookup.sources.__main__:main"

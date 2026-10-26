@@ -7,36 +7,42 @@ var map = L.map("map", { zoomControl: false, keyboard: false }).setView(
 );
 L.control.zoom({ position: "bottomright" }).addTo(map);
 var ESRI_SERVICES = "https://server.arcgisonline.com/ArcGIS/rest/services/";
-var lightLayer = L.layerGroup();
-// CARTO serves "API key required" watermark tiles without a key, so fall back to Esri's keyless light canvas.
-if (CARTO_KEY) {
-    L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png?key=" +
+var CARTO_ATTR =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+var ESRI_LIGHT_ATTR =
+    'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+function cartoBasemap(style) {
+    return L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/rastertiles/" +
+            style +
+            "/{z}/{x}/{y}{r}.png?key=" +
             encodeURIComponent(CARTO_KEY),
-        {
-            maxZoom: 19,
-            attribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        },
-    ).addTo(lightLayer);
-} else {
-    L.tileLayer(
-        ESRI_SERVICES +
-            "Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-        {
-            maxZoom: 19,
-            maxNativeZoom: 16,
-            attribution:
-                'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        },
-    ).addTo(lightLayer);
-    L.tileLayer(
-        ESRI_SERVICES +
-            "Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-        { maxZoom: 19, maxNativeZoom: 16 },
-    ).addTo(lightLayer);
+        { maxZoom: 19, attribution: CARTO_ATTR },
+    );
 }
-lightLayer.addTo(map);
+function esriCanvasBasemap(name) {
+    var group = L.layerGroup();
+    L.tileLayer(ESRI_SERVICES + "Canvas/" + name + "/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 19,
+        maxNativeZoom: 16,
+        attribution: ESRI_LIGHT_ATTR,
+    }).addTo(group);
+    L.tileLayer(
+        ESRI_SERVICES +
+            "Canvas/" +
+            name.replace("_Base", "_Reference") +
+            "/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, maxNativeZoom: 16 },
+    ).addTo(group);
+    return group;
+}
+// CARTO serves "API key required" watermark tiles without a key, so fall back to Esri's keyless canvas.
+var lightLayer = CARTO_KEY
+    ? L.layerGroup([cartoBasemap("light_all")])
+    : esriCanvasBasemap("World_Light_Gray_Base");
+var darkLayer = CARTO_KEY
+    ? L.layerGroup([cartoBasemap("dark_all")])
+    : esriCanvasBasemap("World_Dark_Gray_Base");
 var satelliteLayer = L.layerGroup([
     L.tileLayer(ESRI_SERVICES + "World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 19,
@@ -50,6 +56,23 @@ var satelliteLayer = L.layerGroup([
         { maxZoom: 19, maxNativeZoom: 18 },
     ),
 ]);
+function themeBasemap() {
+    return currentTheme() === "dark" ? darkLayer : lightLayer;
+}
+function syncBasemap() {
+    // theme.js may call this while the single page script is still evaluating
+    // (function decls are hoisted; `map` / layers are not assigned yet).
+    if (!map || !lightLayer || !darkLayer || !satelliteLayer) return;
+    var mapEl = map.getContainer();
+    mapEl.classList.toggle("satellite", map.hasLayer(satelliteLayer));
+    if (map.hasLayer(satelliteLayer)) return;
+    var want = themeBasemap();
+    [lightLayer, darkLayer].forEach(function (layer) {
+        if (layer !== want && map.hasLayer(layer)) map.removeLayer(layer);
+    });
+    if (!map.hasLayer(want)) want.addTo(map);
+}
+syncBasemap();
 
 map.createPane("metro");
 map.getPane("metro").style.zIndex = 640;
@@ -121,11 +144,12 @@ layersControl.onAdd = function () {
             toggle: function () {
                 if (map.hasLayer(satelliteLayer)) {
                     map.removeLayer(satelliteLayer);
-                    lightLayer.addTo(map);
                 } else {
                     map.removeLayer(lightLayer);
+                    map.removeLayer(darkLayer);
                     satelliteLayer.addTo(map);
                 }
+                syncBasemap();
             },
         },
         {

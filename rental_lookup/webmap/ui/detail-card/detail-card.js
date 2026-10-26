@@ -32,7 +32,7 @@ var FURNISHING_LABELS = {
     SEMI: "Semi-furnished",
     NONE: "Unfurnished",
 };
-var SOURCE_LABELS = { nb: "NoBroker", mb: "MagicBricks", pa: "Property Angel" };
+var SOURCE_LABELS = { nb: "NoBroker", mb: "MagicBricks", "9a": "99acres", pa: "Property Angel" };
 function furnishingLabel(d) {
     return FURNISHING_LABELS[d.furnishing] || "Furnishing unknown";
 }

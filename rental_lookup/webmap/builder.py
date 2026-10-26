@@ -4,6 +4,7 @@ Inputs (all optional except the template):
   data/raw/*.json        NoBroker pages (current run)
   data/raw_prev/*.json   NoBroker pages from the previous run, to show delisted listings
   data/raw_mb/*.json     MagicBricks pages
+  data/raw_9a/*.json     99acres pages
   data/raw_pa/*.json     Property Angel listings (one detail payload each)
   data/cache/*.json      stars/dismissals, first-seen dates, photo ratings, fake-location ids,
                          listing details, NoBroker ratings missing from search results;
@@ -32,16 +33,18 @@ from datetime import date
 from pathlib import Path
 
 from rental_lookup.listing_age import (
-    days_since_posted_magicbricks, days_since_posted_nobroker, days_since_posted_propertyangel,
+    days_since_posted_acres99, days_since_posted_magicbricks, days_since_posted_nobroker,
+    days_since_posted_propertyangel,
 )
 from rental_lookup.location import fetch_osm_features, nearest_distance_m, to_metric_crs
 from rental_lookup.models import NOBROKER_BASE_URL, Listing, mentions_branded_builder, nobroker_platform_scores
 from rental_lookup.paths import (
-    CACHE_DIR, ENV_PATH, FAKE_LOCATION_IDS_PATH, FIRST_SEEN_PATH, LISTING_DETAILS_PATH,
-    MAGICBRICKS_PAGES_DIR, MAP_PAGE_PATH, MAP_TEMPLATE_PATH, METRO_LINES_PATH, NOBROKER_PAGES_DIR,
-    PLATFORM_SCORES_PATH, PREVIOUS_NOBROKER_PAGES_DIR, PROPERTYANGEL_PAGES_DIR, STARS_PATH,
+    ACRES99_PAGES_DIR, CACHE_DIR, ENV_PATH, FAKE_LOCATION_IDS_PATH, FIRST_SEEN_PATH,
+    LISTING_DETAILS_PATH, MAGICBRICKS_PAGES_DIR, MAP_PAGE_PATH, MAP_TEMPLATE_PATH,
+    METRO_LINES_PATH, NOBROKER_PAGES_DIR, PLATFORM_SCORES_PATH, PREVIOUS_NOBROKER_PAGES_DIR,
+    PROPERTYANGEL_PAGES_DIR, STARS_PATH,
 )
-from rental_lookup.sources import magicbricks, propertyangel
+from rental_lookup.sources import acres99, magicbricks, propertyangel
 from rental_lookup.sources.nobroker import has_real_photo, iter_saved_listings, photo_urls
 from rental_lookup.webmap.dedupe import (
     GENERIC_SOCIETY_KEYS, SameFlatIndex, coordinate_key, place_key,
@@ -213,6 +216,50 @@ def magicbricks_record(listing: Listing, raw: dict, context: BuildContext) -> di
     }
 
 
+def acres99_record(listing: Listing, raw: dict, context: BuildContext) -> dict:
+    """Map record for a 99acres listing (`listing` is its normalised form)."""
+    photos = acres99.photo_urls(raw)
+    amenities = acres99.amenity_names(raw)
+    return {
+        "lat": listing.lat, "lng": listing.lng,
+        "rent": listing.rent, "maintenance": 0, "totalCost": listing.rent,
+        "deposit": listing.deposit, "sqft": listing.sqft,
+        "bhk": listing.bhk, "society": listing.society,
+        "locality": listing.locality, "facing": listing.facing,
+        "balconies": listing.balconies, "floor": listing.floor,
+        "totalFloors": listing.total_floors,
+        "hasLift": listing.has_lift, "ageYears": listing.age_years,
+        "buildingType": listing.building_type, "parking": listing.parking,
+        "furnishing": acres99.furnishing(raw),
+        "isNegotiable": False, "waterSupply": listing.water_supply,
+        "nbTransit": None, "nbLifestyle": None,
+        "hasPowerBackup": listing.has_power_backup, "isGated": listing.is_gated_community,
+        "hasSecurity": listing.has_security, "hasFireSafety": listing.has_fire_safety,
+        "hasPool": "pool" in amenities, "hasGym": bool({"gym", "gymnasium"} & amenities),
+        "hasClubhouse": "club" in amenities, "hasPark": "park" in amenities,
+        "hasIntercom": "intercom" in amenities,
+        "hasCoveredParking": listing.has_covered_parking,
+        "photoCount": len(photos) or (1 if listing.photo_url else 0),
+        "hasRealPhoto": bool(photos),
+        "isBrandedBuilder": mentions_branded_builder(listing.society),
+        "isPetFriendly": False, "cupboards": 0,
+        "street": listing.locality[:80],
+        "availableFrom": "",
+        "propertyCode": acres99.prop_id(raw),
+        "buildingName": acres99.building_name(raw),
+        "isStacked": coordinate_key(listing.lat, listing.lng) in context.stacked_coordinates,
+        "isFakeLocation": False,
+        "isCentroidLocation": not acres99.has_property_pin(raw),
+        "floorKnown": acres99.floor_known(raw),
+        "daysAgo": 0,
+        "coverPhoto": photos[0] if photos else (listing.photo_url or ""),
+        "photos": photos,
+        "url": listing.url,
+        "source": "9a",
+        "isDelisted": False,
+    }
+
+
 def propertyangel_record(listing: Listing, raw: dict, context: BuildContext) -> dict:
     """Map record for a Property Angel listing (`listing` is its normalised form)."""
     photos = propertyangel.photo_urls(raw)
@@ -298,7 +345,7 @@ def _is_single_property(listings: list[tuple[str, str]]) -> bool:
 
 
 def build_records(today: date, first_seen: dict) -> list[dict]:
-    """All map records: current NoBroker, then unique MagicBricks and Property Angel, then delisted.
+    """All map records: NoBroker, then unique MB / 99acres / Property Angel, then delisted.
 
     Updates `first_seen` in place with listings seen for the first time today.
     """
@@ -315,6 +362,8 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
     nobroker_raw = list(iter_saved_listings(NOBROKER_PAGES_DIR))
     magicbricks_listings = [(listing, raw) for raw in magicbricks.iter_saved_listings(MAGICBRICKS_PAGES_DIR)
                             if (listing := magicbricks.normalize_listing(raw))]
+    acres99_listings = [(listing, raw) for raw in acres99.iter_saved_listings(ACRES99_PAGES_DIR)
+                        if (listing := acres99.normalize_listing(raw))]
     propertyangel_listings = [(listing, raw) for raw in propertyangel.iter_saved_listings(PROPERTYANGEL_PAGES_DIR)
                               if (listing := propertyangel.normalize_listing(raw))]
 
@@ -325,7 +374,7 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
         if raw.get("latitude") and raw.get("longitude"):
             listings_per_coordinate[coordinate_key(raw["latitude"], raw["longitude"])].append(
                 (raw.get("society") or "", raw.get("locality") or ""))
-    for listing, _ in magicbricks_listings + propertyangel_listings:
+    for listing, _ in magicbricks_listings + acres99_listings + propertyangel_listings:
         listings_per_coordinate[coordinate_key(listing.lat, listing.lng)].append((listing.society, listing.locality))
     context = BuildContext(
         fake_location_ids=fake_location_ids,
@@ -333,7 +382,7 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
                              if len(listings) > STACKED_LISTING_THRESHOLD and not _is_single_property(listings)},
         platform_scores=platform_scores,
     )
-    print(f"  Stacked coords (NB+MB+PA): {len(context.stacked_coordinates)} locations")
+    print(f"  Stacked coords (NB+MB+AA+PA): {len(context.stacked_coordinates)} locations")
 
     records = []
     same_flat_index = SameFlatIndex()
@@ -360,7 +409,23 @@ def build_records(today: date, first_seen: dict) -> list[dict]:
         print(f"  MagicBricks: {len(magicbricks_listings)} parsed, "
               f"{magicbricks_dupes} same-flat dupes dropped, {magicbricks_added} unique added to map")
 
-    # Property Angel: skip same-flat re-listings of NoBroker or MagicBricks already on the map.
+    # 99acres: skip same-flat re-listings of something already on the map.
+    acres99_added = acres99_dupes = 0
+    for listing, raw in acres99_listings:
+        record = acres99_record(listing, raw, context)
+        if same_flat_index.has_same_flat(record):
+            acres99_dupes += 1
+            continue
+        record["daysAgo"] = days_since_posted_acres99(
+            acres99.posting_date_ms(raw), first_seen.setdefault(listing.url, str(today)), today)
+        records.append(record)
+        same_flat_index.add(record)
+        acres99_added += 1
+    if acres99_listings:
+        print(f"  99acres: {len(acres99_listings)} parsed, "
+              f"{acres99_dupes} same-flat dupes dropped, {acres99_added} unique added to map")
+
+    # Property Angel: skip same-flat re-listings of sources already on the map.
     propertyangel_added = propertyangel_dupes = 0
     for listing, raw in propertyangel_listings:
         record = propertyangel_record(listing, raw, context)

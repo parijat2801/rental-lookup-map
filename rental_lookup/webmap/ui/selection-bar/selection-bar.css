@@ -9,7 +9,7 @@
     align-items: center;
     gap: 4px;
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-fg);
     padding: 6px 6px 6px 16px;
     border-radius: 999px;
     box-shadow: var(--shadow-lg);
@@ -25,14 +25,14 @@
     gap: 6px;
     padding: 7px 12px;
     border-radius: 999px;
-    color: #fff;
+    color: inherit;
 }
 .floating-bar button:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: color-mix(in srgb, var(--accent-fg) 14%, transparent);
 }
 .floating-bar .divider {
     width: 1px;
     height: 18px;
-    background: rgba(255, 255, 255, 0.2);
+    background: color-mix(in srgb, var(--accent-fg) 20%, transparent);
     margin: 0 4px;
 }

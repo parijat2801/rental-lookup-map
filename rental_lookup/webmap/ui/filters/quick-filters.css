@@ -27,7 +27,7 @@
 .chip.on {
     background: var(--accent);
     border-color: var(--accent);
-    color: #fff;
+    color: var(--accent-fg);
 }
 .chip svg.icon {
     width: 14px;
@@ -81,12 +81,12 @@
     padding: 0 5px;
     border-radius: 9px;
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-fg);
     font-size: var(--fs-xs);
     font-weight: 600;
 }
 .chip.on .count-badge {
-    background: #fff;
+    background: var(--accent-fg);
     color: var(--accent);
 }
 .count-badge[hidden] {
