@@ -31,7 +31,10 @@ def fetch_magicbricks(cookie: str = "") -> list[Listing]:
 
 
 def fetch_acres99(cookie: str = "") -> list[Listing]:
-    """`cookie` is a browser Cookie header; needed when Akamai blocks plain requests."""
+    """Fetch 99acres. Uses Apify when `APIFY_TOKEN` is set; else JSON API / Chrome SSR.
+
+    `cookie` is a browser Cookie header for the JSON API / SSR paths only.
+    """
     return acres99.parse_listings(acres99.fetch_all(pages_dir=ACRES99_PAGES_DIR, cookie=cookie))
 
 

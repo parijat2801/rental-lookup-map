@@ -113,3 +113,64 @@ def test_map_record_has_same_keys_as_other_sources():
     assert record["source"] == "9a"
     assert record["hasPool"] is True
     assert record["isCentroidLocation"] is False
+
+
+APIFY_ITEM = {
+    "spid": "95171606",
+    "title": "2 BHK Flat for rent in Thanisandra, Bangalore",
+    "bhk": 2,
+    "price": 67000,
+    "area_sqft": 1161,
+    "locality": "Thanisandra, Bangalore",
+    "society": "Vario Homes",
+    "furnishing": "Semifurnished",
+    "amenities": [
+        "14th out of 34 Floors",
+        "East Facing",
+        "Full Power Backup",
+        "Reserved Parking",
+    ],
+    "latitude": 13.056865,
+    "longitude": 77.623533,
+    "floor": "14",
+    "total_floors": "34",
+    "age_years": "6",
+    "posted_on": "17th Oct, 2026",
+    "photo_url": "https://imagecdn.99acres.com/media/photo.jpg",
+    "listing_url": "https://www.99acres.com/2-bhk-bedroom-apartment-flat-for-rent-in-thanisandra-bangalore-north-1161-sqft-spid-A95171606",
+}
+
+
+def test_apify_to_srp_normalizes():
+    srp = aa.apify_to_srp(APIFY_ITEM)
+    listing = aa.normalize_listing(srp)
+    assert listing is not None
+    assert listing.id == "9a_95171606"
+    assert (listing.rent, listing.sqft, listing.bhk) == (67000, 1161, "BHK2")
+    assert (listing.lat, listing.lng) == (13.056865, 77.623533)
+    assert listing.society == "Vario Homes"
+    assert listing.facing == "E"
+    assert listing.has_power_backup is True
+    assert listing.parking == "FOUR_WHEELER"
+    assert listing.url.endswith("spid-A95171606")
+    assert aa.posting_date_ms(srp) and aa.posting_date_ms(srp) > 0
+
+
+def test_apify_skips_summary_rows_and_fixes_tiny_area():
+    assert aa.apify_to_srp({"_type": "run_summary", "spid": "x"}) is None
+    tiny = {
+        **APIFY_ITEM,
+        "spid": "93507470",
+        "area_sqft": 148.6,
+        "listing_url": "https://www.99acres.com/3-bhk-apartment-1600-sqft-spid-P93507470",
+    }
+    srp = aa.apify_to_srp(tiny)
+    assert srp["AREA"] == 1600
+    assert aa.normalize_listing(srp).sqft == 1600
+
+
+def test_normalize_accepts_raw_apify_shape():
+    listing = aa.normalize_listing(APIFY_ITEM)
+    assert listing is not None
+    assert listing.rent == 67000
+    assert listing.lat == 13.056865

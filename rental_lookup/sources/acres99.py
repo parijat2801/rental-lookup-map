@@ -1,21 +1,33 @@
 """99acres: fetch rental listings and normalise them to `Listing`.
 
-Primary: SSR HTML search pages expose `window.__initialData__` (loaded in Chrome
-via Playwright). The JSON API (`/api-aggregator/srp/search`) now returns 401/403
-for non-browser clients, so httpx is only tried first and abandoned on failure.
+Fetch order when calling `fetch_all`:
+  1. Apify actor `themineworks/99acres-scraper` when `APIFY_TOKEN` is set
+     (env or `.env`) — best against Akamai; paid per listing.
+  2. JSON API (`/api-aggregator/srp/search`) with an optional browser cookie.
+  3. Chrome SSR via Playwright reading `window.__initialData__`.
+
+Apify items are adapted into the same SRP-shaped dicts the API/SSR paths save,
+so `normalize_listing` / the map builder stay unchanged.
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Iterator, Optional
 
 import httpx
 
 from rental_lookup.models import CAR_PARKING_TYPES, Listing
+from rental_lookup.paths import ENV_PATH
 from rental_lookup.sources.http import get_json
+
+APIFY_ACTOR = "themineworks/99acres-scraper"
+# Actor input schema rejects anything above this.
+APIFY_MAX_RESULTS_CAP = 2000
 
 SEARCH_API = "https://www.99acres.com/api-aggregator/srp/search"
 SITE_URL = "https://www.99acres.com"
@@ -97,14 +109,34 @@ def floor_known(raw: dict) -> bool:
 
 
 def posting_date_ms(raw: dict):
-    """Epoch milliseconds from POSTING_DATE / POSTING_DATE__U, or None."""
+    """Epoch milliseconds from POSTING_DATE / POSTING_DATE__U / posted_on, or None."""
     value = _get(raw, "POSTING_DATE", "posting_date", "POSTING_DATE__U", "posting_date__u")
+    if value not in (None, ""):
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            pass
+    return _parse_posted_on_ms(_get(raw, "posted_on", "POSTED_ON"))
+
+
+def _parse_posted_on_ms(value) -> Optional[int]:
+    """Apify-style `17th Oct, 2026` → epoch ms at midnight local; None if unparseable."""
     if value in (None, ""):
         return None
-    try:
-        return int(float(value))
-    except (TypeError, ValueError):
+    text = str(value).strip()
+    match = re.match(
+        r"(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9}),?\s+(\d{4})$", text
+    )
+    if not match:
         return None
+    day, month_token, year = match.groups()
+    for fmt in ("%b", "%B"):
+        try:
+            dt = datetime.strptime(f"{day} {month_token} {year}", f"%d {fmt} %Y")
+            return int(dt.timestamp() * 1000)
+        except ValueError:
+            continue
+    return None
 
 
 def listing_id(raw: dict) -> str:
@@ -122,11 +154,59 @@ def amenity_codes(raw: dict) -> set[str]:
 
 def amenity_names(raw: dict) -> set[str]:
     codes = amenity_codes(raw)
-    return {name for name, code in AMENITY_CODES.items() if code in codes}
+    names = {name for name, code in AMENITY_CODES.items() if code in codes}
+    # Apify (and some SSR blobs) ship human-readable amenity bullets instead of codes.
+    names.update(_amenity_names_from_text(raw.get("amenities") or raw.get("AMENITIES")))
+    return names
+
+
+def _amenity_names_from_text(value) -> set[str]:
+    if isinstance(value, list):
+        texts = [str(item) for item in value]
+    elif isinstance(value, str) and value.strip():
+        texts = [value]
+    else:
+        return set()
+    blob = " | ".join(texts).lower()
+    names = set()
+    if re.search(r"power\s*backup", blob):
+        names.add("power_backup")
+    if re.search(r"\blift\b|\belevator\b", blob):
+        names.add("lift")
+    if re.search(r"\bpark\b|garden", blob):
+        names.add("park")
+    if re.search(r"parking", blob):
+        names.add("reserved_parking")
+    if re.search(r"security|gated", blob):
+        names.add("security")
+    if re.search(r"\bpool\b|swimming", blob):
+        names.add("pool")
+    if re.search(r"\bgym", blob):
+        names.add("gym")
+    if re.search(r"fire\s*(safety|extinguisher|fighting)?", blob):
+        names.add("fire_safety")
+    if re.search(r"club\s*house|\bclub\b", blob):
+        names.add("club")
+    return names
+
+
+def _facing_from_amenity_text(value) -> str:
+    if isinstance(value, list):
+        blob = " ".join(str(item) for item in value)
+    else:
+        blob = str(value or "")
+    match = re.search(
+        r"\b(north-east|north-west|south-east|south-west|northeast|northwest|"
+        r"southeast|southwest|north|south|east|west)\s*facing\b",
+        blob, re.I,
+    )
+    if not match:
+        return ""
+    return FACING_CODES.get(re.sub(r"\s+", "", match.group(1).lower()), "")
 
 
 def parse_coords(raw: dict) -> Optional[tuple[float, float]]:
-    """Property coordinates from MAP_DETAILS (and a top-level `location` fallback).
+    """Property coordinates from MAP_DETAILS, `location`, or top-level lat/lng (Apify).
 
     99acres occasionally swaps lat/lng labels; values are resolved by India bounds.
     """
@@ -143,6 +223,10 @@ def parse_coords(raw: dict) -> Optional[tuple[float, float]]:
             _parse_float(_get(location, "LATITUDE", "latitude")),
             _parse_float(_get(location, "LONGITUDE", "longitude")),
         ))
+    candidates.append((
+        _parse_float(_get(raw, "LATITUDE", "latitude")),
+        _parse_float(_get(raw, "LONGITUDE", "longitude")),
+    ))
     for a, b in candidates:
         if _LAT_RANGE[0] <= a <= _LAT_RANGE[1] and _LNG_RANGE[0] <= b <= _LNG_RANGE[1]:
             return a, b
@@ -164,12 +248,12 @@ def has_property_pin(raw: dict) -> bool:
 
 
 def _parse_bhk(raw: dict) -> str:
-    bedrooms = parse_int(_get(raw, "BEDROOM_NUM", "bedroom_num"))
+    bedrooms = parse_int(_get(raw, "BEDROOM_NUM", "bedroom_num", "bhk", "BHK"))
     return f"BHK{bedrooms}" if bedrooms > 0 else ""
 
 
 def _parse_floor(raw: dict) -> int:
-    floor = _get(raw, "FLOOR_NUM", "floor_num")
+    floor = _get(raw, "FLOOR_NUM", "floor_num", "floor")
     if floor is None:
         return 0
     text = str(floor).strip().lower()
@@ -182,9 +266,12 @@ def _parse_floor(raw: dict) -> int:
 def _parse_facing(raw: dict) -> str:
     facing = _get(raw, "FACING", "facing")
     if facing is None or str(facing).strip() in ("", "0"):
-        return ""
-    key = re.sub(r"\s+", "", str(facing).strip().lower())
-    return FACING_CODES.get(str(facing).strip(), FACING_CODES.get(key, ""))
+        return _facing_from_amenity_text(raw.get("amenities") or raw.get("AMENITIES"))
+    text = str(facing).strip()
+    if text.upper() in {"N", "S", "E", "W", "NE", "NW", "SE", "SW"}:
+        return text.upper()
+    key = re.sub(r"\s+", "", text.lower())
+    return FACING_CODES.get(text, FACING_CODES.get(key, ""))
 
 
 def _parse_parking(raw: dict, amenities: set[str]) -> str:
@@ -210,13 +297,14 @@ def _parse_balconies(raw: dict) -> int:
 
 
 def _parse_has_lift(raw: dict, amenities: set[str]) -> Optional[bool]:
-    if not amenity_codes(raw):
+    text_names = _amenity_names_from_text(raw.get("amenities") or raw.get("AMENITIES"))
+    if not amenity_codes(raw) and not text_names:
         return None
     return "lift" in amenities
 
 
 def _parse_age_years(raw: dict) -> int:
-    age = _get(raw, "AGE", "age")
+    age = _get(raw, "AGE", "age", "age_years")
     if age is None or age == "":
         return 99
     years = parse_int(age, default=-1)
@@ -231,7 +319,8 @@ def _parse_age_years(raw: dict) -> int:
 
 def _parse_sqft(raw: dict) -> int:
     for key in ("BUILTUP_SQFT", "builtup_sqft", "CARPET_SQFT", "carpet_sqft",
-                "SUPERBUILTUP_SQFT", "superbuiltup_sqft", "SUPER_SQFT", "super_sqft"):
+                "SUPERBUILTUP_SQFT", "superbuiltup_sqft", "SUPER_SQFT", "super_sqft",
+                "AREA_SQFT", "area_sqft"):
         value = parse_int(_get(raw, key))
         if value > 50:  # skip sq.m values mistakenly labelled as sqft
             return value
@@ -239,7 +328,12 @@ def _parse_sqft(raw: dict) -> int:
     match = re.search(r"([\d,]+(?:\.\d+)?)\s*(?:sq\.?\s*ft|sqft)", area, re.I)
     if match:
         return parse_int(match.group(1))
-    return parse_int(re.search(r"[\d,]+", area).group()) if re.search(r"[\d,]+", area) else 0
+    if re.search(r"[\d,]+", area):
+        return parse_int(re.search(r"[\d,]+", area).group())
+    # Apify sometimes returns absurdly small AREA_SQFT; the listing URL usually has the real figure.
+    url = str(_get(raw, "PD_URL", "pd_url", "listing_url", "LISTING_URL") or "")
+    url_match = re.search(r"(\d+)\s*-?\s*sq\.?ft", url, re.I)
+    return parse_int(url_match.group(1)) if url_match else 0
 
 
 def furnishing(raw: dict) -> str:
@@ -290,9 +384,9 @@ def listing_url(raw: dict) -> str:
 # --- Normalisation ----------------------------------------------------------
 
 def normalize_listing(raw: dict) -> Optional[Listing]:
-    """Convert a raw 99acres SRP item to a Listing; None if unusable."""
+    """Convert a raw 99acres SRP item (or Apify-adapted dict) to a Listing; None if unusable."""
     coords = parse_coords(raw)
-    rent = parse_int(_get(raw, "MIN_PRICE", "min_price", "MAX_PRICE", "max_price"))
+    rent = parse_int(_get(raw, "MIN_PRICE", "min_price", "MAX_PRICE", "max_price", "price", "PRICE"))
     if not coords or rent <= 0 or not prop_id(raw):
         return None
 
@@ -301,11 +395,13 @@ def normalize_listing(raw: dict) -> Optional[Listing]:
     parking = _parse_parking(raw, amenities)
     photos = photo_urls(raw, max_photos=1)
     society = str(_get(raw, "SOCIETY_NAME", "society_name", "BUILDING_NAME", "building_name",
-                       "PROP_NAME", "prop_name") or "").strip()
+                       "PROP_NAME", "prop_name", "society") or "").strip()
     locality = str(_get(raw, "LOCALITY_WO_CITY", "locality_wo_city", "LOCALITY", "locality") or "").strip()
     locality = locality.split(",")[0].strip()
     has_security = "security" in amenities
     gated = str(_get(raw, "GATED", "gated") or "").upper() in ("Y", "YES", "TRUE", "1")
+    title = str(_get(raw, "PROP_HEADING", "prop_heading", "PROP_NAME", "prop_name", "title") or "")
+    url = listing_url(raw) or str(_get(raw, "listing_url", "LISTING_URL") or "")
 
     return Listing(
         id=listing_id(raw),
@@ -319,11 +415,11 @@ def normalize_listing(raw: dict) -> Optional[Listing]:
         society=society or locality,
         building_type="AP",
         floor=_parse_floor(raw),
-        total_floors=parse_int(_get(raw, "TOTAL_FLOOR", "total_floor")),
+        total_floors=parse_int(_get(raw, "TOTAL_FLOOR", "total_floor", "total_floors")),
         has_lift=_parse_has_lift(raw, amenities),
         parking=parking,
-        title=str(_get(raw, "PROP_HEADING", "prop_heading", "PROP_NAME", "prop_name") or ""),
-        url=listing_url(raw),
+        title=title,
+        url=url,
         photo_url=photos[0] if photos else "",
         facing=_parse_facing(raw),
         balconies=_parse_balconies(raw),
@@ -430,11 +526,188 @@ def fetch_page(client: httpx.Client, page_number: int = 1,
         return {}
 
 
+# How long to leave Chrome open for a human to clear Akamai/captcha when SSR
+# hydration stalls (common around page 6+). Browser runs headed, so this is usable.
+CAPTCHA_WAIT_MS = 180_000
+PAGE_LOAD_TIMEOUT_MS = 90_000
+SRP_HYDRATE_TIMEOUT_MS = 45_000
+# Pause between pages; Akamai often trips if we hammer &page=N too fast.
+INTER_PAGE_SLEEP_S = 3.0
+
+
 def _save_page(pages_dir: Optional[Path], page_number: int, page: dict) -> None:
     if not pages_dir:
         return
     pages_dir.mkdir(parents=True, exist_ok=True)
     (pages_dir / f"acres99_page{page_number}.json").write_text(json.dumps(page, indent=2))
+
+
+def _env_value(name: str) -> str:
+    """`$NAME` from the environment, else the same key in the gitignored `.env`."""
+    value = os.environ.get(name, "").strip()
+    if value or not ENV_PATH.exists():
+        return value
+    for line in ENV_PATH.read_text().splitlines():
+        key, sep, raw = line.partition("=")
+        if sep and key.strip() == name:
+            return raw.strip().strip("'\"")
+    return ""
+
+
+def apify_token() -> str:
+    return _env_value("APIFY_TOKEN")
+
+
+def is_apify_item(raw: dict) -> bool:
+    """True for Apify listing rows (skips the run-summary object in the dataset)."""
+    return isinstance(raw, dict) and bool(raw.get("spid")) and not raw.get("_type")
+
+
+def _area_sqft_from_apify(item: dict) -> int:
+    area = parse_int(item.get("area_sqft"))
+    url = str(item.get("listing_url") or "")
+    url_match = re.search(r"(\d+)\s*-?\s*sq\.?ft", url, re.I)
+    url_area = parse_int(url_match.group(1)) if url_match else 0
+    # Prefer the URL figure when Apify's area looks like sq.m mislabelled as sqft.
+    if url_area >= 200 and (area < 200 or area < url_area * 0.5):
+        return url_area
+    return area if area > 0 else url_area
+
+
+def apify_to_srp(item: dict) -> Optional[dict]:
+    """Map one Apify 99acres record onto the SRP dict shape `normalize_listing` expects."""
+    if not is_apify_item(item):
+        return None
+    amenities = item.get("amenities") or []
+    amenity_codes_csv = ",".join(
+        AMENITY_CODES[name] for name in sorted(_amenity_names_from_text(amenities))
+        if name in AMENITY_CODES
+    )
+    facing = _facing_from_amenity_text(amenities)
+    posted_ms = _parse_posted_on_ms(item.get("posted_on"))
+    return {
+        "PROP_ID": str(item.get("spid") or "").strip(),
+        "MIN_PRICE": item.get("price"),
+        "BEDROOM_NUM": item.get("bhk"),
+        "AREA": _area_sqft_from_apify(item),
+        "SOCIETY_NAME": item.get("society") or "",
+        "LOCALITY": item.get("locality") or "",
+        "MAP_DETAILS": {
+            "LATITUDE": item.get("latitude"),
+            "LONGITUDE": item.get("longitude"),
+            "SOURCE": "PROJECT",
+            "MAP_ACCURACY": "1",
+        },
+        "FLOOR_NUM": item.get("floor"),
+        "TOTAL_FLOOR": item.get("total_floors"),
+        "FURNISH": item.get("furnishing"),
+        "FACING": facing,
+        "AGE": item.get("age_years"),
+        "PD_URL": item.get("listing_url") or "",
+        "PROP_HEADING": item.get("title") or "",
+        "MEDIUM_PHOTO_URL": item.get("photo_url") or "",
+        "AMENITIES": amenity_codes_csv,
+        "amenities": amenities,  # keep text for lift/parking fallbacks
+        "POSTING_DATE": posted_ms or 0,
+        "GATED": "Y" if "security" in _amenity_names_from_text(amenities) else "",
+    }
+
+
+def fetch_all_via_apify(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50,
+                        pages_dir: Optional[Path] = None, token: str = "") -> list[dict]:
+    """Run the Apify 99acres actor and return SRP-shaped dicts.
+
+    Requires `pip install apify-client` (optional extra `acres99-apify`) and a
+    non-empty `APIFY_TOKEN`. Saves results as `acres99_page*.json` under `pages_dir`.
+    """
+    token = token or apify_token()
+    if not token:
+        return []
+    try:
+        from apify_client import ApifyClient
+    except ImportError as e:
+        raise SystemExit(
+            "APIFY_TOKEN is set but apify-client is not installed:\n"
+            "  pip install 'rental-lookup[acres99-apify]'\n"
+            "Then re-run: rental-map-fetch 99acres"
+        ) from e
+
+    override = _env_value("APIFY_MAX_RESULTS")
+    try:
+        requested = max(1, int(override)) if override else max(1, max_pages * PAGE_SIZE)
+    except ValueError:
+        requested = max(1, max_pages * PAGE_SIZE)
+    max_results = min(requested, APIFY_MAX_RESULTS_CAP)
+    if requested > APIFY_MAX_RESULTS_CAP:
+        print(f"  [!] APIFY_MAX_RESULTS={requested} exceeds actor cap; using {APIFY_MAX_RESULTS_CAP}")
+    run_input = {
+        "city": "Bangalore",
+        "listingType": "rent",
+        "bhk": BHK_TYPES,
+        "minPrice": budget_min,
+        "maxPrice": budget_max,
+        "maxResults": max_results,
+        "allowResidentialFallback": True,
+    }
+    print(f"  Apify {APIFY_ACTOR}: up to {max_results} listings "
+          f"(~${max_results * 0.002:.2f} if all charged)...")
+    client = ApifyClient(token)
+    run = client.actor(APIFY_ACTOR).call(run_input=run_input)
+    if not run or run.get("status") != "SUCCEEDED":
+        print(f"  [!] Apify run status: {(run or {}).get('status')}")
+        return []
+
+    adapted: list[dict] = []
+    for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+        srp = apify_to_srp(item)
+        if srp and prop_id(srp):
+            adapted.append(srp)
+
+    if pages_dir is not None:
+        pages_dir.mkdir(parents=True, exist_ok=True)
+        for stale in pages_dir.glob("acres99_page*.json"):
+            stale.unlink()
+        for index in range(0, len(adapted), PAGE_SIZE):
+            chunk = adapted[index:index + PAGE_SIZE]
+            _save_page(pages_dir, index // PAGE_SIZE + 1, {"properties": chunk, "source": "apify"})
+
+    print(f"  Apify delivered {len(adapted)} listings")
+    return adapted
+
+
+def _parse_cookie_header(cookie: str) -> list[dict]:
+    """Turn a raw `Cookie` request-header value into Playwright cookie dicts."""
+    cookies = []
+    for part in cookie.split(";"):
+        part = part.strip()
+        if not part or "=" not in part:
+            continue
+        name, value = part.split("=", 1)
+        cookies.append({
+            "name": name.strip(),
+            "value": value.strip(),
+            "domain": ".99acres.com",
+            "path": "/",
+        })
+    return cookies
+
+
+def _resume_from_saved(pages_dir: Optional[Path]) -> tuple[list[dict], int]:
+    """Load already-saved pages so a stalled run can continue past page N."""
+    if not pages_dir or not pages_dir.exists():
+        return [], 1
+    raw_listings: list[dict] = []
+    next_page = 1
+    for page_path in sorted(pages_dir.glob("acres99_page*.json")):
+        match = re.fullmatch(r"acres99_page(\d+)\.json", page_path.name)
+        if not match:
+            continue
+        page_number = int(match.group(1))
+        with open(page_path) as f:
+            page = json.load(f)
+        raw_listings.extend(page_properties(page))
+        next_page = max(next_page, page_number + 1)
+    return raw_listings, next_page
 
 
 def fetch_all_via_api(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50,
@@ -457,12 +730,51 @@ def fetch_all_via_api(budget_min: int = 0, budget_max: int = 150000, max_pages: 
     return raw_listings
 
 
+def _wait_for_srp(page, timeout_ms: int) -> None:
+    page.wait_for_function(
+        "() => window.__initialData__ && window.__initialData__.srp",
+        timeout=timeout_ms,
+    )
+
+
+def _load_srp_page(page, url: str) -> Optional[dict]:
+    """Navigate to one SSR search URL and return extracted SRP data, or None."""
+    for attempt in range(1, 4):
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=PAGE_LOAD_TIMEOUT_MS)
+            _wait_for_srp(page, SRP_HYDRATE_TIMEOUT_MS)
+            page.wait_for_timeout(800)
+            data = page.evaluate(_EXTRACT_SRP_JS)
+            if data:
+                return data
+        except Exception as e:
+            print(f"  [!] attempt {attempt}/3: {type(e).__name__}: {e}")
+            time.sleep(2 * attempt)
+
+    # Akamai / captcha often appears here (frequently around page 6). Chrome is
+    # headed — give the user time to clear the challenge, then keep going.
+    print(
+        f"  [!] SSR still blocked. If Chrome shows a captcha/challenge, solve it "
+        f"within {CAPTCHA_WAIT_MS // 1000}s — waiting..."
+    )
+    try:
+        _wait_for_srp(page, CAPTCHA_WAIT_MS)
+        page.wait_for_timeout(800)
+        return page.evaluate(_EXTRACT_SRP_JS)
+    except Exception as e:
+        print(f"  [!] captcha wait failed: {type(e).__name__}: {e}")
+        return None
+
+
 def fetch_all_via_browser(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50,
-                          pages_dir: Optional[Path] = None) -> list[dict]:
+                          pages_dir: Optional[Path] = None, cookie: str = "") -> list[dict]:
     """Load SSR search pages in Chrome and read `window.__initialData__`.
 
     Requires the optional `playwright` package and a local Chrome install
     (`playwright install` is not needed when using `channel='chrome'`).
+    Resumes from `acres99_page*.json` already in `pages_dir`. Passes `cookie`
+    into the browser context when provided. On mid-run blocks, waits for a
+    human to clear the challenge in the visible Chrome window.
     """
     try:
         from playwright.sync_api import sync_playwright
@@ -473,31 +785,22 @@ def fetch_all_via_browser(budget_min: int = 0, budget_max: int = 150000, max_pag
             "Then re-run: rental-map-fetch 99acres"
         ) from e
 
-    raw_listings: list[dict] = []
-    base = (
-        f"{SEARCH_PAGE}&budget_min={budget_min}&budget_max={budget_max}"
-    )
+    raw_listings, start_page = _resume_from_saved(pages_dir)
+    if start_page > 1:
+        print(f"  resuming Chrome SSR from page {start_page} "
+              f"({len(raw_listings)} listings already saved)")
+    base = f"{SEARCH_PAGE}&budget_min={budget_min}&budget_max={budget_max}"
+
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="chrome", headless=False)
-        page = browser.new_page()
+        context = browser.new_context()
+        if cookie:
+            context.add_cookies(_parse_cookie_header(cookie))
+        page = context.new_page()
         try:
-            for page_number in range(1, max_pages + 1):
+            for page_number in range(start_page, max_pages + 1):
                 print(f"  99acres page {page_number}...")
-                url = f"{base}&page={page_number}"
-                data = None
-                for attempt in range(1, 4):
-                    try:
-                        page.goto(url, wait_until="domcontentloaded", timeout=90000)
-                        page.wait_for_function(
-                            "() => window.__initialData__ && window.__initialData__.srp",
-                            timeout=45000,
-                        )
-                        page.wait_for_timeout(800)
-                        data = page.evaluate(_EXTRACT_SRP_JS)
-                        break
-                    except Exception as e:
-                        print(f"  [!] attempt {attempt}/3: {type(e).__name__}: {e}")
-                        time.sleep(2 * attempt)
+                data = _load_srp_page(page, f"{base}&page={page_number}")
                 if not data:
                     break
                 results = page_properties({"properties": data.get("properties") or []})
@@ -511,7 +814,7 @@ def fetch_all_via_browser(budget_min: int = 0, budget_max: int = 150000, max_pag
                 )
                 if data.get("isLast") or len(results) < 10:
                     break
-                time.sleep(1.2)
+                time.sleep(INTER_PAGE_SLEEP_S)
         finally:
             browser.close()
     return raw_listings
@@ -519,21 +822,29 @@ def fetch_all_via_browser(budget_min: int = 0, budget_max: int = 150000, max_pag
 
 def fetch_all(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50,
               pages_dir: Optional[Path] = None, cookie: str = "") -> list[dict]:
-    """Fetch result pages until one comes back empty; returns raw dicts.
+    """Fetch result pages until one comes back empty; returns SRP-shaped dicts.
 
-    Tries the JSON API first; on block/empty first page, falls back to Chrome SSR.
-    `cookie` only applies to the API path.
+    Prefers Apify when `APIFY_TOKEN` is set; otherwise JSON API (optional `cookie`),
+    then Chrome SSR.
     """
-    print("  trying JSON API...")
-    raw_listings = fetch_all_via_api(
-        budget_min=budget_min, budget_max=budget_max, max_pages=max_pages,
-        pages_dir=pages_dir, cookie=cookie,
-    )
+    raw_listings: list[dict] = []
+    if apify_token():
+        print("  trying Apify...")
+        raw_listings = fetch_all_via_apify(
+            budget_min=budget_min, budget_max=budget_max, max_pages=max_pages,
+            pages_dir=pages_dir,
+        )
+    if not raw_listings:
+        print("  trying JSON API...")
+        raw_listings = fetch_all_via_api(
+            budget_min=budget_min, budget_max=budget_max, max_pages=max_pages,
+            pages_dir=pages_dir, cookie=cookie,
+        )
     if not raw_listings:
         print("  JSON API empty/blocked; falling back to Chrome SSR...")
         raw_listings = fetch_all_via_browser(
             budget_min=budget_min, budget_max=budget_max, max_pages=max_pages,
-            pages_dir=pages_dir,
+            pages_dir=pages_dir, cookie=cookie,
         )
     pages_fetched = len(list(pages_dir.glob("acres99_page*.json"))) if pages_dir and pages_dir.exists() else 0
     print(f"  99acres total: {len(raw_listings)} raw listings across {pages_fetched or '?'} pages")

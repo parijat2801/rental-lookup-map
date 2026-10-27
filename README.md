@@ -132,6 +132,9 @@ Notes:
   to `data/raw_nb_prev/` so the map can show delisted listings.
 - `COOKIE` is an optional browser `Cookie` header for NoBroker / 99acres, only
   needed if requests start getting blocked (99acres often needs one behind Akamai).
+- For 99acres, set `APIFY_TOKEN` in `.env` to use the Apify scraper instead of the
+  JSON API / Chrome SSR path (`pip install 'rental-lookup[acres99-apify]'`). Optional
+  `APIFY_MAX_RESULTS` caps how many listings to buy (~$0.002 each).
 - The map builder works with whatever data is present; every input except the
   template is optional.
 

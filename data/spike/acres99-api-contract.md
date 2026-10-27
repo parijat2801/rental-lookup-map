@@ -1,15 +1,19 @@
 # 99acres API Contract
 
+## Fetch order
+1. **Apify** (`themineworks/99acres-scraper`) when `APIFY_TOKEN` is set —
+   `pip install 'rental-lookup[acres99-apify]'`. Items are adapted to the SRP
+   shape below before saving under `data/raw_9a/`.
+2. **JSON API** (optional browser `Cookie`) — often 401/403 behind Akamai.
+3. **Chrome SSR** via Playwright reading `window.__initialData__.srp` —
+   `pip install 'rental-lookup[acres99]'`.
+
 ## Endpoint (legacy JSON API)
 ```
 GET https://www.99acres.com/api-aggregator/srp/search
 ```
 Formerly returned JSON. As of late 2026 this returns **401 Unauthorized Client**
-(or Akamai 403) for non-browser clients. The scraper now falls back to loading
-the public SSR search HTML in Chrome (Playwright) and reading
-`window.__initialData__.srp`, which still embeds `PROP_ID` tuples.
-
-Optional: `pip install 'rental-lookup[acres99]'` (Playwright) for the SSR path.
+(or Akamai 403) for non-browser clients without a fresh cookie.
 
 ## Query Parameters
 | Param | Example | Notes |
