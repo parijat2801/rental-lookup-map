@@ -1,8 +1,8 @@
-# rental-map
+# blr-rental-map
 
 Find a flat in Bangalore without tabbing between rental portals.
 
-rental-map scrapes **NoBroker**, **MagicBricks**, **99acres** and **Property Angel**,
+blr-rental-map scrapes **NoBroker**, **MagicBricks**, **99acres** and **Property Angel**,
 de-duplicates same-flat re-listings across them (society + floor + rent/amenities —
 not merely the same building), scores each one, and puts everything on a single
 interactive map with real filters, rankings and a shared star/dismiss list. It also
@@ -71,8 +71,8 @@ nearest park, woods/tree cover, lake and metro station.
 ## Quick start
 
 ```bash
-git clone https://github.com/sarweshshah/rental-map.git
-cd rental-map
+git clone https://github.com/sarweshshah/blr-rental-map.git
+cd blr-rental-map
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev]'
 
@@ -257,4 +257,4 @@ Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributor
 
 ## License
 
-[MIT](LICENSE) © The rental-map contributors
+[MIT](LICENSE) © The blr-rental-map contributors

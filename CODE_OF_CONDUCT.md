@@ -6,6 +6,6 @@ This project follows the
 In short: be respectful and constructive, assume good intent, and don't harass
 anyone. Unacceptable behaviour can be reported privately to the maintainers
 through the repository's
-[private vulnerability reporting](https://github.com/sarweshshah/rental-map/security/advisories/new)
+[private vulnerability reporting](https://github.com/sarweshshah/blr-rental-map/security/advisories/new)
 form or by contacting a maintainer directly. Maintainers may remove comments,
 commits or contributions that break these rules, and may block repeat offenders.

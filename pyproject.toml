@@ -39,8 +39,8 @@ rental-map-serve = "rental_lookup.webmap.server:main"
 rental-map-dev = "rental_lookup.webmap.dev:main"
 
 [project.urls]
-Homepage = "https://github.com/sarweshshah/rental-map"
-Issues = "https://github.com/sarweshshah/rental-map/issues"
+Homepage = "https://github.com/sarweshshah/blr-rental-map"
+Issues = "https://github.com/sarweshshah/blr-rental-map/issues"
 
 [tool.setuptools.packages.find]
 include = ["rental_lookup*"]
