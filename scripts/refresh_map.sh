@@ -6,13 +6,13 @@ cd "$(dirname "$0")/.."
 PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3)
 
 echo "=== Step 1: Back up previous data + fetch fresh from NoBroker ==="
-# The previous run becomes data/raw_prev, which the map uses to show delisted
-# listings. Also forces a fresh fetch (fetch_all skips neighbourhoods already in data/raw).
-if compgen -G "data/raw/*.json" > /dev/null; then
-    rm -rf data/raw_prev
-    mv data/raw data/raw_prev
+# The previous run becomes data/raw_nb_prev, which the map uses to show delisted
+# listings. Also forces a fresh fetch (fetch_all skips neighbourhoods already in data/raw_nb).
+if compgen -G "data/raw_nb/*.json" > /dev/null; then
+    rm -rf data/raw_nb_prev
+    mv data/raw_nb data/raw_nb_prev
 fi
-mkdir -p data/raw
+mkdir -p data/raw_nb
 "$PY" -m rental_lookup.sources nobroker
 
 echo

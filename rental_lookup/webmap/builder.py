@@ -1,8 +1,8 @@
 """Build output/map.html from scraped listings and cached extras.
 
 Inputs (all optional except the template):
-  data/raw/*.json        NoBroker pages (current run)
-  data/raw_prev/*.json   NoBroker pages from the previous run, to show delisted listings
+  data/raw_nb/*.json     NoBroker pages (current run)
+  data/raw_nb_prev/*.json NoBroker pages from the previous run, to show delisted listings
   data/raw_mb/*.json     MagicBricks pages
   data/raw_9a/*.json     99acres pages
   data/raw_pa/*.json     Property Angel listings (one detail payload each)

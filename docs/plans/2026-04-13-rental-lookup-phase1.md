@@ -10,7 +10,7 @@
 
 1. Python CLI (`python -m rental_lookup`), four modules: `nobroker.py` (fetch), `geo.py` (location data), `scorer.py` (rank), `run.py` (orchestrate + output). Dependencies: `httpx` (sync — no async until we know the API tolerates concurrency), `osmnx`, `geopandas`, `geopy`, `pandas`, `tqdm`. Writes `output/results.csv`. No config files, no YAML, no CLI args — hardcode everything for Bangalore/60K/2-3BHK in constants at top of each module. Change a constant, re-run.
 
-2. `nobroker.py` hits NoBroker's undocumented listing endpoint (exact URL/params/headers determined by Spike 0). We search 6 neighborhoods by lat/lng centroid: Indiranagar (12.9716, 77.6412), Jayanagar (12.9250, 77.5938), Malleshwaram (12.9963, 77.5713), Basavanagudi (12.9416, 77.5713), Ulsoor (12.9812, 77.6200), Rajajinagar (12.9900, 77.5525). Paginates until empty page. Saves raw JSON responses to `data/raw/` (so we can re-score without re-fetching). Parses each listing into a `Listing` dataclass, deduplicates by `propertyId`, skips listings missing lat/lng. If a 403 hits, prints the cURL equivalent so we can manually grab fresh cookies.
+2. `nobroker.py` hits NoBroker's undocumented listing endpoint (exact URL/params/headers determined by Spike 0). We search 6 neighborhoods by lat/lng centroid: Indiranagar (12.9716, 77.6412), Jayanagar (12.9250, 77.5938), Malleshwaram (12.9963, 77.5713), Basavanagudi (12.9416, 77.5713), Ulsoor (12.9812, 77.6200), Rajajinagar (12.9900, 77.5525). Paginates until empty page. Saves raw JSON responses to `data/raw_nb/` (so we can re-score without re-fetching). Parses each listing into a `Listing` dataclass, deduplicates by `propertyId`, skips listings missing lat/lng. If a 403 hits, prints the cURL equivalent so we can manually grab fresh cookies.
 
 3. `geo.py` does NOT query Overpass per listing. Instead, it bulk-fetches three GeoDataFrames for all of central Bangalore (bbox: 12.90-13.05 lat, 77.50-77.70 lng) in exactly 3 Overpass calls: green spaces (`{"leisure": ["park", "garden"], "landuse": "recreation_ground"}`), water bodies (`{"natural": "water", "water": "lake"}`), metro/rail stations (`{"railway": "station", "public_transport": "station"}`). Caches results to `data/cache/parks.gpkg`, `lakes.gpkg`, `metro.gpkg` (GeoPackage files — reload on next run without hitting Overpass). For each listing, computes nearest-feature distance using geopandas spatial index (`sindex.nearest`) on projected CRS (UTM 43N for Bangalore) — proper geometry distance, not centroid-to-centroid haversine.
 
@@ -36,7 +36,7 @@ Run these in Claude Code before writing any module code:
 | `rental_lookup/scorer.py` | Hard filters, weighted scoring, CSV output |
 | `rental_lookup/models.py` | `Listing`, `LocationScore`, `ScoredListing` dataclasses |
 | `pyproject.toml` | Dependencies |
-| `data/raw/` | Raw NoBroker JSON responses (gitignored) |
+| `data/raw_nb/` | Raw NoBroker JSON responses (gitignored) |
 | `data/cache/` | Cached GeoPackage files (gitignored) |
 | `data/spike/` | Spike 0 artifacts |
 | `output/results.csv` | Final ranked output |

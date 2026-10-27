@@ -145,8 +145,8 @@ def scrape_group(
 
     if output_dir:
         output_dir.mkdir(parents=True, exist_ok=True)
-        (output_dir / f"fb_raw_{group_id}.json").write_text(json.dumps(all_posts, indent=2, default=str))
-        parsed_path = output_dir / f"fb_rentals_{group_id}.json"
+        (output_dir / f"facebook_raw_{group_id}.json").write_text(json.dumps(all_posts, indent=2, default=str))
+        parsed_path = output_dir / f"facebook_rentals_{group_id}.json"
         parsed_path.write_text(json.dumps(rental_posts, indent=2))
         print(f"  Saved to {parsed_path}")
 

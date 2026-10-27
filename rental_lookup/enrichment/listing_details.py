@@ -1,8 +1,8 @@
 """Fetch NoBroker detail pages for extras the search results lack.
 
 Two passes, both cached in data/cache and merged into the map by the webmap builder:
-  - details (maintenance, description, ...) for the top listings -> detail_enrichment.json
-  - transit / lifestyle ratings for listings whose search result had none -> platform_scores.json
+  - details (maintenance, description, ...) for the top listings -> nobroker_detail_enrichment.json
+  - transit / lifestyle ratings for listings whose search result had none -> nobroker_platform_scores.json
 
 Run: python -m rental_lookup.enrichment.listing_details [TOP_N]
      python -m rental_lookup.enrichment.listing_details scores [LIMIT]

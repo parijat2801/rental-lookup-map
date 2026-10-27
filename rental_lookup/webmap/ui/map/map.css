@@ -7,10 +7,9 @@
     z-index: 0;
     background: var(--map-bg);
 }
-/* Mute colorful basemap features; keep enough contrast for subtle grey place names. */
+/* High contrast: dark roads sink, light place names lift; low sat keeps color quiet. */
 [data-theme="dark"] #map:not(.satellite) .leaflet-tile-pane {
-    filter: brightness(0.88) contrast(1.05) saturate(0.3);
-    opacity: 0.96;
+    filter: brightness(0.82) contrast(1.45) saturate(0.25);
 }
 .leaflet-bar {
     border: none !important;

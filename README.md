@@ -127,9 +127,9 @@ Each step can also be run on its own, from the repository root:
 
 Notes:
 
-- NoBroker pages already saved under `data/raw/` are reused; empty that folder (as
+- NoBroker pages already saved under `data/raw_nb/` are reused; empty that folder (as
   `scripts/refresh_map.sh` does) to force a fresh fetch. The previous run is moved
-  to `data/raw_prev/` so the map can show delisted listings.
+  to `data/raw_nb_prev/` so the map can show delisted listings.
 - `COOKIE` is an optional browser `Cookie` header for NoBroker / 99acres, only
   needed if requests start getting blocked (99acres often needs one behind Akamai).
 - The map builder works with whatever data is present; every input except the

@@ -11,20 +11,20 @@ CACHE_DIR = DATA_DIR / "cache"
 OUTPUT_DIR = REPO_ROOT / "output"
 
 # Raw API responses, one JSON file per results page (re-fetched every run).
-NOBROKER_PAGES_DIR = DATA_DIR / "raw"
-PREVIOUS_NOBROKER_PAGES_DIR = DATA_DIR / "raw_prev"  # last run's pages, to spot delisted listings
+NOBROKER_PAGES_DIR = DATA_DIR / "raw_nb"
+PREVIOUS_NOBROKER_PAGES_DIR = DATA_DIR / "raw_nb_prev"  # last run's pages, to spot delisted listings
 MAGICBRICKS_PAGES_DIR = DATA_DIR / "raw_mb"
 ACRES99_PAGES_DIR = DATA_DIR / "raw_9a"
 PROPERTYANGEL_PAGES_DIR = DATA_DIR / "raw_pa"  # one detail payload per property
-FACEBOOK_POSTS_DIR = DATA_DIR / "fb"
+FACEBOOK_POSTS_DIR = DATA_DIR / "raw_fb"
 
 # Long-lived state, committed to git and cached by CI.
 STARS_PATH = CACHE_DIR / "stars_and_dismissals.json"  # personal; gitignored; local server backup only
 FIRST_SEEN_PATH = CACHE_DIR / "first_seen.json"  # listing url -> date we first saw it
-LISTING_DETAILS_PATH = CACHE_DIR / "detail_enrichment.json"  # listing id -> NoBroker detail-page extras
+LISTING_DETAILS_PATH = CACHE_DIR / "nobroker_detail_enrichment.json"  # listing id -> NoBroker detail-page extras
 # listing id -> NoBroker [transit, lifestyle] from the detail page (null = it has none either),
 # for listings whose search result came without them
-PLATFORM_SCORES_PATH = CACHE_DIR / "platform_scores.json"
+PLATFORM_SCORES_PATH = CACHE_DIR / "nobroker_platform_scores.json"
 FAKE_LOCATION_IDS_PATH = CACHE_DIR / "fake_location_ids.json"  # listing ids with known-bogus coordinates
 
 METRO_LINES_PATH = DATA_DIR / "metro_lines.json"  # map overlay, from scripts/fetch_metro_lines.py

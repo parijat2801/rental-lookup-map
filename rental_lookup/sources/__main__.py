@@ -4,10 +4,10 @@ Run: rental-map-fetch SOURCE [--cookie COOKIE]
  or: python -m rental_lookup.sources SOURCE [--cookie COOKIE]
 
 SOURCE is `nobroker`, `magicbricks`, `99acres`, `propertyangel` or `all`. Raw
-result pages are saved under data/raw/ (NoBroker), data/raw_mb/ (MagicBricks),
+result pages are saved under data/raw_nb/ (NoBroker), data/raw_mb/ (MagicBricks),
 data/raw_9a/ (99acres) and data/raw_pa/ (Property Angel) for the map builder.
-NoBroker reuses neighbourhoods already saved in data/raw/; empty it for a fresh
-fetch (scripts/refresh_map.sh does this, keeping the old pages in data/raw_prev/).
+NoBroker reuses neighbourhoods already saved in data/raw_nb/; empty it for a fresh
+fetch (scripts/refresh_map.sh does this, keeping the old pages in data/raw_nb_prev/).
 Property Angel reuses details saved in data/raw_pa/ and only fetches new properties.
 """
 from __future__ import annotations

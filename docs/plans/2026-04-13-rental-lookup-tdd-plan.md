@@ -61,7 +61,7 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 Create `.gitignore`:
 ```
-data/raw/
+data/raw_nb/
 data/cache/
 output/
 __pycache__/
@@ -516,7 +516,7 @@ def fetch_neighborhood(
 
         if raw_dir:
             raw_dir.mkdir(parents=True, exist_ok=True)
-            path = raw_dir / f"{name.lower()}_page{page}.json"
+            path = raw_dir / f"nobroker_{name.lower()}_page{page}.json"
             path.write_text(json.dumps(data, indent=2))
 
         page_listings = parse_listings(data)
@@ -1147,7 +1147,7 @@ def main(cookie: str = "") -> None:
     print("=" * 60)
     print("STEP 1: Fetching listings from NoBroker")
     print("=" * 60)
-    listings = fetch_all(cookie=cookie, raw_dir=DATA_DIR / "raw")
+    listings = fetch_all(cookie=cookie, raw_dir=DATA_DIR / "raw_nb")
 
     # 2. Hard filter
     print(f"\nApplying hard filters (rent <= 60K, sqft >= 700)...")
@@ -1246,7 +1246,7 @@ python3 -m rental_lookup "PASTE_COOKIE_HERE"
 **Step 2: Verify output**
 
 - Check `output/results.csv` exists and has rows
-- Check `data/raw/` has JSON files
+- Check `data/raw_nb/` has JSON files
 - Check `data/cache/` has .gpkg files
 - Verify top-10 printed to terminal looks reasonable
 

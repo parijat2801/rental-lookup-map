@@ -41,8 +41,8 @@ jobs:
         with:
           path: |
             data/cache
-            data/raw
-            data/raw_prev
+            data/raw_nb
+            data/raw_nb_prev
             data/raw_pa
           key: rental-data-${{ github.run_number }}
           restore-keys: |
@@ -54,13 +54,13 @@ jobs:
 
       - name: Fetch NoBroker listings
         run: |
-          # Last run's listings become raw_prev, used to show delisted listings on the map.
-          if compgen -G "data/raw/*.json" > /dev/null; then
-            rm -rf data/raw_prev
-            mv data/raw data/raw_prev
+          # Last run's listings become raw_nb_prev, used to show delisted listings on the map.
+          if compgen -G "data/raw_nb/*.json" > /dev/null; then
+            rm -rf data/raw_nb_prev
+            mv data/raw_nb data/raw_nb_prev
           fi
-          rm -rf data/raw
-          mkdir -p data/raw
+          rm -rf data/raw_nb
+          mkdir -p data/raw_nb
           python -m rental_lookup.sources nobroker
 
       - name: Fetch MagicBricks listings
