@@ -63,7 +63,7 @@ def test_map_template_shows_1bhk_by_default():
 
 def test_map_template_filter_predicate_handles_bhk1():
     html = load_template()
-    assert "filterChips.bhk1 && d.bhk === 'BHK1'" in html, (
+    assert re.search(r"filterChips\.bhk1 && d\.bhk === ['\"]BHK1['\"]", html), (
         "filter predicate must match BHK1 when the 1 BHK chip is on"
     )
     assert "filterChips.bhk1 || filterChips.bhk2 || filterChips.bhk3" in html, (

@@ -2,21 +2,22 @@
 // Filter chips, sliders, the filters sheet and active-filter counts
 // ===========================================================================
 // One entry per chip (its data-filter attribute); true = filter active.
+// All chips start off; last-session choices are restored from localStorage.
 var filterChips = {
-    bhk1: true,
-    bhk2: true,
+    bhk1: false,
+    bhk2: false,
     bhk3: false,
-    furnishedFull: true,
-    furnishedSemi: true,
+    furnishedFull: false,
+    furnishedSemi: false,
     furnishedNone: false,
-    requireLift: true,
+    requireLift: false,
     requireCarParking: false,
-    requireAnyParking: true,
+    requireAnyParking: false,
     excludeWestFacing: false,
-    requireBalcony: true,
-    excludeStandalone: true,
-    excludeIndependentHouses: true,
-    requireRealPhoto: true,
+    requireBalcony: false,
+    excludeStandalone: false,
+    excludeIndependentHouses: false,
+    requireRealPhoto: false,
     petFriendlyOnly: false,
     poolOnly: false,
     requireGym: false,
@@ -35,7 +36,7 @@ var filterChips = {
     penthouseOnly: false,
     newTodayOnly: false,
     starredOnly: false,
-    hideDismissed: true,
+    hideDismissed: false,
 };
 var DEFAULT_FILTER_CHIPS = JSON.parse(JSON.stringify(filterChips));
 var SLIDER_IDS = [
@@ -51,6 +52,44 @@ var SLIDER_IDS = [
 var SLIDERS_OFF_AT_MAX = ["filter-cost-max", "filter-deposit", "filter-days"];
 // Chips shown outside the sheet; they don't count towards the "Filters" badge.
 var QUICK_FILTERS = ["starredOnly"];
+var FILTERS_STORAGE_KEY = "rental_filters";
+
+function saveFilters() {
+    try {
+        var sliders = {};
+        SLIDER_IDS.forEach(function (id) {
+            sliders[id] = byId(id).value;
+        });
+        localStorage.setItem(
+            FILTERS_STORAGE_KEY,
+            JSON.stringify({
+                chips: filterChips,
+                sliders: sliders,
+                search: byId("search-input").value,
+            }),
+        );
+    } catch (e) {}
+}
+function loadFilters() {
+    try {
+        var saved = JSON.parse(localStorage.getItem(FILTERS_STORAGE_KEY));
+        if (!saved) return;
+        if (saved.chips) {
+            for (var name in filterChips) {
+                if (typeof saved.chips[name] === "boolean")
+                    filterChips[name] = saved.chips[name];
+            }
+        }
+        if (saved.sliders) {
+            SLIDER_IDS.forEach(function (id) {
+                if (saved.sliders[id] != null) byId(id).value = saved.sliders[id];
+            });
+        }
+        if (typeof saved.search === "string")
+            byId("search-input").value = saved.search;
+    } catch (e) {}
+}
+loadFilters();
 
 function toggleChip(chip) {
     filterChips[chip.dataset.filter] = !filterChips[chip.dataset.filter];

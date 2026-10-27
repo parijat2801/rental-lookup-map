@@ -120,6 +120,7 @@ function passesFilters(d, sliders) {
 function refreshMap() {
     updateActiveFilterCount();
     paintSliders();
+    saveFilters();
     var sliders = readSliders();
     var rankMode = effectiveRankMode(),
         mode = RANK_MODES[rankMode];

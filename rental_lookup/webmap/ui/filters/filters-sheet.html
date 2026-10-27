@@ -31,7 +31,7 @@
                             min="0"
                             max="150000"
                             step="5000"
-                            value="30000"
+                            value="0"
                             oninput="onCostInput(this)"
                             aria-label="Minimum monthly cost"
                         />
@@ -41,7 +41,7 @@
                             min="0"
                             max="150000"
                             step="5000"
-                            value="50000"
+                            value="150000"
                             oninput="onCostInput(this)"
                             aria-label="Maximum monthly cost"
                         />
@@ -58,7 +58,7 @@
                         min="2"
                         max="20"
                         step="1"
-                        value="5"
+                        value="20"
                         oninput="refreshMap()"
                     />
                 </div>
@@ -73,14 +73,14 @@
             <div class="section-body">
                 <div class="chip-row">
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="bhk1"
                         onclick="toggleChip(this)"
                     >
                         1 BHK
                     </button>
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="bhk2"
                         onclick="toggleChip(this)"
                     >
@@ -96,14 +96,14 @@
                 </div>
                 <div class="chip-row">
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="furnishedFull"
                         onclick="toggleChip(this)"
                     >
                         Furnished
                     </button>
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="furnishedSemi"
                         onclick="toggleChip(this)"
                     >
@@ -128,20 +128,20 @@
                         min="500"
                         max="2000"
                         step="50"
-                        value="800"
+                        value="500"
                         oninput="refreshMap()"
                     />
                 </div>
                 <div class="chip-row">
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="excludeStandalone"
                         onclick="toggleChip(this)"
                     >
                         No standalone buildings
                     </button>
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="excludeIndependentHouses"
                         onclick="toggleChip(this)"
                     >
@@ -166,14 +166,14 @@
             <div class="section-body">
                 <div class="chip-row">
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="requireBalcony"
                         onclick="toggleChip(this)"
                     >
                         Balcony
                     </button>
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="requireLift"
                         onclick="toggleChip(this)"
                     >
@@ -187,7 +187,7 @@
                         Car parking
                     </button>
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="requireAnyParking"
                         onclick="toggleChip(this)"
                     >
@@ -305,7 +305,7 @@
                 </div>
                 <div class="chip-row">
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="requireRealPhoto"
                         onclick="toggleChip(this)"
                     >
@@ -409,7 +409,7 @@
             <div class="section-body">
                 <div class="chip-row">
                     <button
-                        class="chip on"
+                        class="chip"
                         data-filter="hideDismissed"
                         onclick="toggleChip(this)"
                     >
