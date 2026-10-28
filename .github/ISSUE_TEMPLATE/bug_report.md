@@ -22,5 +22,5 @@ paste here
 **Environment**
 
 - OS:
-- Python version (`python --version`):
+- Python version (`python3 --version`):
 - Browser (for map issues):

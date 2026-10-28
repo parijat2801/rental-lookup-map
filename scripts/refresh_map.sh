@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Local full refresh: fetch fresh listings, enrich the top ones, rebuild output/map.html.
-# Usage: scripts/refresh_map.sh   (uses .venv/bin/python if present, else python3)
+# Usage: scripts/refresh_map.sh   (uses .venv/bin/python3 if present, else python3)
 set -euo pipefail
 cd "$(dirname "$0")/.."
-PY=$([ -x .venv/bin/python ] && echo .venv/bin/python || echo python3)
+PY=$([ -x .venv/bin/python3 ] && echo .venv/bin/python3 || echo python3)
 
 echo "=== Step 1: Back up previous data + fetch fresh from NoBroker ==="
 # The previous run becomes data/raw_nb_prev, which the map uses to show delisted

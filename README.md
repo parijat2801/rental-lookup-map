@@ -75,11 +75,17 @@ nearest park, woods/tree cover, lake and metro station.
 git clone https://github.com/sarweshshah/blr-rental-map.git
 cd blr-rental-map
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e '.[dev]'
+python3 -m pip install -e '.[dev]'
 
-scripts/refresh_map.sh   # fetch, enrich and build output/map.html (takes a while)
-rental-map-dev           # serve it at http://localhost:8765/map.html, rebuilding on changes
+scripts/refresh_map.sh               # fetch, enrich and build output/map.html (takes a while)
+python3 -m rental_lookup.webmap.dev  # http://localhost:8765/map.html, rebuilds on changes
 ```
+
+Prefer `python3` (macOS often has no `python` command). With the venv
+activated, `python3` is the venv interpreter; without activation use
+`.venv/bin/python3`. After `python3 -m pip install -e '.[dev]'`, short aliases
+like `rental-map-dev` are also installed into `.venv/bin/` — they only work when
+that directory is on your `PATH` (i.e. the venv is activated).
 
 Serving the map through the bundled server (rather than opening the file) also
 backs up stars/dismissals to the gitignored `data/cache/stars_and_dismissals.json`
@@ -89,17 +95,16 @@ listings**, which runs `scripts/refresh_map.sh` in the background (output in
 
 ### Build / run commands
 
-Installing the package adds these commands:
-
-| Command | Same as | What it does |
+| Command | Optional alias | What it does |
 | --- | --- | --- |
-| `rental-map-fetch SOURCE` | `python -m rental_lookup.sources SOURCE` | Fetch listings from `nobroker`, `magicbricks`, `99acres`, `propertyangel` or `all` into `data/`. |
-| `rental-map-rank` | `python -m rental_lookup` | Score NoBroker listings into `output/results.csv`. |
-| `rental-map-build` | `python -m rental_lookup.webmap.builder` | Build `output/map.html` once. |
-| `rental-map-serve [PORT]` | `python -m rental_lookup.webmap.server` | Serve the map without the watcher. |
-| `rental-map-dev [PORT]` | `python -m rental_lookup.webmap.dev` | Build the map, serve it, and watch for changes: edits to the code, the template or the data files trigger a rebuild, and the open page reloads itself. A failed build keeps serving the previous map. |
+| `python3 -m rental_lookup.sources SOURCE` | `rental-map-fetch SOURCE` | Fetch listings from `nobroker`, `magicbricks`, `99acres`, `propertyangel` or `all` into `data/`. |
+| `python3 -m rental_lookup` | `rental-map-rank` | Score NoBroker listings into `output/results.csv`. |
+| `python3 -m rental_lookup.webmap.builder` | `rental-map-build` | Build `output/map.html` once. |
+| `python3 -m rental_lookup.webmap.server [PORT]` | `rental-map-serve [PORT]` | Serve the map without the watcher. |
+| `python3 -m rental_lookup.webmap.dev [PORT]` | `rental-map-dev [PORT]` | Build the map, serve it, and watch for changes: edits to the code, the template or the data files trigger a rebuild, and the open page reloads itself. A failed build keeps serving the previous map. |
 
-`rental-map-fetch` and `rental-map-rank` take `--cookie COOKIE` and `--help`.
+`rental-map-fetch` / `python3 -m rental_lookup.sources` and
+`rental-map-rank` / `python3 -m rental_lookup` take `--cookie COOKIE` and `--help`.
 
 In Cursor / VS Code, the same commands are set up as tasks in `.vscode/`:
 **Run Build Task** (`Cmd/Ctrl+Shift+B`) starts the dev watcher, **Run Test Task**
@@ -112,19 +117,19 @@ Each step can also be run on its own, from the repository root:
 
 | Step | Command |
 | --- | --- |
-| Fetch NoBroker listings | `rental-map-fetch nobroker [--cookie COOKIE]` |
-| Fetch MagicBricks listings | `rental-map-fetch magicbricks` |
-| Fetch 99acres listings | `rental-map-fetch 99acres [--cookie COOKIE]` |
-| Fetch Property Angel listings | `rental-map-fetch propertyangel` |
-| Fetch from every source | `rental-map-fetch all [--cookie COOKIE]` |
-| Rank NoBroker listings into `output/results.csv` | `rental-map-rank [--cookie COOKIE]` |
-| Fetch detail pages for the top N NoBroker listings | `python -m rental_lookup.enrichment.listing_details [N]` |
-| Look up NoBroker transit / lifestyle ratings missing from search results (~1 s per listing, cached) | `python -m rental_lookup.enrichment.listing_details scores [LIMIT]` |
-| Build `output/map.html` from saved data | `rental-map-build` |
-| Serve the map with star auto-save | `rental-map-serve [PORT]` |
-| Serve, watch and rebuild on changes | `rental-map-dev [PORT]` |
-| Regenerate the metro overlay | `python scripts/fetch_metro_lines.py` |
-| Merge star export files | `python -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` |
+| Fetch NoBroker listings | `python3 -m rental_lookup.sources nobroker [--cookie COOKIE]` |
+| Fetch MagicBricks listings | `python3 -m rental_lookup.sources magicbricks` |
+| Fetch 99acres listings | `python3 -m rental_lookup.sources 99acres [--cookie COOKIE]` |
+| Fetch Property Angel listings | `python3 -m rental_lookup.sources propertyangel` |
+| Fetch from every source | `python3 -m rental_lookup.sources all [--cookie COOKIE]` |
+| Rank NoBroker listings into `output/results.csv` | `python3 -m rental_lookup [--cookie COOKIE]` |
+| Fetch detail pages for the top N NoBroker listings | `python3 -m rental_lookup.enrichment.listing_details [N]` |
+| Look up NoBroker transit / lifestyle ratings missing from search results (~1 s per listing, cached) | `python3 -m rental_lookup.enrichment.listing_details scores [LIMIT]` |
+| Build `output/map.html` from saved data | `python3 -m rental_lookup.webmap.builder` |
+| Serve the map with star auto-save | `python3 -m rental_lookup.webmap.server [PORT]` |
+| Serve, watch and rebuild on changes | `python3 -m rental_lookup.webmap.dev [PORT]` |
+| Regenerate the metro overlay | `python3 scripts/fetch_metro_lines.py` |
+| Merge star export files | `python3 -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` |
 
 Notes:
 
@@ -134,7 +139,7 @@ Notes:
 - `COOKIE` is an optional browser `Cookie` header for NoBroker / 99acres, only
   needed if requests start getting blocked (99acres often needs one behind Akamai).
 - For 99acres, set `APIFY_TOKEN` in `.env` to use the Apify scraper instead of the
-  JSON API / Chrome SSR path (`pip install 'rental-lookup[acres99-apify]'`). Optional
+  JSON API / Chrome SSR path (`python3 -m pip install 'rental-lookup[acres99-apify]'`). Optional
   `APIFY_MAX_RESULTS` caps how many listings to buy (~$0.002 each).
 - The map builder works with whatever data is present; every input except the
   template is optional.
@@ -156,8 +161,8 @@ UI (Settings → Quality scoring); your edits are kept in the browser.
 not part of the map pipeline and needs an extra dependency and your cookies:
 
 ```bash
-pip install -e '.[facebook]'
-python -m rental_lookup.sources.facebook cookies.txt
+python3 -m pip install -e '.[facebook]'
+python3 -m rental_lookup.sources.facebook cookies.txt
 ```
 
 ## Automated daily map (GitHub Actions)
@@ -201,7 +206,7 @@ output/            map.html, results.csv (gitignored)
 ## Stars and dismissals
 
 Stars are personal and stay on your machine. The browser's `localStorage` is the
-source of truth; when you use `rental-map-dev` / `rental-map-serve`, changes are
+source of truth; when you use the dev / serve commands above, changes are
 also backed up to the gitignored `data/cache/stars_and_dismissals.json`. Neither
 the repo nor GitHub Pages publishes them.
 
@@ -227,7 +232,7 @@ commute times per place:
   `data/metro_lines.json`: walk (up to 1.5 km) or take an auto to one of the
   three nearest stations, wait, ride (including changes between lines), then walk
   or take an auto to the place. Lines that open after the last
-  `python scripts/fetch_metro_lines.py` run aren't counted.
+  `python3 scripts/fetch_metro_lines.py` run aren't counted.
 
 Ranking uses the faster of drive and metro for each place; both times are shown.
 Places combine with AND: a listing has to be easy to reach from every place, so its
@@ -241,8 +246,8 @@ All speeds and penalties are constants at the top of
 ## Development
 
 ```bash
-pip install -e '.[dev]'
-pytest
+python3 -m pip install -e '.[dev]'
+python3 -m pytest
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and how to add a new source.

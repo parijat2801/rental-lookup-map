@@ -9,7 +9,7 @@ labels: scraper
 **Command you ran**
 
 ```
-python -m ...
+python3 -m rental_lookup.sources ...
 ```
 
 **Output**

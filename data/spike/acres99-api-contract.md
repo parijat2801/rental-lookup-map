@@ -2,11 +2,11 @@
 
 ## Fetch order
 1. **Apify** (`themineworks/99acres-scraper`) when `APIFY_TOKEN` is set —
-   `pip install 'rental-lookup[acres99-apify]'`. Items are adapted to the SRP
-   shape below before saving under `data/raw_9a/`.
+   `python3 -m pip install 'rental-lookup[acres99-apify]'`. Items are adapted to
+   the SRP shape below before saving under `data/raw_9a/`.
 2. **JSON API** (optional browser `Cookie`) — often 401/403 behind Akamai.
 3. **Chrome SSR** via Playwright reading `window.__initialData__.srp` —
-   `pip install 'rental-lookup[acres99]'`.
+   `python3 -m pip install 'rental-lookup[acres99]'`.
 
 ## Endpoint (legacy JSON API)
 ```

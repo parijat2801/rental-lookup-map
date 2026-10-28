@@ -31,10 +31,10 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: pip install -e '.[dev]'
+        run: python3 -m pip install -e '.[dev]'
 
       - name: Run tests
-        run: pytest -q
+        run: python3 -m pytest -q
 
       - name: Restore cached data
         uses: actions/cache@v6
@@ -61,26 +61,26 @@ jobs:
           fi
           rm -rf data/raw_nb
           mkdir -p data/raw_nb
-          python -m rental_lookup.sources nobroker
+          python3 -m rental_lookup.sources nobroker
 
       - name: Fetch MagicBricks listings
         run: |
           rm -rf data/raw_mb
-          python -m rental_lookup.sources magicbricks
+          python3 -m rental_lookup.sources magicbricks
 
       - name: Fetch 99acres listings
         run: |
           rm -rf data/raw_9a
-          python -m rental_lookup.sources 99acres
+          python3 -m rental_lookup.sources 99acres
 
       # data/raw_pa is cached: only properties new since the last run are fetched (the API is rate-limited).
       - name: Fetch Property Angel listings
-        run: python -m rental_lookup.sources propertyangel
+        run: python3 -m rental_lookup.sources propertyangel
 
       - name: Build map
         env:
           CARTO_BASEMAPS_KEY: ${{ secrets.CARTO_BASEMAPS_KEY }}
-        run: python -m rental_lookup.webmap.builder
+        run: python3 -m rental_lookup.webmap.builder
 
       - name: Deploy to GitHub Pages
         run: |

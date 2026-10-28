@@ -6,21 +6,24 @@ Thanks for helping out! Bug fixes, scraper repairs and new sources are all welco
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e '.[dev]'
-pytest
+python3 -m pip install -e '.[dev]'
+python3 -m pytest
 ```
+
+Use `python3` (macOS often has no `python` command). Without activating the
+venv, prefix commands with `.venv/bin/python3 -m …`.
 
 The test suite needs no network access; NoBroker parsing is tested against the
 saved response in `data/spike/nobroker-sample-response.json`.
 
 ## Before opening a pull request
 
-- Run `pytest` and make sure it passes.
+- Run `python3 -m pytest` and make sure it passes.
 - Keep changes focused; one fix or feature per pull request.
 - Don't commit scraped data (`data/raw*/`), generated output (`output/`), or
   `.env`. Stars/dismissals are gitignored (`data/cache/stars_and_dismissals.json`).
-- If you change what the map shows, check it in a browser. `rental-map-dev` rebuilds
-  and reloads the page on every save.
+- If you change what the map shows, check it in a browser.
+  `python3 -m rental_lookup.webmap.dev` rebuilds and reloads the page on every save.
 
 ## Code conventions
 
