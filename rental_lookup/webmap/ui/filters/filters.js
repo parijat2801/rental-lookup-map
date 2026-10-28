@@ -43,13 +43,28 @@ var SLIDER_IDS = [
     "filter-cost-min",
     "filter-cost-max",
     "filter-sqft",
+    "filter-floor-min",
+    "filter-floor-max",
     "filter-photos",
     "filter-deposit",
     "filter-score",
     "filter-days",
 ];
 // Sliders that stop filtering at their max end; the rest stop filtering at their min end.
-var SLIDERS_OFF_AT_MAX = ["filter-cost-max", "filter-deposit", "filter-days"];
+var SLIDERS_OFF_AT_MAX = [
+    "filter-cost-max",
+    "filter-floor-max",
+    "filter-deposit",
+    "filter-days",
+];
+// Dual-range pairs count once in the active-filter badge.
+var DUAL_RANGE_SLIDERS = [
+    ["filter-cost-min", "filter-cost-max"],
+    ["filter-floor-min", "filter-floor-max"],
+];
+var DUAL_RANGE_SLIDER_IDS = DUAL_RANGE_SLIDERS.reduce(function (ids, pair) {
+    return ids.concat(pair);
+}, []);
 // Chips shown outside the sheet; they don't count towards the "Filters" badge.
 var QUICK_FILTERS = ["starredOnly"];
 var FILTERS_STORAGE_KEY = "rental_filters";
@@ -140,12 +155,28 @@ function filtersOpen() {
     return byId("filters-sheet").classList.contains("open");
 }
 
-function onCostInput(slider) {
-    var low = byId("filter-cost-min"),
-        high = byId("filter-cost-max");
+function onDualRangeInput(lowId, highId, slider) {
+    var low = byId(lowId),
+        high = byId(highId);
     if (+low.value > +high.value)
         slider.value = slider === low ? high.value : low.value;
     refreshMap();
+}
+function onCostInput(slider) {
+    onDualRangeInput("filter-cost-min", "filter-cost-max", slider);
+}
+function onFloorInput(slider) {
+    onDualRangeInput("filter-floor-min", "filter-floor-max", slider);
+}
+function paintDualRangeTrack(lowId, highId, fillId) {
+    var low = byId(lowId),
+        high = byId(highId),
+        fill = byId(fillId),
+        min = +high.min,
+        max = +high.max,
+        span = max - min || 1;
+    fill.style.left = ((+low.value - min) / span) * 100 + "%";
+    fill.style.right = 100 - ((+high.value - min) / span) * 100 + "%";
 }
 function paintSliders() {
     document
@@ -156,12 +187,12 @@ function paintSliders() {
                 ((el.value - el.min) / (el.max - el.min)) * 100 + "%",
             );
         });
-    var low = byId("filter-cost-min"),
-        high = byId("filter-cost-max"),
-        max = +high.max;
-    var fill = byId("cost-track-fill");
-    fill.style.left = (low.value / max) * 100 + "%";
-    fill.style.right = 100 - (high.value / max) * 100 + "%";
+    paintDualRangeTrack("filter-cost-min", "filter-cost-max", "cost-track-fill");
+    paintDualRangeTrack(
+        "filter-floor-min",
+        "filter-floor-max",
+        "floor-track-fill",
+    );
 }
 
 function isNonDefault(el) {
@@ -188,14 +219,11 @@ function updateActiveFilterCount() {
         if (filterChips[name]) applied++;
         if (filterChips[name] !== DEFAULT_FILTER_CHIPS[name]) changed++;
     }
-    if (sliderApplied("filter-cost-min") || sliderApplied("filter-cost-max"))
-        applied++;
+    DUAL_RANGE_SLIDERS.forEach(function (pair) {
+        if (sliderApplied(pair[0]) || sliderApplied(pair[1])) applied++;
+    });
     SLIDER_IDS.forEach(function (id) {
-        if (
-            id !== "filter-cost-min" &&
-            id !== "filter-cost-max" &&
-            sliderApplied(id)
-        )
+        if (DUAL_RANGE_SLIDER_IDS.indexOf(id) < 0 && sliderApplied(id))
             applied++;
         if (isNonDefault(byId(id))) changed++;
     });

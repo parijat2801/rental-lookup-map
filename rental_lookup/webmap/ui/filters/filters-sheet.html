@@ -132,6 +132,37 @@
                         oninput="refreshMap()"
                     />
                 </div>
+                <div>
+                    <div class="field-label">
+                        <span>Floor</span
+                        ><span class="slider-value" id="value-floor"></span>
+                    </div>
+                    <div class="dual-range">
+                        <div class="track">
+                            <div class="track-fill" id="floor-track-fill"></div>
+                        </div>
+                        <input
+                            type="range"
+                            id="filter-floor-min"
+                            min="0"
+                            max="40"
+                            step="1"
+                            value="0"
+                            oninput="onFloorInput(this)"
+                            aria-label="Minimum floor"
+                        />
+                        <input
+                            type="range"
+                            id="filter-floor-max"
+                            min="0"
+                            max="40"
+                            step="1"
+                            value="40"
+                            oninput="onFloorInput(this)"
+                            aria-label="Maximum floor"
+                        />
+                    </div>
+                </div>
                 <div class="chip-row">
                     <button
                         class="chip"

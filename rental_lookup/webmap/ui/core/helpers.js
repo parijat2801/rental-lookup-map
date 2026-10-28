@@ -25,6 +25,19 @@ function formatRupeesShort(amount) {
         return "₹" + (amount / 100000).toFixed(amount % 100000 ? 1 : 0) + "L";
     return "₹" + Math.round(amount / 1000) + "K";
 }
+function floorFilterLabel(n) {
+    return n === 0 ? "Ground" : String(n);
+}
+function floorRangeLabel(min, max) {
+    if (min <= 0 && max >= 40) return "Any";
+    if (min === max) return floorFilterLabel(min);
+    return (
+        floorFilterLabel(min) +
+        " – " +
+        floorFilterLabel(max) +
+        (max >= 40 ? "+" : "")
+    );
+}
 
 // Lucide icons as inline SVG strings, so re-rendered lists don't need a DOM rescan.
 var _iconCache = {};

@@ -6,6 +6,8 @@ function readSliders() {
         costMin: +byId("filter-cost-min").value,
         costMax: +byId("filter-cost-max").value,
         minSqft: +byId("filter-sqft").value,
+        floorMin: +byId("filter-floor-min").value,
+        floorMax: +byId("filter-floor-max").value,
         minPhotos: +byId("filter-photos").value,
         maxDepositMonths: +byId("filter-deposit").value,
         minScore: +byId("filter-score").value,
@@ -38,6 +40,15 @@ function passesFilters(d, sliders) {
     if (d.totalCost < sliders.costMin || d.totalCost > sliders.costMax)
         return false;
     if (d.sqft < sliders.minSqft) return false;
+    // Full 0–40 range = off; when narrowed, unknown floors are hidden
+    if (sliders.floorMin > 0 || sliders.floorMax < 40) {
+        if (
+            !d.floorKnown ||
+            d.floor < sliders.floorMin ||
+            d.floor > sliders.floorMax
+        )
+            return false;
+    }
     if (d.photoCount < sliders.minPhotos) return false;
     if (d.rent > 0 && d.deposit / d.rent > sliders.maxDepositMonths)
         return false;
@@ -131,6 +142,10 @@ function refreshMap() {
         formatRupeesShort(sliders.costMax) +
         (sliders.costMax >= +byId("filter-cost-max").max ? "+" : "");
     byId("value-sqft").textContent = sliders.minSqft.toLocaleString() + " sqft";
+    byId("value-floor").textContent = floorRangeLabel(
+        sliders.floorMin,
+        sliders.floorMax,
+    );
     byId("value-photos").textContent = sliders.minPhotos || "Any";
     byId("value-deposit").textContent =
         sliders.maxDepositMonths >= 20

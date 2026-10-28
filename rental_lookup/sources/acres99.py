@@ -28,10 +28,12 @@ from rental_lookup.sources.http import get_json
 APIFY_ACTOR = "themineworks/99acres-scraper"
 # Actor input schema rejects anything above this.
 APIFY_MAX_RESULTS_CAP = 2000
+# 99acres zone/city label (Apify + SSR slug). Override with APIFY_CITY in .env.
+DEFAULT_APIFY_CITY = "Bangalore East"
 
 SEARCH_API = "https://www.99acres.com/api-aggregator/srp/search"
 SITE_URL = "https://www.99acres.com"
-CITY_ID = "20"  # Bangalore
+CITY_ID = "20"  # Bangalore (JSON API still uses the metro city id)
 BHK_TYPES = "1,2,3"
 # 1=Apartment / flat (residential)
 PROPERTY_TYPES = "1"
@@ -558,6 +560,10 @@ def apify_token() -> str:
     return _env_value("APIFY_TOKEN")
 
 
+def apify_city() -> str:
+    return _env_value("APIFY_CITY") or DEFAULT_APIFY_CITY
+
+
 def is_apify_item(raw: dict) -> bool:
     """True for Apify listing rows (skips the run-summary object in the dataset)."""
     return isinstance(raw, dict) and bool(raw.get("spid")) and not raw.get("_type")
@@ -640,8 +646,9 @@ def fetch_all_via_apify(budget_min: int = 0, budget_max: int = 150000, max_pages
     max_results = min(requested, APIFY_MAX_RESULTS_CAP)
     if requested > APIFY_MAX_RESULTS_CAP:
         print(f"  [!] APIFY_MAX_RESULTS={requested} exceeds actor cap; using {APIFY_MAX_RESULTS_CAP}")
+    city = apify_city()
     run_input = {
-        "city": "Bangalore",
+        "city": city,
         "listingType": "rent",
         "bhk": BHK_TYPES,
         "minPrice": budget_min,
@@ -649,7 +656,7 @@ def fetch_all_via_apify(budget_min: int = 0, budget_max: int = 150000, max_pages
         "maxResults": max_results,
         "allowResidentialFallback": True,
     }
-    print(f"  Apify {APIFY_ACTOR}: up to {max_results} listings "
+    print(f"  Apify {APIFY_ACTOR}: {city}, up to {max_results} listings "
           f"(~${max_results * 0.002:.2f} if all charged)...")
     client = ApifyClient(token)
     run = client.actor(APIFY_ACTOR).call(run_input=run_input)

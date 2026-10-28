@@ -23,6 +23,9 @@ var QUALITY_POINT_SECTIONS = [
             { key: "sqftLarge", label: "Size ≥ 1,500 sqft" },
             { key: "sqftMid", label: "Size ≥ 1,200 sqft" },
             { key: "cupboards", label: "Cupboards ≥ 5" },
+            { key: "floor1", label: "Floor ≤ 1", hint: "Ground or 1st" },
+            { key: "floor3", label: "Floor ≤ 3", hint: "2nd or 3rd" },
+            { key: "floor4Plus", label: "Floor ≥ 4" },
         ],
     },
     {

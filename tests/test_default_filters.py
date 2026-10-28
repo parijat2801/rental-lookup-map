@@ -37,6 +37,8 @@ SLIDER_DEFAULTS = (
     ("filter-cost-max", "150000"),
     ("filter-deposit", "20"),
     ("filter-sqft", "500"),
+    ("filter-floor-min", "0"),
+    ("filter-floor-max", "40"),
     ("filter-photos", "0"),
     ("filter-score", "0"),
     ("filter-days", "90"),
@@ -78,6 +80,18 @@ def test_filters_persisted_to_local_storage():
     assert "function loadFilters()" in html
     assert "loadFilters();" in html
     assert "saveFilters();" in html
+
+
+def test_floor_range_slider_predicate():
+    html = load_template()
+    assert 'id="filter-floor-min"' in html
+    assert 'id="filter-floor-max"' in html
+    assert "sliders.floorMin" in html
+    assert "sliders.floorMax" in html
+    assert "d.floorKnown" in html
+    assert "d.floor < sliders.floorMin" in html
+    assert "d.floor > sliders.floorMax" in html
+    assert "onFloorInput" in html
 
 
 def test_must_have_predicates_present():

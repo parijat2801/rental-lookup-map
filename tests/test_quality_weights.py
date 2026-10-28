@@ -19,6 +19,12 @@ def test_quality_score_reads_quality_points():
     assert "s += p.goodFacing;" in html
     assert "s += p.gym;" in html
     assert "s += p.gated;" in html
+    assert "s += p.floor1;" in html
+    assert "s += p.floor3;" in html
+    assert "s += p.floor4Plus;" in html
+    assert "floor1: -5" in html
+    assert "floor3: 8" in html
+    assert "floor4Plus: 5" in html
 
 
 def test_settings_modal_wired():

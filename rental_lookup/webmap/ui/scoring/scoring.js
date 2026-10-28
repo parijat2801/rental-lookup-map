@@ -40,6 +40,10 @@ var DEFAULT_QUALITY_POINTS = {
     sqftLarge: 3,
     sqftMid: 2,
     cupboards: 5,
+    // Floor tiers (mutually exclusive).
+    floor1: -5,
+    floor3: 8,
+    floor4Plus: 5,
 };
 var QUALITY_POINTS_KEY = "rental_quality_points";
 var qualityPoints = Object.assign({}, DEFAULT_QUALITY_POINTS);
@@ -106,6 +110,11 @@ function qualityScore(d) {
     else if (d.sqft >= 1200) s += p.sqftMid;
     // if (d.isPetFriendly) s += 10;
     if (d.cupboards >= 5) s += p.cupboards;
+    if (d.floorKnown) {
+        if (d.floor <= 1) s += p.floor1;
+        else if (d.floor <= 3) s += p.floor3;
+        else s += p.floor4Plus;
+    }
     return s;
 }
 // Vibe: greenery near the listing. Distances are to neighbourhood-scale OSM parks /
