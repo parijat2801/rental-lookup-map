@@ -46,6 +46,9 @@
         animation: none;
     }
 }
+[data-motion="off"] .resync-progress-icon {
+    animation: none;
+}
 .resync-progress-label {
     min-width: 0;
     color: var(--text);

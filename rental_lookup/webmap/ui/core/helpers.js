@@ -64,10 +64,48 @@ function renderStaticIcons(root) {
 }
 renderStaticIcons();
 
-// GSAP drives the UI motion; without it (offline) or with reduced motion, things just appear.
-var MOTION =
-    !!window.gsap &&
-    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// GSAP drives the UI motion; without it (offline), OS reduced-motion, or a user
+// opt-out in Settings → Animation, things just appear.
+var MOTION_KEY = "rental_motion";
+var MOTION = false;
+
+function motionPreferenceEnabled() {
+    try {
+        return localStorage.getItem(MOTION_KEY) !== "0";
+    } catch (e) {
+        return true;
+    }
+}
+
+function refreshMotion() {
+    MOTION =
+        !!window.gsap &&
+        motionPreferenceEnabled() &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.documentElement.setAttribute(
+        "data-motion",
+        MOTION ? "on" : "off",
+    );
+}
+
+function setMotionEnabled(on) {
+    try {
+        localStorage.setItem(MOTION_KEY, on ? "1" : "0");
+    } catch (e) {}
+    refreshMotion();
+    if (typeof syncMotionUi === "function") syncMotionUi();
+}
+
+function syncMotionUi() {
+    var toggle = byId("motion-toggle");
+    if (toggle) toggle.checked = motionPreferenceEnabled();
+}
+
+refreshMotion();
+window
+    .matchMedia("(prefers-reduced-motion: reduce)")
+    .addEventListener("change", refreshMotion);
+
 function animateIn(el, from, duration) {
     if (MOTION)
         gsap.fromTo(el, Object.assign({ autoAlpha: 0 }, from), {

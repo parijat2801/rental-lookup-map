@@ -1,4 +1,4 @@
-// Theme: light / dark, remembered in localStorage (falls back to system preference).
+// Theme: light / dark / system, remembered in localStorage (system follows OS).
 var THEME_KEY = "rental_theme";
 
 function systemTheme() {
@@ -16,6 +16,10 @@ function storedTheme() {
     }
 }
 
+function themePreference() {
+    return storedTheme() || "system";
+}
+
 function currentTheme() {
     return (
         document.documentElement.getAttribute("data-theme") ||
@@ -24,14 +28,13 @@ function currentTheme() {
     );
 }
 
-function syncThemeToggle() {
-    var btn = byId("theme-toggle");
-    if (!btn) return;
-    var theme = currentTheme();
-    var next = theme === "dark" ? "light" : "dark";
-    btn.title = "Switch to " + next + " theme";
-    btn.setAttribute("aria-label", btn.title);
-    btn.innerHTML = icon(theme === "dark" ? "sun" : "moon");
+function syncThemeUi() {
+    var pref = themePreference();
+    document.querySelectorAll("[data-theme-choice]").forEach(function (btn) {
+        var on = btn.dataset.themeChoice === pref;
+        btn.classList.toggle("on", on);
+        btn.setAttribute("aria-checked", on ? "true" : "false");
+    });
 }
 
 function applyTheme(theme, persist) {
@@ -43,15 +46,22 @@ function applyTheme(theme, persist) {
             localStorage.setItem(THEME_KEY, theme);
         } catch (e) {}
     }
-    syncThemeToggle();
+    syncThemeUi();
     // Function decls are hoisted in the single page script, so also wait until
     // `map` has been assigned before touching the basemap / re-rendering.
     if (typeof map !== "undefined" && map) syncBasemap();
     if (prev && prev !== theme && typeof refreshMap === "function") refreshMap();
 }
 
-function toggleTheme() {
-    applyTheme(currentTheme() === "dark" ? "light" : "dark", true);
+function setThemePreference(pref) {
+    if (pref === "system") {
+        try {
+            localStorage.removeItem(THEME_KEY);
+        } catch (e) {}
+        applyTheme(systemTheme(), false);
+        return;
+    }
+    if (pref === "light" || pref === "dark") applyTheme(pref, true);
 }
 
 applyTheme(storedTheme() || systemTheme(), false);

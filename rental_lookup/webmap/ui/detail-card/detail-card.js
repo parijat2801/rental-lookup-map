@@ -229,30 +229,43 @@ function samePropertyHtml(d) {
         return x.propertyKey === d.propertyKey && x !== d;
     });
     if (!others.length) return "";
-    return (
-        '<div class="same-property"><div class="label">' +
+    var hint =
         others.length +
-        " more in this property</div>" +
-        others
-            .map(function (x) {
-                return (
-                    '<button class="same-property-row" data-url="' +
-                    escapeHtml(x.url) +
-                    '">' +
-                    "<span>" +
-                    bhkLabel(x) +
-                    " · " +
-                    x.sqft.toLocaleString() +
-                    " sqft · " +
-                    floorLabel(x) +
-                    (x.isDelisted ? " · Delisted" : "") +
-                    "</span><b>" +
-                    formatRupeesShort(x.totalCost) +
-                    "</b></button>"
-                );
-            })
-            .join("") +
-        "</div>"
+        " more listing" +
+        (others.length === 1 ? "" : "s");
+    var rows = others
+        .map(function (x) {
+            return (
+                '<button class="same-property-row" data-url="' +
+                escapeHtml(x.url) +
+                '">' +
+                "<span>" +
+                bhkLabel(x) +
+                " · " +
+                x.sqft.toLocaleString() +
+                " sqft · " +
+                floorLabel(x) +
+                (x.isDelisted ? " · Delisted" : "") +
+                "</span><b>" +
+                formatRupeesShort(x.totalCost) +
+                "</b></button>"
+            );
+        })
+        .join("");
+    return (
+        '<details class="card-fold same-property">' +
+        "<summary>" +
+        '<span class="fold-title">' +
+        icon("layers") +
+        "<span>Same property</span></span>" +
+        '<span class="fold-hint">' +
+        hint +
+        "</span>" +
+        icon("chevron-down").replace('class="icon"', 'class="icon chevron"') +
+        "</summary>" +
+        '<div class="fold-body">' +
+        rows +
+        "</div></details>"
     );
 }
 detailCard.addEventListener("click", function (e) {
@@ -263,7 +276,7 @@ detailCard.addEventListener("click", function (e) {
     });
     if (d) selectListing(d, {});
 });
-// Keep the card's vertical centre fixed when Vibe/Commute folds open or close.
+// Keep the card's vertical centre fixed when card folds open or close.
 var detailCardHeight = 0;
 function rememberDetailCardHeight() {
     detailCardHeight = detailCard.offsetHeight;

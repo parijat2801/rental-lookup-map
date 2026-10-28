@@ -224,11 +224,11 @@ function renderMarkers(listings, tiers, scoreName) {
         marker.on("mouseover", function (e) {
             if (!selectedListing) showDetailCard(e, d);
         });
+        // Hover previews only: a pinned selection stays until the map/list deselects it.
         marker.on("mouseout", function () {
-            if (!selectedListing || selectedListing.url !== d.url) {
-                detailCard.style.display = "none";
-                detailCard.style.pointerEvents = "none";
-            }
+            if (selectedListing) return;
+            detailCard.style.display = "none";
+            detailCard.style.pointerEvents = "none";
         });
         marker.on("click", function (e) {
             e.originalEvent.handledByMarker = true;

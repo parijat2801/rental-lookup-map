@@ -1,5 +1,5 @@
 // ===========================================================================
-// Settings modal: quality point weights + listing backup.
+// Settings modal: appearance, quality point weights, listing backup.
 // Quality edits apply live and are remembered in localStorage (see scoring.js).
 // ===========================================================================
 var QUALITY_POINT_SECTIONS = [
@@ -61,6 +61,16 @@ var QUALITY_POINT_SECTIONS = [
     },
 ];
 var SETTINGS_PANELS = {
+    appearance: {
+        title: "Appearance",
+        hint: "Colour theme for the map and sidebar.",
+        quality: false,
+    },
+    animation: {
+        title: "Animation",
+        hint: "Motion on the map, dialogs, and list interactions.",
+        quality: false,
+    },
     quality: {
         title: "Quality score",
         hint: "Points each trait adds (or subtracts). Economy ranking uses the same score per rupee.",
@@ -73,6 +83,11 @@ var SETTINGS_PANELS = {
     },
 };
 var activeSettingsPanel = "quality";
+var THEME_CHOICES = [
+    { id: "light", label: "Light", icon: "sun" },
+    { id: "dark", label: "Dark", icon: "moon" },
+    { id: "system", label: "System", icon: "monitor" },
+];
 
 function qualityRowsHtml(rows) {
     return rows
@@ -101,6 +116,43 @@ function qualityRowsHtml(rows) {
             );
         })
         .join("");
+}
+
+function appearancePanelHtml() {
+    return (
+        '<div class="theme-choice" role="radiogroup" aria-label="Colour theme">' +
+        THEME_CHOICES.map(function (choice) {
+            return (
+                '<button type="button" class="theme-choice-option" ' +
+                'role="radio" data-theme-choice="' +
+                choice.id +
+                '" aria-checked="false" ' +
+                'onclick="setThemePreference(\'' +
+                choice.id +
+                "')\">" +
+                '<span data-icon="' +
+                choice.icon +
+                '"></span>' +
+                "<span>" +
+                escapeHtml(choice.label) +
+                "</span></button>"
+            );
+        }).join("") +
+        "</div>"
+    );
+}
+
+function animationPanelHtml() {
+    return (
+        '<label class="settings-toggle-row" for="motion-toggle">' +
+        '<span class="settings-toggle-copy">' +
+        "<span>Enable animations</span>" +
+        '<span class="hint">Map pulses, dialogs, and other motion</span>' +
+        "</span>" +
+        '<input type="checkbox" id="motion-toggle" role="switch" ' +
+        'onchange="setMotionEnabled(this.checked)" />' +
+        "</label>"
+    );
 }
 
 function backupPanelHtml() {
@@ -188,9 +240,24 @@ function buildSettingsChrome() {
         '<div class="settings-nav-group">Data</div>' +
         '<button type="button" class="settings-nav-item" ' +
         'data-settings-panel="backup" onclick="showSettingsPanel(\'backup\')">' +
-        "Listings &amp; backup</button>";
+        "Listings &amp; backup</button>" +
+        '<div class="settings-nav-group">UI &amp; Display</div>' +
+        '<button type="button" class="settings-nav-item" ' +
+        'data-settings-panel="appearance" ' +
+        'onclick="showSettingsPanel(\'appearance\')">Appearance</button>' +
+        '<button type="button" class="settings-nav-item" ' +
+        'data-settings-panel="animation" ' +
+        'onclick="showSettingsPanel(\'animation\')">Animation</button>';
 
     panels.innerHTML =
+        '<div class="settings-panel" id="settings-panel-appearance" ' +
+        'data-panel="appearance" hidden>' +
+        appearancePanelHtml() +
+        "</div>" +
+        '<div class="settings-panel" id="settings-panel-animation" ' +
+        'data-panel="animation" hidden>' +
+        animationPanelHtml() +
+        "</div>" +
         '<div class="settings-panel" id="settings-panel-quality" ' +
         'data-panel="quality" hidden>' +
         qualityPanelHtml() +
@@ -201,6 +268,8 @@ function buildSettingsChrome() {
         "</div>";
 
     renderStaticIcons(byId("settings-overlay"));
+    syncThemeUi();
+    syncMotionUi();
 }
 
 function syncQualityWeightsUi() {

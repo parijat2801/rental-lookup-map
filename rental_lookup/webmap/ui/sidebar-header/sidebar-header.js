@@ -1,1 +1,1 @@
-// Sidebar header actions (theme / shortcuts / settings) are wired in markup.
+// Sidebar header actions (shortcuts / settings) are wired in markup.
