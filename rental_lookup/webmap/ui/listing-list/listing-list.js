@@ -75,9 +75,6 @@ function renderSidebarList() {
                 commuteLineHtml(d) +
                 greeneryLineHtml(d) +
                 '<div class="tags">' +
-                (d.source !== "nb" && SOURCE_LABELS[d.source]
-                    ? '<span class="tag">' + SOURCE_LABELS[d.source] + "</span>"
-                    : "") +
                 (d.isPetFriendly
                     ? '<span class="tag positive">' +
                       icon("paw-print") +

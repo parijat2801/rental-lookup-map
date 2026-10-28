@@ -10,10 +10,10 @@ var RANK_MODES = {
             );
         },
     },
-    value: {
+    economy: {
         score: "value",
-        label: "value",
-        sortedBy: "value for money",
+        label: "economy",
+        sortedBy: "economy",
         sort: function (a, b) {
             return (
                 b.scores.value - a.scores.value ||

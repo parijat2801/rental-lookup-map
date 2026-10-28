@@ -13,6 +13,14 @@ var RESYNC_STEP_LABELS = {
     6: "Fetching ratings",
     7: "Rebuilding map",
 };
+// Stack under the map legend so expanding the legend pushes this chip down.
+var resyncProgressControl = L.control({ position: "topright" });
+resyncProgressControl.onAdd = function () {
+    var el = byId("resync-progress");
+    L.DomEvent.disableClickPropagation(el);
+    return el;
+};
+resyncProgressControl.addTo(map);
 function toggleResyncConfirm(show) {
     setOverlayOpen(byId("resync-overlay"), show);
     if (show) byId("resync-confirm-button").focus();
@@ -28,10 +36,13 @@ function updateResyncProgress(status) {
     var card = byId("resync-progress");
     var running = !!status.running;
     card.hidden = !running;
-    byId("resync-button").disabled = running;
-    byId("resync-label").textContent = running
-        ? "Resyncing listings…"
-        : "Resync listings";
+    var resyncButton = byId("resync-button"),
+        resyncLabel = byId("resync-label");
+    if (resyncButton) resyncButton.disabled = running;
+    if (resyncLabel)
+        resyncLabel.textContent = running
+            ? "Resyncing listings…"
+            : "Resync listings";
     if (!running) return;
 
     var step = Math.max(0, Math.min(status.step || 0, status.totalSteps || 7));
@@ -68,9 +79,6 @@ function pollResync() {
         });
 }
 function startResync() {
-    document.querySelectorAll(".popover").forEach(function (p) {
-        p.hidden = true;
-    });
     fetch("/resync", { method: "POST" })
         .then(function (r) {
             if (r.status !== 202 && r.status !== 409) throw new Error();

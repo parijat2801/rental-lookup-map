@@ -1,12 +1,7 @@
 /* --- Resync progress chip ---------------------------------------------------- */
+/* Mounted as a topright Leaflet control so it sits under the legend and shifts
+   when the legend expands. */
 .resync-progress {
-    /* Sit under the top-right map legend (leaflet margin 10px + legend ~34px + gap). */
-    position: fixed;
-    top: 54px;
-    right: 10px;
-    left: auto;
-    bottom: auto;
-    z-index: 2100;
     display: grid;
     gap: 8px;
     width: max-content;
@@ -17,6 +12,7 @@
     border-radius: 10px;
     box-shadow: var(--shadow);
     pointer-events: none;
+    clear: both;
 }
 .resync-progress[hidden] {
     display: none;

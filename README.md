@@ -39,9 +39,10 @@ publishes it to GitHub Pages.
 
 - One marker per listing, sized by area and coloured by the active ranking.
 - Four rankings: **Quality** (light, age, amenities, platform scores, ...),
-  **Value** (quality per rupee), **Vibe** (parks, woods/tree cover and lakes
+  **Economy** (quality per rupee), **Vibe** (parks, woods/tree cover and lakes
   nearby), and **Commute**, driven by your
-  [places of interest](#places-of-interest).
+  [places of interest](#places-of-interest). Quality point weights are
+  customisable in Settings so the ranking matches what you care about.
 - Sliders for total cost (rent + maintenance), area, photo count, deposit
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
   balcony, pool, pet-friendly, branded builder, source and more.
@@ -82,7 +83,7 @@ rental-map-dev           # serve it at http://localhost:8765/map.html, rebuildin
 
 Serving the map through the bundled server (rather than opening the file) also
 backs up stars/dismissals to the gitignored `data/cache/stars_and_dismissals.json`
-(browser `localStorage` is the source of truth). It enables **••• → Resync
+(browser `localStorage` is the source of truth). It enables **Settings → Resync
 listings**, which runs `scripts/refresh_map.sh` in the background (output in
 `output/resync.log`) and reloads the page when done.
 
@@ -144,9 +145,10 @@ Notes:
 | --- | --- | --- |
 | `CARTO_BASEMAPS_KEY` | map builder | CARTO light basemap. Without it the map uses Esri's keyless light-grey tiles. Can also be set in a local `.env` (see `.env.example`). |
 
-Search areas, budgets and scoring weights are constants at the top of the
-relevant modules (`sources/nobroker.py`, `scoring.py`, `location.py`) and in the
-scoring functions of `webmap/ui/scoring/scoring.js`.
+Search areas and budgets are constants at the top of the relevant modules
+(`sources/nobroker.py`, `scoring.py`, `location.py`). Map **quality** point
+weights default in `webmap/ui/scoring/scoring.js` and can be personalised in the
+UI (Settings → Quality scoring); your edits are kept in the browser.
 
 ### Experimental: Facebook groups
 

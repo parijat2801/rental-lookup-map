@@ -3,9 +3,6 @@ var openOverlay = null;
 function setOverlayOpen(overlay, show) {
     openOverlay = show ? overlay : null;
     if (show) {
-        document.querySelectorAll(".popover").forEach(function (p) {
-            p.hidden = true;
-        });
         overlay.hidden = false;
         animateIn(overlay, {}, 0.18);
         if (MOTION)

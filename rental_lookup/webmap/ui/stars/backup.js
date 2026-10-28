@@ -1,4 +1,4 @@
-// Saved-state actions from the header menu: backup download/restore and copying starred listings.
+// Saved-state actions from Settings: backup download/restore and copying starred listings.
 function downloadStarsBackup() {
     var state = {
         starred: starredAt,

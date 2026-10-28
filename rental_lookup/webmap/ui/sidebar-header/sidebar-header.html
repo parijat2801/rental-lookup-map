@@ -32,30 +32,12 @@
         </button>
         <button
             class="icon-button"
-            title="More"
-            aria-label="More"
-            onclick="toggleMenu('saved-popover', event)"
+            id="settings-button"
+            title="Settings"
+            aria-label="Settings"
+            onclick="toggleSettings(true)"
         >
-            <span data-icon="ellipsis"></span>
+            <span data-icon="settings"></span>
         </button>
-        <div class="popover" id="saved-popover" hidden>
-            <button
-                class="menu-item"
-                id="resync-button"
-                onclick="toggleResyncConfirm(true)"
-            >
-                <span data-icon="refresh-cw"></span
-                ><span id="resync-label">Resync listings</span>
-            </button>
-            <button class="menu-item" onclick="copyStarredToClipboard()">
-                <span data-icon="copy"></span>Copy starred listings
-            </button>
-            <button class="menu-item" onclick="downloadStarsBackup()">
-                <span data-icon="download"></span>Download backup
-            </button>
-            <button class="menu-item" onclick="restoreStarsBackup()">
-                <span data-icon="upload"></span>Restore from backup
-            </button>
-        </div>
     </div>
 </header>
