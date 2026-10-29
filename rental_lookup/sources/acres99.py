@@ -832,7 +832,8 @@ def fetch_all(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50
     """Fetch result pages until one comes back empty; returns SRP-shaped dicts.
 
     Prefers Apify when `APIFY_TOKEN` is set; otherwise JSON API (optional `cookie`),
-    then Chrome SSR.
+    then Chrome SSR. On GitHub Actions, Chrome SSR is skipped (no headed browser);
+    set `APIFY_TOKEN` there instead.
     """
     raw_listings: list[dict] = []
     if apify_token():
@@ -848,11 +849,17 @@ def fetch_all(budget_min: int = 0, budget_max: int = 150000, max_pages: int = 50
             pages_dir=pages_dir, cookie=cookie,
         )
     if not raw_listings:
-        print("  JSON API empty/blocked; falling back to Chrome SSR...")
-        raw_listings = fetch_all_via_browser(
-            budget_min=budget_min, budget_max=budget_max, max_pages=max_pages,
-            pages_dir=pages_dir, cookie=cookie,
-        )
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            print(
+                "  JSON API empty/blocked; skipping Chrome SSR on GitHub Actions "
+                "(headed browser is not available). Set APIFY_TOKEN to fetch via Apify."
+            )
+        else:
+            print("  JSON API empty/blocked; falling back to Chrome SSR...")
+            raw_listings = fetch_all_via_browser(
+                budget_min=budget_min, budget_max=budget_max, max_pages=max_pages,
+                pages_dir=pages_dir, cookie=cookie,
+            )
     pages_fetched = len(list(pages_dir.glob("acres99_page*.json"))) if pages_dir and pages_dir.exists() else 0
     print(f"  99acres total: {len(raw_listings)} raw listings across {pages_fetched or '?'} pages")
     return raw_listings

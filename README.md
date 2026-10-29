@@ -175,7 +175,11 @@ fetches fresh listings, builds the map, and pushes `index.html` to the
 To use it on your fork:
 
 1. Create a `gh-pages` branch and enable GitHub Pages for it.
-2. Optionally add a `CARTO_BASEMAPS_KEY` repository secret.
+2. Enable the workflow if it is disabled: `gh workflow enable "Update blr-rental-map"`.
+3. Add an `APIFY_TOKEN` repository secret so the 99acres step can use Apify
+   (Chrome SSR is skipped on Actions). Without it the step soft-fails and the
+   map still builds from the other sources. Cap is `APIFY_MAX_RESULTS=200` in CI.
+4. Optionally add a `CARTO_BASEMAPS_KEY` repository secret.
 
 ## Project layout
 

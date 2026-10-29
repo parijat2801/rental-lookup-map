@@ -31,7 +31,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: python3 -m pip install -e '.[dev]'
+        run: python3 -m pip install -e '.[dev,acres99-apify]'
 
       - name: Run tests
         run: python3 -m pytest -q
@@ -43,6 +43,7 @@ jobs:
             data/cache
             data/raw_nb
             data/raw_nb_prev
+            data/raw_9a
             data/raw_pa
           key: rental-data-${{ github.run_number }}
           restore-keys: |
@@ -69,6 +70,10 @@ jobs:
           python3 -m rental_lookup.sources magicbricks
 
       - name: Fetch 99acres listings
+        continue-on-error: true
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          APIFY_MAX_RESULTS: '200'
         run: |
           rm -rf data/raw_9a
           python3 -m rental_lookup.sources 99acres
