@@ -1,4 +1,4 @@
-name: Update blr-rental-map
+name: update blr-rental-map
 
 on:
   push:
