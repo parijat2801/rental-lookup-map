@@ -57,7 +57,8 @@ function stationLegMinutes(km) {
 // --- Metro station graph -------------------------------------------------------
 var metroStations = []; // {name, line, lat, lng}
 var metroMinutesBetween = [],
-    metroTransfersBetween = []; // all-pairs, indexed by station
+    metroTransfersBetween = [],
+    metroPreviousBetween = []; // all-pairs, indexed by station
 (function buildMetroGraph() {
     var edges = [];
     function link(a, b, minutes, transfers) {
@@ -142,6 +143,7 @@ var metroMinutesBetween = [],
     for (var source = 0; source < n; source++) {
         var minutes = new Array(n).fill(Infinity),
             transfers = new Array(n).fill(0),
+            previous = new Array(n).fill(-1),
             done = new Array(n).fill(false);
         minutes[source] = 0;
         for (;;) {
@@ -159,13 +161,21 @@ var metroMinutesBetween = [],
                 if (minutes[u] + edge[1] < minutes[edge[0]]) {
                     minutes[edge[0]] = minutes[u] + edge[1];
                     transfers[edge[0]] = transfers[u] + edge[2];
+                    previous[edge[0]] = u;
                 }
             });
         }
         metroMinutesBetween.push(minutes);
         metroTransfersBetween.push(transfers);
+        metroPreviousBetween.push(previous);
     }
 })();
+// Station indices along the fastest ride from one station to another, both ends included.
+function metroStops(from, to) {
+    var stops = [to];
+    while (stops[0] !== from) stops.unshift(metroPreviousBetween[from][stops[0]]);
+    return stops;
+}
 // The few stations quickest to reach from (lat, lng): [{index, minutes}].
 function nearestStations(lat, lng) {
     return metroStations
@@ -198,6 +208,8 @@ function metroTrip(fromStations, toStations) {
             if (!best || minutes < best.minutes) {
                 best = {
                     minutes: minutes,
+                    fromIndex: a.index,
+                    toIndex: b.index,
                     fromStation: metroStations[a.index].name,
                     toStation: metroStations[b.index].name,
                     transfers: metroTransfersBetween[a.index][b.index],

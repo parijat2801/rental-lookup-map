@@ -276,4 +276,5 @@ function renderMarkers(listings, tiers, scoreName) {
     layoutFannedGroups();
     justStarredUrls.clear();
     highlightSelectedMarker(selectedMarker, selectedListing);
+    syncCommutePaths();
 }

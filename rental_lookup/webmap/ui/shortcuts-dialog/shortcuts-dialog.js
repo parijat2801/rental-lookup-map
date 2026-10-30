@@ -41,7 +41,7 @@ document.addEventListener("keydown", function (e) {
         toggleShortcuts(true);
         return;
     }
-    var isDismissKey = key === "x" || key === "d",
+    var isDismissKey = (key === "Backspace" && !typing) || key === "d",
         isStarKey = key === "c" || key === "s";
 
     if (boxSelection.length > 0 && !selectedListing) {

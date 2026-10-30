@@ -242,6 +242,17 @@
     fill: var(--bg);
     stroke: none;
 }
+/* Routes from each place of interest to the selected listing; metro rides keep their line colour. */
+.commute-path-drive {
+    stroke: var(--muted);
+    stroke-opacity: 0.6;
+}
+.commute-path-leg {
+    stroke: var(--muted);
+}
+.commute-path-casing {
+    stroke: var(--bg);
+}
 /* Cursor is the top-left corner (flips near edges). */
 .area-context-menu {
     position: fixed;

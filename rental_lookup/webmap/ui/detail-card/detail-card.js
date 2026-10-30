@@ -310,16 +310,49 @@ detailCard.addEventListener(
     true,
 );
 // Card position for an anchor at viewport (x, y): beside it, on screen and clear of the sidebar.
-function cardPosition(anchorX, anchorY) {
-    var x = anchorX + 20,
-        y = anchorY - 120;
-    if (x + 350 > window.innerWidth) x = anchorX - 360;
-    x = Math.max(x, sidebarOffset() + 10);
-    y = Math.max(
-        10,
-        Math.min(y, window.innerHeight - detailCard.offsetHeight - 10),
-    );
-    return { left: x, top: y };
+// With commute paths drawn, the spot beside the anchor that covers the least of them wins.
+function cardPosition(anchorX, anchorY, zoom) {
+    var height = detailCard.offsetHeight,
+        right = anchorX + 20,
+        left = anchorX - 360,
+        fitsRight = right + 350 <= window.innerWidth;
+    var spots = [
+        [fitsRight ? right : left, anchorY - 120],
+        [fitsRight ? left : right, anchorY - 120],
+        [right, anchorY + 20],
+        [left, anchorY + 20],
+        [right, anchorY - height - 20],
+        [left, anchorY - height - 20],
+    ]
+        .filter(function (spot, i) {
+            return i === 0 || spot[0] + 350 <= window.innerWidth;
+        })
+        .map(function (spot) {
+            return {
+                left: Math.max(spot[0], sidebarOffset() + 10),
+                top: Math.max(
+                    10,
+                    Math.min(spot[1], window.innerHeight - height - 10),
+                ),
+            };
+        });
+    if (!hasCommutePaths()) return spots[0];
+    var best = spots[0],
+        bestCovered = Infinity;
+    spots.forEach(function (spot) {
+        var covered = commutePathCoverage(
+            spot.left - anchorX,
+            spot.top - anchorY,
+            350,
+            height,
+            zoom,
+        );
+        if (covered < bestCovered) {
+            best = spot;
+            bestCovered = covered;
+        }
+    });
+    return best;
 }
 function placeDetailCard(anchorX, anchorY) {
     var pos = cardPosition(anchorX, anchorY);
@@ -359,10 +392,28 @@ function followSelectedListing() {
     if (point.inView) placeDetailCard(point.x, point.y);
 }
 map.on("move zoomend resize", followSelectedListing);
+// Slides a pinned card to its best spot, e.g. once commute paths are drawn around it.
+function resettleSelectedCard() {
+    if (!pinnedCardShown()) return;
+    var point = markerScreenPoint(selectedListing);
+    if (!point.inView) return;
+    var pos = cardPosition(point.x, point.y);
+    if (MOTION)
+        gsap.to(detailCard, {
+            left: pos.left,
+            top: pos.top,
+            duration: 0.3,
+            ease: "power2.out",
+        });
+    else {
+        detailCard.style.left = pos.left + "px";
+        detailCard.style.top = pos.top + "px";
+    }
+}
 map.on("zoomanim", function (e) {
     if (!pinnedCardShown()) return;
     var point = markerScreenPoint(selectedListing, e.center, e.zoom),
-        pos = cardPosition(point.x, point.y);
+        pos = cardPosition(point.x, point.y, e.zoom);
     detailCard.style.visibility = point.inView ? "" : "hidden";
     if (MOTION)
         gsap.to(detailCard, {
