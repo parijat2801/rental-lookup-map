@@ -15,20 +15,12 @@ publishes it to GitHub Pages.
 
 ### Why this exists
 
-- **Fragmented Inventory**: Inventory is split across NoBroker, MagicBricks, 99acres and Property Angel —
-  each portal has listings the others don't, so you miss flats if you only use one.
-- **Cross-portal dupes**: The same flat is often re-listed under different titles, photos and prices;
-  without cross-portal de-dupe you waste time chasing duplicates.
-- **Total cost vs Rent**: "Rent" alone is misleading: maintenance, deposit multiples and total monthly
-  cost matter, but portals bury or omit them from filters.
-- **Quality vs value** vs location trade-offs aren't ranked; portals sort by
-  "relevance" or newest, which pushes sponsored and stale inventory.
-- **Shortlist chaos**: Shortlists live in WhatsApp threads, screenshots and open tabs — there's no
-  shared star/dismiss list that survives closing the browser.
-- **Privacy**: Everything you star becomes a profile for the portal; a local-first tool keeps
-  your shortlist on your machine instead of on theirs.
-- **Tab fatigue**: Comparing options means tabbing forever — this project puts one map, real
-  rankings and your shortlist in a single place so you can decide.
+- **Fragmented inventory**: each portal has listings the others don't.
+- **Cross-portal dupes**: the same flat is re-listed with different titles, photos and prices.
+- **Total cost vs rent**: maintenance and deposit multiples matter, but portals bury them.
+- **No real ranking**: portals sort by "relevance" or newest, pushing sponsored and stale inventory.
+- **Shortlist chaos**: shortlists live in WhatsApp threads, screenshots and open tabs.
+- **Privacy**: a local-first tool keeps your shortlist on your machine, not the portal's.
 
 > **Heads-up:** the scrapers call undocumented internal APIs. They work today and
 > may break without notice when a portal changes. See [Disclaimer](#disclaimer).
@@ -42,23 +34,22 @@ publishes it to GitHub Pages.
   **Economy** (quality per rupee), **Vibe** (parks, woods/tree cover and lakes
   nearby), and **Commute**, driven by your
   [places of interest](#places-of-interest). Quality point weights are
-  customisable in Settings so the ranking matches what you care about.
+  customisable in Settings.
 - Sliders for total cost (rent + maintenance), area, photo count, deposit
   multiple, minimum score and listing age; chips for BHK, lift, parking, facing,
   balcony, pool, pet-friendly, branded builder, source and more.
 - Star / dismiss listings with undo, bulk-select with shift + drag, and keyboard
-  shortcuts (`C` star, `X` dismiss, `Enter` open, `←`/`→` photos, `Ctrl+Z` undo,
-  `Esc` close); press `?` for the full list.
+  shortcuts (`C` star, `Backspace` dismiss, `Enter` open, `←`/`→` photos,
+  `Ctrl+Z` undo, `Esc` close); press `?` for the full list.
 - Hover cards with photos, costs, amenities and an optional AI photo checklist.
-  A selected listing's card stays pinned to its marker as the map pans, and the
-  marker pulses so it's easy to spot.
-- Floating sidebar over the map (drag its edge to resize, double-click to reset)
-  that can be collapsed; both settings are remembered per browser.
-- "Show my location" button that puts a live blue dot on the map (needs browser
-  location permission).
-- Namma Metro line overlay; listings delisted since the last run shown in grey;
-  listings sharing a suspicious coordinate shown dashed.
-- Subtle animations via GSAP, switched off when the OS asks for reduced motion.
+  A selected listing's card stays pinned to its marker, which pulses.
+- On the Commute ranking, the selected listing shows an animated route from each
+  place of interest, and the card moves clear of the routes.
+- Resizable, collapsible floating sidebar (double-click its edge to reset).
+- "Show my location" live blue dot (needs browser location permission).
+- Namma Metro line overlay; delisted listings in grey; listings sharing a
+  suspicious coordinate dashed.
+- Subtle GSAP animations, off when the OS asks for reduced motion.
 
 **CLI ranking** (`output/results.csv`): NoBroker listings within a budget, scored
 0–100+ on pet-friendliness, space, light, freshness, amenities and distance to the
@@ -81,55 +72,33 @@ scripts/refresh_map.sh               # fetch, enrich and build output/map.html (
 python3 -m rental_lookup.webmap.dev  # http://localhost:8765/map.html, rebuilds on changes
 ```
 
-Prefer `python3` (macOS often has no `python` command). With the venv
-activated, `python3` is the venv interpreter; without activation use
-`.venv/bin/python3`. After `python3 -m pip install -e '.[dev]'`, short aliases
-like `rental-map-dev` are also installed into `.venv/bin/` — they only work when
-that directory is on your `PATH` (i.e. the venv is activated).
+Use `python3` (macOS often has no `python`), or `.venv/bin/python3` without
+activating the venv. The install also adds short aliases (`rental-map-dev`, ...)
+to `.venv/bin/`.
 
-Serving the map through the bundled server (rather than opening the file) also
-backs up stars/dismissals to the gitignored `data/cache/stars_and_dismissals.json`
-(browser `localStorage` is the source of truth). It enables **Settings → Resync
-listings**, which runs `scripts/refresh_map.sh` in the background (output in
-`output/resync.log`) and reloads the page when done.
+Serving the map through the bundled server (rather than opening the file) backs
+up stars/dismissals to disk (see [Stars and dismissals](#stars-and-dismissals))
+and enables **Settings → Resync listings**, which runs `scripts/refresh_map.sh`
+in the background (log in `output/resync.log`) and reloads the page when done.
 
-### Build / run commands
-
-| Command | Optional alias | What it does |
-| --- | --- | --- |
-| `python3 -m rental_lookup.sources SOURCE` | `rental-map-fetch SOURCE` | Fetch listings from `nobroker`, `magicbricks`, `99acres`, `propertyangel` or `all` into `data/`. |
-| `python3 -m rental_lookup` | `rental-map-rank` | Score NoBroker listings into `output/results.csv`. |
-| `python3 -m rental_lookup.webmap.builder` | `rental-map-build` | Build `output/map.html` once. |
-| `python3 -m rental_lookup.webmap.server [PORT]` | `rental-map-serve [PORT]` | Serve the map without the watcher. |
-| `python3 -m rental_lookup.webmap.dev [PORT]` | `rental-map-dev [PORT]` | Build the map, serve it, and watch for changes: edits to the code, the template or the data files trigger a rebuild, and the open page reloads itself. A failed build keeps serving the previous map. |
-
-`rental-map-fetch` / `python3 -m rental_lookup.sources` and
-`rental-map-rank` / `python3 -m rental_lookup` take `--cookie COOKIE` and `--help`.
-
-In Cursor / VS Code, the same commands are set up as tasks in `.vscode/`:
-**Run Build Task** (`Cmd/Ctrl+Shift+B`) starts the dev watcher, **Run Test Task**
-runs pytest, and the Run and Debug panel can launch the dev server under the
-debugger.
+In Cursor / VS Code, `.vscode/` tasks start the dev watcher (**Run Build Task**,
+`Cmd/Ctrl+Shift+B`), run pytest (**Run Test Task**), and debug the dev server.
 
 ## Usage
 
-Each step can also be run on its own, from the repository root:
+Run from the repository root:
 
-| Step | Command |
-| --- | --- |
-| Fetch NoBroker listings | `python3 -m rental_lookup.sources nobroker [--cookie COOKIE]` |
-| Fetch MagicBricks listings | `python3 -m rental_lookup.sources magicbricks` |
-| Fetch 99acres listings | `python3 -m rental_lookup.sources 99acres [--cookie COOKIE]` |
-| Fetch Property Angel listings | `python3 -m rental_lookup.sources propertyangel` |
-| Fetch from every source | `python3 -m rental_lookup.sources all [--cookie COOKIE]` |
-| Rank NoBroker listings into `output/results.csv` | `python3 -m rental_lookup [--cookie COOKIE]` |
-| Fetch detail pages for the top N NoBroker listings | `python3 -m rental_lookup.enrichment.listing_details [N]` |
-| Look up NoBroker transit / lifestyle ratings missing from search results (~1 s per listing, cached) | `python3 -m rental_lookup.enrichment.listing_details scores [LIMIT]` |
-| Build `output/map.html` from saved data | `python3 -m rental_lookup.webmap.builder` |
-| Serve the map with star auto-save | `python3 -m rental_lookup.webmap.server [PORT]` |
-| Serve, watch and rebuild on changes | `python3 -m rental_lookup.webmap.dev [PORT]` |
-| Regenerate the metro overlay | `python3 scripts/fetch_metro_lines.py` |
-| Merge star export files | `python3 -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` |
+| Step | Command | Alias |
+| --- | --- | --- |
+| Fetch listings (`nobroker`, `magicbricks`, `99acres`, `propertyangel` or `all`) | `python3 -m rental_lookup.sources SOURCE [--cookie COOKIE]` | `rental-map-fetch` |
+| Rank NoBroker listings into `output/results.csv` | `python3 -m rental_lookup [--cookie COOKIE]` | `rental-map-rank` |
+| Fetch detail pages for the top N NoBroker listings | `python3 -m rental_lookup.enrichment.listing_details [N]` | |
+| Look up missing NoBroker transit / lifestyle ratings (~1 s per listing, cached) | `python3 -m rental_lookup.enrichment.listing_details scores [LIMIT]` | |
+| Build `output/map.html` once | `python3 -m rental_lookup.webmap.builder` | `rental-map-build` |
+| Serve the map with star auto-save | `python3 -m rental_lookup.webmap.server [PORT]` | `rental-map-serve` |
+| Build, serve and rebuild + reload on code, template or data changes (a failed build keeps the previous map) | `python3 -m rental_lookup.webmap.dev [PORT]` | `rental-map-dev` |
+| Regenerate the metro overlay | `python3 scripts/fetch_metro_lines.py` | |
+| Merge star export files | `python3 -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` | |
 
 Notes:
 
@@ -137,23 +106,22 @@ Notes:
   `scripts/refresh_map.sh` does) to force a fresh fetch. The previous run is moved
   to `data/raw_nb_prev/` so the map can show delisted listings.
 - `COOKIE` is an optional browser `Cookie` header for NoBroker / 99acres, only
-  needed if requests start getting blocked (99acres often needs one behind Akamai).
+  needed if requests get blocked (99acres often needs one behind Akamai).
 - For 99acres, set `APIFY_TOKEN` in `.env` to use the Apify scraper instead of the
-  JSON API / Chrome SSR path (`python3 -m pip install 'rental-lookup[acres99-apify]'`). Optional
-  `APIFY_MAX_RESULTS` caps how many listings to buy (~$0.002 each).
+  JSON API / Chrome SSR path (`python3 -m pip install 'rental-lookup[acres99-apify]'`).
+  Optional `APIFY_MAX_RESULTS` caps how many listings to buy (~$0.002 each).
 - The map builder works with whatever data is present; every input except the
   template is optional.
 
 ### Configuration
 
-| Variable | Used by | Purpose |
-| --- | --- | --- |
-| `CARTO_BASEMAPS_KEY` | map builder | CARTO light basemap. Without it the map uses Esri's keyless light-grey tiles. Can also be set in a local `.env` (see `.env.example`). |
+Set `CARTO_BASEMAPS_KEY` (env or `.env`, see `.env.example`) for the CARTO light
+basemap; without it the map uses Esri's keyless light-grey tiles.
 
-Search areas and budgets are constants at the top of the relevant modules
-(`sources/nobroker.py`, `scoring.py`, `location.py`). Map **quality** point
-weights default in `webmap/ui/scoring/scoring.js` and can be personalised in the
-UI (Settings → Quality scoring); your edits are kept in the browser.
+Search areas and budgets are constants at the top of `sources/nobroker.py`,
+`scoring.py` and `location.py`. Map quality weights default in
+`webmap/ui/scoring/scoring.js`; edits made in Settings → Quality scoring are kept
+in the browser.
 
 ### Experimental: Facebook groups
 
@@ -176,18 +144,16 @@ To use it on your fork:
 
 1. Create a `gh-pages` branch and enable GitHub Pages for it.
 2. Enable the workflow if it is disabled: `gh workflow enable "Update blr-rental-map"`.
-3. Add an `APIFY_TOKEN` repository secret so the 99acres step can use Apify
-   (Chrome SSR is skipped on Actions). Without it the step soft-fails and the
-   map still builds from the other sources. Cap is `APIFY_MAX_RESULTS=200` in CI.
+3. Add an `APIFY_TOKEN` repository secret for 99acres (Chrome SSR is skipped on
+   Actions; capped at `APIFY_MAX_RESULTS=200`). Without it the step soft-fails
+   and the map builds from the other sources.
 4. Optionally add a `CARTO_BASEMAPS_KEY` repository secret.
 
 ## Project layout
 
 ```
 sources → data/ → enrichment → webmap builder → output/map.html
-```
 
-```
 rental_lookup/
   sources/         scrapers (nobroker, magicbricks, acres99, propertyangel)
   enrichment/      per-listing extras (detail pages, scores)
@@ -209,43 +175,28 @@ output/            map.html, results.csv (gitignored)
 
 ## Stars and dismissals
 
-Stars are personal and stay on your machine. The browser's `localStorage` is the
-source of truth; when you use the dev / serve commands above, changes are
-also backed up to the gitignored `data/cache/stars_and_dismissals.json`. Neither
-the repo nor GitHub Pages publishes them.
+Stars live in the browser's `localStorage` and are never published. The serve /
+dev commands also back them up to the gitignored
+`data/cache/stars_and_dismissals.json`, and the "Saved state" panel
+exports/imports a backup to move them between browsers.
 
 Format: `{"starred": {url: timestamp}, "dismissed": {url: timestamp}}`. A
-negative timestamp is an un-star / un-dismiss; when copies are merged the most
-recent action per URL wins. The "Saved state" panel can export/import a backup
-file to move stars between browsers.
+negative timestamp undoes the action; on merge, the latest action per URL wins.
 
 ## Places of interest
 
-On the **Commute** tab, add the places you want to get to easily (office, gym,
-friends): search for a place, paste a full Google Maps URL or `lat, lng`, or
-right-click anywhere on the map. Short `maps.app.goo.gl` links can't be read from
-the page; open them and paste the full URL instead. Each listing then gets two
-commute times per place:
+On the **Commute** tab, add places (office, gym, friends) by search, a full
+Google Maps URL, `lat, lng`, or right-clicking the map. Each listing gets two
+times per place:
 
-- **Drive**: road time from the public [OSRM](https://project-osrm.org) server,
-  multiplied by `DRIVE_TRAFFIC_FACTOR` (1.6) because OSRM assumes empty roads.
-  The page routes about one batch of 100 locations per second, listings in view
-  first, and caches the results in `localStorage`. Until a listing is routed, a
-  straight-line estimate is shown with a leading `~`.
-- **Metro**: computed in the page from the Namma Metro stations in
-  `data/metro_lines.json`: walk (up to 1.5 km) or take an auto to one of the
-  three nearest stations, wait, ride (including changes between lines), then walk
-  or take an auto to the place. Lines that open after the last
-  `python3 scripts/fetch_metro_lines.py` run aren't counted.
+- **Drive**: [OSRM](https://project-osrm.org) road time × 1.6 for traffic,
+  cached in the browser; a straight-line estimate (`~`) shows until routed.
+- **Metro**: walk or auto to a nearby station, ride (with line changes), then
+  walk or auto on, using `data/metro_lines.json`.
 
-Ranking uses the faster of drive and metro for each place; both times are shown.
-Places combine with AND: a listing has to be easy to reach from every place, so its
-commute score comes from its longest commute (100 at 10 minutes or less, falling
-to 0 at 60 minutes). Ties go to the shorter average commute, then the lower cost.
-Places and drive times are kept per browser.
-All speeds and penalties are constants at the top of
-`rental_lookup/webmap/ui/commute/metro.js`. `COMMUTE_BLEND_WEIGHT` in
-`ui/scoring/score-tiers.js` (currently 0) is where commute can later be blended into the other rankings.
+The faster mode counts. A listing's commute score comes from its longest
+commute across all places (100 at ≤10 minutes, 0 at 60). Tuning constants are
+at the top of `ui/commute/metro.js`.
 
 ## Development
 
