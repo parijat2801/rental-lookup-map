@@ -1,0 +1,211 @@
+// ===========================================================================
+// Map, metro overlay, legend and marker jitter
+// ===========================================================================
+var map = L.map("map", { zoomControl: false, keyboard: false }).setView(
+    [12.9716, 77.6],
+    12,
+);
+L.control.zoom({ position: "bottomright" }).addTo(map);
+var ESRI_SERVICES = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+var CARTO_ATTR =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+var ESRI_LIGHT_ATTR =
+    'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+function cartoBasemap(style) {
+    return L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/rastertiles/" +
+            style +
+            "/{z}/{x}/{y}{r}.png?key=" +
+            encodeURIComponent(CARTO_KEY),
+        { maxZoom: 19, attribution: CARTO_ATTR },
+    );
+}
+function esriCanvasBasemap(name) {
+    var group = L.layerGroup();
+    L.tileLayer(ESRI_SERVICES + "Canvas/" + name + "/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 19,
+        maxNativeZoom: 16,
+        attribution: ESRI_LIGHT_ATTR,
+    }).addTo(group);
+    L.tileLayer(
+        ESRI_SERVICES +
+            "Canvas/" +
+            name.replace("_Base", "_Reference") +
+            "/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, maxNativeZoom: 16 },
+    ).addTo(group);
+    return group;
+}
+// CARTO serves "API key required" watermark tiles without a key, so fall back to Esri's keyless canvas.
+var lightLayer = CARTO_KEY
+    ? L.layerGroup([cartoBasemap("light_all")])
+    : esriCanvasBasemap("World_Light_Gray_Base");
+var darkLayer = CARTO_KEY
+    ? L.layerGroup([cartoBasemap("dark_all")])
+    : esriCanvasBasemap("World_Dark_Gray_Base");
+var satelliteLayer = L.layerGroup([
+    L.tileLayer(ESRI_SERVICES + "World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 19,
+        maxNativeZoom: 18,
+        attribution:
+            "Imagery &copy; Esri &mdash; Esri, Maxar, Earthstar Geographics",
+    }),
+    L.tileLayer(
+        ESRI_SERVICES +
+            "Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+        { maxZoom: 19, maxNativeZoom: 18 },
+    ),
+]);
+function themeBasemap() {
+    return currentTheme() === "dark" ? darkLayer : lightLayer;
+}
+function syncBasemap() {
+    // theme.js may call this while the single page script is still evaluating
+    // (function decls are hoisted; `map` / layers are not assigned yet).
+    if (!map || !lightLayer || !darkLayer || !satelliteLayer) return;
+    var mapEl = map.getContainer();
+    mapEl.classList.toggle("satellite", map.hasLayer(satelliteLayer));
+    if (map.hasLayer(satelliteLayer)) return;
+    var want = themeBasemap();
+    [lightLayer, darkLayer].forEach(function (layer) {
+        if (layer !== want && map.hasLayer(layer)) map.removeLayer(layer);
+    });
+    if (!map.hasLayer(want)) want.addTo(map);
+}
+syncBasemap();
+
+map.createPane("metro");
+map.getPane("metro").style.zIndex = 640;
+var metroLayer = L.layerGroup();
+var METRO_LINE_NAMES = {
+    purple: "Purple Line",
+    green: "Green Line",
+    yellow: "Yellow Line",
+};
+Object.keys(METRO_LINES).forEach(function (lineId) {
+    var line = METRO_LINES[lineId];
+    L.polyline(line.path, {
+        pane: "metro",
+        color: line.color,
+        weight: 3,
+        opacity: 0.8,
+        interactive: false,
+    }).addTo(metroLayer);
+    line.stations.forEach(function (station) {
+        L.circleMarker([station.lat, station.lng], {
+            pane: "metro",
+            radius: 3,
+            color: line.color,
+            weight: 1.5,
+            fillColor: "#fff",
+            fillOpacity: 1,
+        })
+            .bindTooltip(station.name + " \u00b7 " + METRO_LINE_NAMES[lineId], {
+                direction: "top",
+            })
+            .addTo(metroLayer);
+    });
+});
+metroLayer.addTo(map);
+
+// Live traffic roads as a transparent overlay above the basemap, below markers.
+map.createPane("traffic");
+map.getPane("traffic").style.zIndex = 250;
+map.getPane("traffic").style.pointerEvents = "none";
+var trafficLayer = L.tileLayer(
+    // apistyle hides the hybrid road outlines so only coloured traffic segments show.
+    "https://{s}.google.com/vt?lyrs=h@159000000,traffic|seconds_into_week:-1&style=3&apistyle=s.t:3|s.e:g|p.v:off&x={x}&y={y}&z={z}",
+    {
+        maxZoom: 20,
+        pane: "traffic",
+        subdomains: ["mt0", "mt1", "mt2", "mt3"],
+        attribution: "Traffic &copy; Google",
+    },
+);
+
+// Button under the zoom controls opening a panel of map layers (satellite, metro, traffic).
+var layersControl = L.control({ position: "bottomright" });
+layersControl.onAdd = function () {
+    var container = L.DomUtil.create("div", "layers-control");
+    var bar = L.DomUtil.create("div", "leaflet-bar", container);
+    var button = L.DomUtil.create("a", "", bar);
+    button.href = "#";
+    button.title = "Map layers";
+    button.innerHTML = icon("layers");
+    var panel = L.DomUtil.create("div", "layers-panel", container);
+    panel.hidden = true;
+    var options = [
+        {
+            label: "Satellite",
+            iconName: "satellite",
+            isOn: function () {
+                return map.hasLayer(satelliteLayer);
+            },
+            toggle: function () {
+                if (map.hasLayer(satelliteLayer)) {
+                    map.removeLayer(satelliteLayer);
+                } else {
+                    map.removeLayer(lightLayer);
+                    map.removeLayer(darkLayer);
+                    satelliteLayer.addTo(map);
+                }
+                syncBasemap();
+            },
+        },
+        {
+            label: "Metro lines",
+            iconName: "train-front",
+            isOn: function () {
+                return map.hasLayer(metroLayer);
+            },
+            toggle: function () {
+                if (map.hasLayer(metroLayer)) map.removeLayer(metroLayer);
+                else metroLayer.addTo(map);
+            },
+        },
+        {
+            label: "Traffic",
+            iconName: "car-front",
+            isOn: function () {
+                return map.hasLayer(trafficLayer);
+            },
+            toggle: function () {
+                if (map.hasLayer(trafficLayer)) map.removeLayer(trafficLayer);
+                else trafficLayer.addTo(map);
+            },
+        },
+    ];
+    options.forEach(function (option) {
+        var row = L.DomUtil.create("button", "layer-option", panel);
+        row.type = "button";
+        row.innerHTML =
+            icon(option.iconName) +
+            "<span>" +
+            option.label +
+            "</span>" +
+            icon("check").replace('class="', 'class="check ');
+        row.classList.toggle("on", option.isOn());
+        row.onclick = function () {
+            option.toggle();
+            row.classList.toggle("on", option.isOn());
+        };
+    });
+    function setOpen(open) {
+        panel.hidden = !open;
+        button.classList.toggle("on", open);
+    }
+    button.onclick = function (e) {
+        e.preventDefault();
+        setOpen(panel.hidden);
+    };
+    document.addEventListener("click", function (e) {
+        if (!container.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") setOpen(false);
+    });
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.disableScrollPropagation(container);
+    return container;
+};
+layersControl.addTo(map);

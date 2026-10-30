@@ -1,0 +1,58 @@
+<div
+    class="overlay"
+    id="settings-overlay"
+    hidden
+    onclick="if (event.target === this) toggleSettings(false);"
+>
+    <div
+        class="dialog settings-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+    >
+        <div class="dialog-header">
+            <div>
+                <h2 id="settings-title">Settings</h2>
+                <p class="dialog-sub">
+                    Scoring weights, data tools, and display preferences.
+                </p>
+            </div>
+            <button
+                class="icon-button"
+                aria-label="Close"
+                onclick="toggleSettings(false)"
+            >
+                <span data-icon="x"></span>
+            </button>
+        </div>
+        <div class="settings-layout">
+            <nav
+                class="settings-nav"
+                id="settings-nav"
+                aria-label="Settings sections"
+            ></nav>
+            <div class="settings-main">
+                <div class="settings-panel-head">
+                    <div>
+                        <h3 id="settings-panel-title"></h3>
+                        <p class="settings-hint" id="settings-panel-hint"></p>
+                    </div>
+                    <button
+                        class="settings-reset"
+                        id="quality-weights-reset"
+                        onclick="onResetQualityPoints()"
+                        hidden
+                    >
+                        Reset
+                    </button>
+                </div>
+                <div class="settings-panels" id="settings-panels"></div>
+            </div>
+        </div>
+        <div class="dialog-actions settings-footer">
+            <button class="primary-button" onclick="toggleSettings(false)">
+                Done
+            </button>
+        </div>
+    </div>
+</div>

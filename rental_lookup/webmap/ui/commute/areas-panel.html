@@ -1,0 +1,58 @@
+<section
+    class="areas-panel"
+    id="areas-panel"
+    aria-label="Places of interest"
+    hidden
+>
+    <button
+        type="button"
+        class="areas-head"
+        id="areas-toggle"
+        onclick="toggleAreasPanel()"
+        aria-expanded="true"
+        aria-controls="areas-body"
+    >
+        <span class="areas-head-left">
+            <span class="label">Places of interest</span>
+            <span class="areas-count" id="areas-count" hidden></span>
+        </span>
+        <span class="areas-head-right">
+            <span class="areas-status" id="areas-status"></span>
+            <span class="chevron" data-icon="chevron-down"></span>
+        </span>
+    </button>
+    <div class="areas-body" id="areas-body">
+        <div class="area-bar">
+            <div class="area-list" id="area-list"></div>
+            <button
+                type="button"
+                class="area-add"
+                id="area-add"
+                onclick="openAreaSearch()"
+                title="Search a place, paste a Google Maps link, or right-click the map"
+            >
+                <span data-icon="map-pin-plus"></span
+                ><span id="area-add-label">Add place</span>
+            </button>
+        </div>
+        <div class="area-search" id="area-search" hidden>
+            <label class="search-box"
+                ><span data-icon="map-pin-plus"></span
+                ><input
+                    type="search"
+                    id="area-input"
+                    placeholder="Search a place or paste a Google Maps link"
+                    aria-label="Add a place of interest"
+                    autocomplete="off"
+                    oninput="onAreaInput()"
+                    onkeydown="onAreaKeydown(event)"
+            /></label>
+            <div
+                class="area-suggestions"
+                id="area-suggestions"
+                role="listbox"
+                hidden
+            ></div>
+        </div>
+    </div>
+</section>

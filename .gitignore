@@ -1,19 +1,34 @@
-data/raw/
-data/raw_mb/
-data/raw_prev/
-data/raw_v1/
-data/raw_v2/
-data/sample_photos/
-output/*
-!output/map_template.html
+# Python / tooling
 __pycache__/
 *.egg-info/
+build/
+dist/
 .venv/
+.pytest_cache/
+.DS_Store
+.env
 
-# Cache - track these for GitHub Actions
-!data/cache/
+# Scraped data (re-fetched every run)
+data/raw_nb/
+data/raw_nb_prev/
+data/raw_mb/
+data/raw_9a/
+data/raw_pa/
+data/raw_mygate/
+data/raw_v1/
+data/raw_v2/
+data/raw_fb/
+data/sample_photos/
+
+# HTTP caches: osmnx writes ./cache/, scripts/fetch_metro_lines.py writes op_cache_*.json
+/cache/
+op_cache_*.json
+
+# Build output (map.html, results.csv); the source template lives in rental_lookup/webmap/
+output/
+
+# data/cache: tracked JSON state used by CI; generated GeoPackages are not
 data/cache/*.gpkg
-!data/cache/photo_ratings.json
-!data/cache/stars_and_dismissals.json
-!data/cache/fake_location_ids.json
-!data/cache/detail_enrichment.json
+data/cache/*.tmp
+# Personal stars/dismissals (localStorage + optional local backup via the map server)
+data/cache/stars_and_dismissals.json
