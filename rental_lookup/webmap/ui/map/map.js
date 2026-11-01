@@ -1,7 +1,12 @@
 // ===========================================================================
 // Map, metro overlay, legend and marker jitter
 // ===========================================================================
-var map = L.map("map", { zoomControl: false, keyboard: false }).setView(
+// Without an explicit cap Leaflet uses the highest layer maxZoom, so an overlay could zoom past the basemaps.
+var map = L.map("map", {
+    zoomControl: false,
+    keyboard: false,
+    maxZoom: 19,
+}).setView(
     [12.9716, 77.6],
     12,
 );
@@ -116,7 +121,7 @@ var trafficLayer = L.tileLayer(
     // apistyle hides the hybrid road outlines so only coloured traffic segments show.
     "https://{s}.google.com/vt?lyrs=h@159000000,traffic|seconds_into_week:-1&style=3&apistyle=s.t:3|s.e:g|p.v:off&x={x}&y={y}&z={z}",
     {
-        maxZoom: 20,
+        maxZoom: 19,
         pane: "traffic",
         subdomains: ["mt0", "mt1", "mt2", "mt3"],
         attribution: "Traffic &copy; Google",
