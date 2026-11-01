@@ -3,6 +3,9 @@
 // from === Step N === banners in output/resync.log via /resync_status.
 var resyncPollTimer = null;
 var RESYNC_POLL_MS = 1500;
+// Static hosts (GitHub Pages, file://) have no /resync_status, so the Resync
+// button stays hidden unless the local server answers.
+var resyncAvailable = false;
 var RESYNC_STEP_LABELS = {
     0: "Starting…",
     1: "Fetching NoBroker",
@@ -102,9 +105,13 @@ function startResync() {
 }
 fetch("/resync_status")
     .then(function (r) {
+        if (!r.ok) throw new Error();
         return r.json();
     })
     .then(function (status) {
+        resyncAvailable = true;
+        var resyncButton = byId("resync-button");
+        if (resyncButton) resyncButton.hidden = false;
         if (status.running) {
             updateResyncProgress(status);
             resyncPollTimer = setTimeout(pollResync, RESYNC_POLL_MS);

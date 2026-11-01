@@ -162,6 +162,7 @@ function backupPanelHtml() {
     return (
         '<div class="settings-actions">' +
         '<button class="settings-action" id="resync-button" ' +
+        (resyncAvailable ? "" : "hidden ") +
         'onclick="toggleSettings(false); toggleResyncConfirm(true)">' +
         '<span data-icon="refresh-cw"></span>' +
         '<span class="settings-action-copy">' +

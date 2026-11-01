@@ -293,6 +293,9 @@
     text-align: left;
     color: var(--text);
 }
+.settings-action[hidden] {
+    display: none;
+}
 .settings-action:hover {
     background: var(--hover);
 }
