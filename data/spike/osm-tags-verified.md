@@ -9,8 +9,7 @@ Metro stations are tagged with ALL of these:
 - `network=Namma Metro`
 - `operator=Bangalore Metro Rail Corporation Limited`
 
-**Best query strategy**: Use `network=Namma Metro` to get ONLY metro (not Indian Railways).
-Alternatively: `station=subway` within Bangalore bbox.
+**Best query strategy**: Use `network=Namma Metro` to get ONLY metro (not Indian Railways). Alternatively: `station=subway` within Bangalore bbox.
 
 ## Indian Railways Stations (to exclude)
 Regular rail stations have:
