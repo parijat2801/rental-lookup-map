@@ -40,6 +40,9 @@ var DEFAULT_QUALITY_POINTS = {
     sqftLarge: 3,
     sqftMid: 2,
     cupboards: 5,
+    // Furnishing tiers (mutually exclusive); unfurnished / unknown add nothing.
+    furnishedFull: 20,
+    furnishedSemi: 10,
     // Floor tiers (mutually exclusive).
     floor1: -5,
     floor3: 8,
@@ -110,6 +113,8 @@ function qualityScore(d) {
     else if (d.sqft >= 1200) s += p.sqftMid;
     // if (d.isPetFriendly) s += 10;
     if (d.cupboards >= 5) s += p.cupboards;
+    if (d.furnishing === "FULL") s += p.furnishedFull;
+    else if (d.furnishing === "SEMI") s += p.furnishedSemi;
     if (d.floorKnown) {
         if (d.floor <= 1) s += p.floor1;
         else if (d.floor <= 3) s += p.floor3;
