@@ -11,11 +11,11 @@ Returns JSON directly! No auth/cookies needed.
 |-------|---------|-------|
 | `editSearch` | `Y` | Required |
 | `category` | `R` | R=Rent |
-| `propertyType` | `10002,10003,10021,10022` | 10002=Apartment, 10003=Builder Floor |
-| `bedrooms` | `2,3` | |
+| `propertyType` | `10002,10003,10021,10022` | 10002=Apartment, 10003=Builder Floor, 10021=Penthouse, 10022=Studio |
+| `bedrooms` | `1,2,3` | |
 | `cityName` | `Bangalore` | |
-| `budgetMin` | `30000` | |
-| `budgetMax` | `70000` | |
+| `budgetMin` | `0` | what `sources/magicbricks.py` sends; the map filters narrow it |
+| `budgetMax` | `150000` | |
 | `page` | `1` | |
 
 ## Response

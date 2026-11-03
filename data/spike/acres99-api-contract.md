@@ -1,9 +1,9 @@
 # 99acres API Contract
 
 ## Fetch order
-1. **Apify** (`themineworks/99acres-scraper`) when `APIFY_TOKEN` is set — `python3 -m pip install 'rental-lookup[acres99-apify]'`. Items are adapted to the SRP shape below before saving under `data/raw_9a/`.
+1. **Apify** (`themineworks/99acres-scraper`) when `APIFY_TOKEN` is set — `python3 -m pip install -e '.[acres99-apify]'`. Optional `APIFY_MAX_RESULTS` (default `max_pages * 30`, hard cap 2000) and `APIFY_CITY` (default `Bangalore East`). Items are adapted to the SRP shape below before saving under `data/raw_9a/`.
 2. **JSON API** (optional browser `Cookie`) — often 401/403 behind Akamai.
-3. **Chrome SSR** via Playwright reading `window.__initialData__.srp` — `python3 -m pip install 'rental-lookup[acres99]'`.
+3. **Chrome SSR** via Playwright reading `window.__initialData__.srp` — `python3 -m pip install -e '.[acres99]'`. Skipped on GitHub Actions (no headed browser); set `APIFY_TOKEN` there instead.
 
 ## Endpoint (legacy JSON API)
 ```

@@ -1,7 +1,7 @@
 # MyGate Homes Spike
 
 ## Goal
-Determine if MyGate Homes (MyGate's broker-free rent/sale marketplace for gated communities) can be added as a listing source alongside NoBroker and MagicBricks.
+Determine if MyGate Homes (MyGate's broker-free rent/sale marketplace for gated communities) can be added as a listing source alongside NoBroker, MagicBricks, 99acres and Property Angel.
 
 ## Findings (Oct 2026)
 
@@ -36,7 +36,7 @@ Capture what the Android/iOS app calls when browsing Homes:
 Caveats: tied to one personal account, token refresh/expiry to handle, likely against MyGate's terms, and could get the account flagged. Not suitable for the GitHub Actions daily refresh without storing a personal token as a secret.
 
 ## What we'd need from the response
-Same as NoBroker / MagicBricks:
+Same as the existing sources:
 - rent, deposit, maintenance, sqft, bhk
 - lat, lng (or society name precise enough to geocode — every listing is in a known gated society, so society-level coordinates would be accurate)
 - society name, locality

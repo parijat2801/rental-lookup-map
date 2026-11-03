@@ -2,6 +2,8 @@
 
 Find a flat in Bangalore without tabbing between rental portals.
 
+![blr-rental-map: listings ranked by quality on an interactive map of Bangalore, with the sidebar list and a selected listing's detail card](docs/images/map.png)
+
 blr-rental-map scrapes **NoBroker**, **MagicBricks**, **99acres** and **Property Angel**, de-duplicates same-flat re-listings across them (society + floor + rent/amenities — not merely the same building), scores each one, and puts everything on a single interactive map with real filters, rankings and a shared star/dismiss list. It also produces a ranked CSV scored against distances to parks, lakes and metro stations from OpenStreetMap.
 
 Everything runs locally: listing data and your stars live in plain JSON files in this repo. An optional GitHub Actions workflow refreshes the map daily and publishes it to GitHub Pages.
@@ -23,20 +25,20 @@ Everything runs locally: listing data and your stars live in plain JSON files in
 
 - One marker per listing, sized by area and coloured by the active ranking.
 - Four rankings: **Quality** (light, age, amenities, platform scores, ...), **Economy** (quality per rupee), **Vibe** (parks, woods/tree cover and lakes nearby), and **Commute**, driven by your [places of interest](#places-of-interest). Quality point weights are customisable in Settings.
-- Sliders for total cost (rent + maintenance), area, photo count, deposit multiple, minimum score and listing age; chips for BHK, lift, parking, facing, balcony, pool, pet-friendly, branded builder, source and more.
+- Sliders for total cost range (rent + maintenance), deposit multiple, minimum area, floor range, minimum photos, minimum score and listing age; chips for BHK, furnishing, lift, parking, facing, balcony, pool, gym, pet-friendly, branded builder, source and more. Filters persist between visits.
 - Star / dismiss listings with undo, bulk-select with shift + drag, and keyboard shortcuts (`C` star, `Backspace` dismiss, `Enter` open, `←`/`→` photos, `Ctrl+Z` undo, `Esc` close); press `?` for the full list.
-- Hover cards with photos, costs, amenities and an optional AI photo checklist. A selected listing's card stays pinned to its marker, which pulses.
+- Hover cards with photos, costs and amenities. A selected listing's card stays pinned to its marker, which pulses.
 - On the Commute ranking, the selected listing shows an animated route from each place of interest, and the card moves clear of the routes.
 - Resizable, collapsible floating sidebar (double-click its edge to reset).
 - "Show my location" live blue dot (needs browser location permission).
 - Namma Metro line overlay; delisted listings in grey; listings sharing a suspicious coordinate dashed.
-- Subtle GSAP animations, off when the OS asks for reduced motion.
+- Light / dark / system theme, and subtle GSAP animations that can be switched off in Settings (and are off when the OS asks for reduced motion).
 
-**CLI ranking** (`output/results.csv`): NoBroker listings within a budget, scored 0–100+ on pet-friendliness, space, light, freshness, amenities and distance to the nearest park, woods/tree cover, lake and metro station.
+**CLI ranking** (`output/results.csv`): NoBroker listings (excluding independent houses) renting for ₹30,000–70,000 with at least 700 sq ft, scored 0–100+ on pet-friendliness, space, floor, light, freshness, amenities, parking, water supply, NoBroker's own ratings, negotiability and distance to the nearest park, woods/tree cover, lake and metro station.
 
 ## Requirements
 
-- Python 3.9+ (CI uses 3.13)
+- Python 3.9+ (CI tests 3.9 and 3.13)
 - Network access to NoBroker, MagicBricks, 99acres, Property Angel and the OpenStreetMap Overpass API
 
 ## Quick start
@@ -71,18 +73,22 @@ Run from the repository root:
 | Serve the map with star auto-save | `python3 -m rental_lookup.webmap.server [PORT]` | `rental-map-serve` |
 | Build, serve and rebuild + reload on code, template or data changes (a failed build keeps the previous map) | `python3 -m rental_lookup.webmap.dev [PORT]` | `rental-map-dev` |
 | Regenerate the metro overlay | `python3 scripts/fetch_metro_lines.py` | |
+| Regenerate the traffic signals used for commute delays | `python3 scripts/fetch_traffic_signals.py` | |
 | Merge star export files | `python3 -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` | |
 
 Notes:
 
 - NoBroker pages already saved under `data/raw_nb/` are reused; empty that folder (as `scripts/refresh_map.sh` does) to force a fresh fetch. The previous run is moved to `data/raw_nb_prev/` so the map can show delisted listings.
+- Property Angel details under `data/raw_pa/` are kept between runs and only new properties are fetched (its API allows 100 requests per 15 minutes), so a full catalogue can take a few runs to fill in.
 - `COOKIE` is an optional browser `Cookie` header for NoBroker / 99acres, only needed if requests get blocked (99acres often needs one behind Akamai).
-- For 99acres, set `APIFY_TOKEN` in `.env` to use the Apify scraper instead of the JSON API / Chrome SSR path (`python3 -m pip install 'rental-lookup[acres99-apify]'`). Optional `APIFY_MAX_RESULTS` caps how many listings to buy (~$0.002 each).
+- 99acres is fetched through Apify when `APIFY_TOKEN` is set in `.env` (`python3 -m pip install -e '.[acres99-apify]'`), otherwise through its JSON API, falling back to Chrome SSR via Playwright (`python3 -m pip install -e '.[acres99]'`). Optional `APIFY_MAX_RESULTS` caps how many listings to buy (~$0.002 each, max 2000) and `APIFY_CITY` picks the 99acres zone (default `Bangalore East`).
 - The map builder works with whatever data is present; every input except the template is optional.
 
 ### Configuration
 
 Set `CARTO_BASEMAPS_KEY` (env or `.env`, see `.env.example`) for the CARTO light basemap; without it the map uses Esri's keyless light-grey tiles.
+
+Set `MAPPLS_KEY` the same way for [Mappls](https://about.mappls.com/api/) drive times with live traffic (see [Places of interest](#places-of-interest)). The key is embedded in the page, so restrict it to your map's domains in the Mappls console.
 
 Search areas and budgets are constants at the top of `sources/nobroker.py`, `scoring.py` and `location.py`. Map quality weights default in `webmap/ui/scoring/scoring.js`; edits made in Settings → Quality scoring are kept in the browser.
 
@@ -104,7 +110,7 @@ To use it on your fork:
 1. Create a `gh-pages` branch and enable GitHub Pages for it.
 2. Enable the workflow if it is disabled: `gh workflow enable "Update blr-rental-map"`.
 3. Add an `APIFY_TOKEN` repository secret for 99acres (Chrome SSR is skipped on Actions; capped at `APIFY_MAX_RESULTS=200`). Without it the step soft-fails and the map builds from the other sources.
-4. Optionally add a `CARTO_BASEMAPS_KEY` repository secret.
+4. Optionally add `CARTO_BASEMAPS_KEY` and `MAPPLS_KEY` repository secrets.
 
 ## Project layout
 
@@ -112,7 +118,7 @@ To use it on your fork:
 sources → data/ → enrichment → webmap builder → output/map.html
 
 rental_lookup/
-  sources/         scrapers (nobroker, magicbricks, acres99, propertyangel)
+  sources/         scrapers (nobroker, magicbricks, acres99, propertyangel; facebook is experimental)
   enrichment/      per-listing extras (detail pages, scores)
   webmap/
     builder.py     data/ + ui/ → output/map.html
@@ -124,15 +130,18 @@ rental_lookup/
   paths.py         all on-disk locations
 data/
   raw*/            saved API pages (gitignored)
-  cache/           first-seen, detail caches (tracked); stars file is gitignored
-scripts/           refresh_map.sh, fetch_metro_lines.py
+  cache/           first-seen, detail caches (tracked); stars file and OSM GeoPackages are gitignored
+  metro_lines.json Namma Metro overlay (from scripts/fetch_metro_lines.py)
+  spike/           API contract notes and sample responses per source
+docs/spikes/       research notes on sources (MagicBricks, Housing.com, MyGate)
+scripts/           refresh_map.sh, fetch_metro_lines.py, fetch_traffic_signals.py
 tests/             pytest
-output/            map.html, results.csv (gitignored)
+output/            map.html, results.csv, resync.log (gitignored)
 ```
 
 ## Stars and dismissals
 
-Stars live in the browser's `localStorage` and are never published. The serve / dev commands also back them up to the gitignored `data/cache/stars_and_dismissals.json`, and the "Saved state" panel exports/imports a backup to move them between browsers.
+Stars live in the browser's `localStorage` and are never published. The serve / dev commands also back them up to the gitignored `data/cache/stars_and_dismissals.json`, and **Settings → Listings & backup** exports/imports a backup to move them between browsers.
 
 Format: `{"starred": {url: timestamp}, "dismissed": {url: timestamp}}`. A negative timestamp undoes the action; on merge, the latest action per URL wins.
 
@@ -140,7 +149,7 @@ Format: `{"starred": {url: timestamp}, "dismissed": {url: timestamp}}`. A negati
 
 On the **Commute** tab, add places (office, gym, friends) by search, a full Google Maps URL, `lat, lng`, or right-clicking the map. Each listing gets two times per place:
 
-- **Drive**: [OSRM](https://project-osrm.org) road time × 1.6 for traffic, cached in the browser; a straight-line estimate (`~`) shows until routed.
+- **Drive**: with `MAPPLS_KEY` set, Mappls' drive time under live traffic (which already includes queues at turns and signals), routed once per listing and place and cached in the browser, so it reflects the traffic when first routed; route while traffic is typical rather than late at night. Without the key: [OSRM](https://project-osrm.org) road time × 1.6 for traffic, cached in the browser; a straight-line estimate (`~`) shows until routed. Each turn and traffic signal on the route (signals from `data/traffic_signals.json`) then adds a delay set by Google's typical weekday 10am traffic on the road leading into it (so scores don't change with the time of day; read once and cached in the browser): a right turn adds 10 s in free flow and 90 s when jammed, a signal 20 s to 2 min, and a left turn into free-flowing traffic adds nothing.
 - **Metro**: walk or auto to a nearby station, ride (with line changes), then walk or auto on, using `data/metro_lines.json`.
 
 The faster mode counts. A listing's commute score comes from its longest commute across all places (100 at ≤10 minutes, 0 at 60). Tuning constants are at the top of `ui/commute/metro.js`.
@@ -152,7 +161,7 @@ python3 -m pip install -e '.[dev]'
 python3 -m pytest
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and how to add a new source.
+Pull requests run the suite on Python 3.9 and 3.13 via [`.github/workflows/tests.yml`](.github/workflows/tests.yml). See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and how to add a new source.
 
 ## Disclaimer
 
