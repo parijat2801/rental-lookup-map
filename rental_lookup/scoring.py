@@ -1,6 +1,6 @@
 """Hard filters and a 0-100+ suitability score for the CLI ranking (results.csv).
 
-The interactive map has its own (client-side) scoring in webmap/template.html.
+The interactive map has its own (client-side) scoring in webmap/ui/scoring/scoring.js.
 """
 from __future__ import annotations
 

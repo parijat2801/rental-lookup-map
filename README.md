@@ -73,7 +73,6 @@ Run from the repository root:
 | Serve the map with star auto-save | `python3 -m rental_lookup.webmap.server [PORT]` | `rental-map-serve` |
 | Build, serve and rebuild + reload on code, template or data changes (a failed build keeps the previous map) | `python3 -m rental_lookup.webmap.dev [PORT]` | `rental-map-dev` |
 | Regenerate the metro overlay | `python3 scripts/fetch_metro_lines.py` | |
-| Regenerate the traffic signals used for commute delays | `python3 scripts/fetch_traffic_signals.py` | |
 | Merge star export files | `python3 -m rental_lookup.stars OUTPUT INPUT [INPUT ...]` | |
 
 Notes:
@@ -87,9 +86,6 @@ Notes:
 ### Configuration
 
 Set `CARTO_BASEMAPS_KEY` (env or `.env`, see `.env.example`) for the CARTO light basemap; without it the map uses Esri's keyless light-grey tiles.
-
-Set `MAPPLS_KEY` the same way for [Mappls](https://about.mappls.com/api/) drive times with live traffic (see [Places of interest](#places-of-interest)). The key is embedded in the page, so restrict it to your map's domains in the Mappls console.
-
 Search areas and budgets are constants at the top of `sources/nobroker.py`, `scoring.py` and `location.py`. Map quality weights default in `webmap/ui/scoring/scoring.js`; edits made in Settings → Quality scoring are kept in the browser.
 
 ### Experimental: Facebook groups
@@ -110,7 +106,7 @@ To use it on your fork:
 1. Create a `gh-pages` branch and enable GitHub Pages for it.
 2. Enable the workflow if it is disabled: `gh workflow enable "Update blr-rental-map"`.
 3. Add an `APIFY_TOKEN` repository secret for 99acres (Chrome SSR is skipped on Actions; capped at `APIFY_MAX_RESULTS=200`). Without it the step soft-fails and the map builds from the other sources.
-4. Optionally add `CARTO_BASEMAPS_KEY` and `MAPPLS_KEY` repository secrets.
+4. Optionally add a `CARTO_BASEMAPS_KEY` repository secret.
 
 ## Project layout
 
@@ -134,7 +130,7 @@ data/
   metro_lines.json Namma Metro overlay (from scripts/fetch_metro_lines.py)
   spike/           API contract notes and sample responses per source
 docs/spikes/       research notes on sources (MagicBricks, Housing.com, MyGate)
-scripts/           refresh_map.sh, fetch_metro_lines.py, fetch_traffic_signals.py
+scripts/           refresh_map.sh, fetch_metro_lines.py
 tests/             pytest
 output/            map.html, results.csv, resync.log (gitignored)
 ```
@@ -149,7 +145,7 @@ Format: `{"starred": {url: timestamp}, "dismissed": {url: timestamp}}`. A negati
 
 On the **Commute** tab, add places (office, gym, friends) by search, a full Google Maps URL, `lat, lng`, or right-clicking the map. Each listing gets two times per place:
 
-- **Drive**: with `MAPPLS_KEY` set, Mappls' drive time under live traffic (which already includes queues at turns and signals), routed once per listing and place and cached in the browser, so it reflects the traffic when first routed; route while traffic is typical rather than late at night. Without the key: [OSRM](https://project-osrm.org) road time × 1.6 for traffic, cached in the browser; a straight-line estimate (`~`) shows until routed. Each turn and traffic signal on the route (signals from `data/traffic_signals.json`) then adds a delay set by Google's typical weekday 10am traffic on the road leading into it (so scores don't change with the time of day; read once and cached in the browser): a right turn adds 10 s in free flow and 90 s when jammed, a signal 20 s to 2 min, and a left turn into free-flowing traffic adds nothing.
+- **Drive**: [OSRM](https://project-osrm.org) road time × 1.6 for traffic, routed once per listing and place and cached in the browser; a straight-line estimate (`~`) shows until routed.
 - **Metro**: walk or auto to a nearby station, ride (with line changes), then walk or auto on, using `data/metro_lines.json`.
 
 The faster mode counts. A listing's commute score comes from its longest commute across all places (100 at ≤10 minutes, 0 at 60). Tuning constants are at the top of `ui/commute/metro.js`.

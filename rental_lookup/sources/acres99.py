@@ -634,7 +634,7 @@ def fetch_all_via_apify(budget_min: int = 0, budget_max: int = 150000, max_pages
     except ImportError as e:
         raise SystemExit(
             "APIFY_TOKEN is set but apify-client is not installed:\n"
-            "  pip install 'rental-lookup[acres99-apify]'\n"
+            "  pip install -e '.[acres99-apify]'\n"
             "Then re-run: rental-map-fetch 99acres"
         ) from e
 

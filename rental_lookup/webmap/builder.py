@@ -6,7 +6,7 @@ Inputs (all optional except the template):
   data/raw_mb/*.json     MagicBricks pages
   data/raw_9a/*.json     99acres pages
   data/raw_pa/*.json     Property Angel listings (one detail payload each)
-  data/cache/*.json      stars/dismissals, first-seen dates, photo ratings, fake-location ids,
+  data/cache/*.json      stars/dismissals, first-seen dates, fake-location ids,
                          listing details, NoBroker ratings missing from search results;
                          also OSM GeoPackages used for Vibe (park/lake/woods) distances
   data/metro_lines.json  Namma Metro overlay (regenerate with scripts/fetch_metro_lines.py)

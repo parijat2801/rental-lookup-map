@@ -1,7 +1,7 @@
 [project]
 name = "rental-lookup"
 version = "0.1.0"
-description = "Scrape, score and map Bangalore rental listings (NoBroker + MagicBricks)."
+description = "Scrape, score and map Bangalore rental listings (NoBroker, MagicBricks, 99acres + Property Angel)."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
