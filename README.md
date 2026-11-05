@@ -29,8 +29,6 @@ Everything runs locally: listing data and your stars live in plain JSON files in
 - Star / dismiss listings with undo, bulk-select with shift + drag, and keyboard shortcuts (`C` star, `Backspace` dismiss, `Enter` open, `←`/`→` photos, `Ctrl+Z` undo, `Esc` close); press `?` for the full list.
 - Hover cards with photos, costs and amenities. A selected listing's card stays pinned to its marker, which pulses.
 - On the Commute ranking, the selected listing shows an animated route from each place of interest, and the card moves clear of the routes.
-- Resizable, collapsible floating sidebar (double-click its edge to reset).
-- "Show my location" live blue dot (needs browser location permission).
 - Namma Metro line overlay; delisted listings in grey; listings sharing a suspicious coordinate dashed.
 - Light / dark / system theme, and subtle GSAP animations that can be switched off in Settings (and are off when the OS asks for reduced motion).
 
