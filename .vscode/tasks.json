@@ -1,0 +1,60 @@
+{
+  // Uses the interpreter selected in the editor (e.g. .venv); run `pip install -e '.[dev]'` in it first.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev: build, serve and watch the map",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["-m", "rental_lookup.webmap.dev"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "panel": "dedicated", "reveal": "always" },
+      "problemMatcher": {
+        "owner": "rental-map-dev",
+        "pattern": { "regexp": "^\\[!\\] (Build failed.*)$", "message": 1 },
+        "background": {
+          "activatesOnStart": true,
+          "beginsPattern": "^Changed: ",
+          "endsPattern": "^Serving map at |^Map built with |^\\[!\\] Build failed"
+        }
+      }
+    },
+    {
+      "label": "Build map once",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["-m", "rental_lookup.webmap.builder"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Serve map (no watcher)",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["-m", "rental_lookup.webmap.server"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": { "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Refresh data and rebuild (slow, uses the network)",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/refresh_map.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run tests",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["-m", "pytest", "-q"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    }
+  ]
+}

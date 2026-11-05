@@ -9,8 +9,7 @@ Metro stations are tagged with ALL of these:
 - `network=Namma Metro`
 - `operator=Bangalore Metro Rail Corporation Limited`
 
-**Best query strategy**: Use `network=Namma Metro` to get ONLY metro (not Indian Railways).
-Alternatively: `station=subway` within Bangalore bbox.
+**Best query strategy**: Use `network=Namma Metro` to get ONLY metro (not Indian Railways). Alternatively: `station=subway` within Bangalore bbox.
 
 ## Indian Railways Stations (to exclude)
 Regular rail stations have:
@@ -36,8 +35,14 @@ Regular rail stations have:
 node["network"="Namma Metro"](12.90,77.50,13.05,77.70);
 ```
 
-## For parks/green — need to verify tags too
-Will use: `leisure=park`, `leisure=garden`, `landuse=recreation_ground`
+## Tags the project actually uses
+Defined in `OSM_FEATURE_TAGS` in `rental_lookup/location.py` (the bounding box there covers the NoBroker search anchors):
 
-## For water/lakes
-Will use: `natural=water`, `water=lake`
+| Feature | Tags | Minimum area |
+|---------|------|--------------|
+| Parks | `leisure=park`, `leisure=nature_reserve` | 5,000 m² |
+| Lakes | `water=lake` | 10,000 m² |
+| Woods / tree cover | `natural=wood`, `landuse=forest` | 10,000 m² |
+| Metro | `network=Namma Metro` | none (points) |
+
+`leisure=garden`, `landuse=recreation_ground`, scrub, tree rows and orchards are deliberately left out: they are everywhere in Bangalore's OSM data and made every listing look leafy. Bump `OSM_CACHE_VERSION` when these change so cached GeoPackages are rebuilt.

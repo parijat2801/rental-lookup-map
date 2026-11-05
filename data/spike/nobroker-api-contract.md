@@ -11,8 +11,10 @@ GET https://www.nobroker.in/api/v3/multi/property/RENT/filter
 | `city` | `bangalore` | lowercase |
 | `pageNo` | `1` | 1-indexed, 26 results per page |
 | `searchParam` | base64-encoded JSON | see below |
-| `rent` | `0,60000` | min,max in INR |
-| `type` | `BHK2,BHK3` | comma-separated |
+| `rent` | `0,150000` | min,max in INR (what `sources/nobroker.py` sends; the map filters narrow it) |
+| `type` | `BHK1,BHK2,BHK3` | comma-separated |
+
+The scraper repeats the search for each anchor in `NEIGHBORHOODS` (`sources/nobroker.py`) and de-duplicates by listing id.
 
 ## searchParam format
 Base64-encoded JSON array of location objects:

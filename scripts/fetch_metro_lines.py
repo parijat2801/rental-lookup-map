@@ -1,76 +1,105 @@
-import json, urllib.request, urllib.parse, time
+"""Regenerate data/metro_lines.json (Namma Metro lines + stations) from OpenStreetMap.
 
-RELS = {"purple": 1798771, "green": 1798772, "yellow": 19421927}
+Run from the repo root: python scripts/fetch_metro_lines.py
+Overpass responses are cached as op_cache_<md5>.json in the working directory.
+"""
+import hashlib
+import json
+import os
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OUTPUT = "data/metro_lines.json"
+RELATIONS = {"purple": 1798771, "green": 1798772, "yellow": 19421927}  # OSM route relation ids
 COLORS = {"purple": "#8e24aa", "green": "#2e7d32", "yellow": "#f9a825"}
 
-import hashlib, os
-def overpass(q):
-    key = hashlib.md5(q.encode()).hexdigest()
-    cache = f"op_cache_{key}.json"
+
+def overpass(query: str) -> dict:
+    """Run an Overpass query, cached on disk by query hash."""
+    cache = f"op_cache_{hashlib.md5(query.encode()).hexdigest()}.json"
     if os.path.exists(cache):
-        return json.load(open(cache))
-    r = _overpass(q)
-    json.dump(r, open(cache, "w"))
-    return r
+        with open(cache) as f:
+            return json.load(f)
+    result = _overpass_with_retry(query)
+    with open(cache, "w") as f:
+        json.dump(result, f)
+    return result
 
-def _overpass(q):
-    req = urllib.request.Request("https://overpass-api.de/api/interpreter",
-        data=urllib.parse.urlencode({"data": q}).encode(),
-        headers={"User-Agent": "rental-lookup-metro/1.0"})
-    for attempt in range(6):
+
+def _overpass_with_retry(query: str, attempts: int = 6) -> dict:
+    req = urllib.request.Request(
+        OVERPASS_URL,
+        data=urllib.parse.urlencode({"data": query}).encode(),
+        headers={"User-Agent": "rental-lookup-metro/1.0"},
+    )
+    for attempt in range(attempts):
         try:
-            return json.load(urllib.request.urlopen(req, timeout=120))
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                return json.load(resp)
         except urllib.error.HTTPError as e:
-            if e.code in (429, 502, 503, 504):
-                time.sleep(15 * (attempt + 1))
-                continue
-            raise
-        except Exception:
-            time.sleep(15 * (attempt + 1))
-            continue
-    raise RuntimeError("gave up after 429s")
+            if e.code not in (429, 502, 503, 504):
+                raise
+        except (urllib.error.URLError, TimeoutError, ValueError):
+            pass
+        time.sleep(15 * (attempt + 1))  # Overpass rate-limits aggressively; back off linearly
+    raise RuntimeError(f"Overpass gave up after {attempts} attempts")
 
-out = {}
-for name, rid in RELS.items():
-    d = overpass(f"[out:json][timeout:90];relation({rid});out geom;")
-    rel = d["elements"][0]
-    ways, stations = [], []
-    for m in rel["members"]:
-        if m["type"] == "way" and m.get("geometry"):
-            ways.append([(round(p["lat"],5), round(p["lon"],5)) for p in m["geometry"]])
-        elif m["type"] == "node" and m.get("role","").startswith("stop"):
-            stations.append({"lat": round(m["lat"],5), "lng": round(m["lon"],5)})
-    # fetch station names for stop nodes
-    ids = [m["ref"] for m in rel["members"] if m["type"]=="node" and m.get("role","").startswith("stop")]
-    if ids:
-        nq = "[out:json];node(id:" + ",".join(map(str,ids)) + ");out;"
-        nd = overpass(nq)
-        names = {e["id"]: e["tags"].get("name","") for e in nd["elements"]}
-        stations = [{"lat": round(m["lat"],5), "lng": round(m["lon"],5), "name": names.get(m["ref"],"")}
-                    for m in rel["members"] if m["type"]=="node" and m.get("role","").startswith("stop")]
-    # stitch ways into one path: greedy nearest-endpoint ordering
-    def d2(a, b): return (a[0]-b[0])**2 + (a[1]-b[1])**2
-    path = list(ways[0])
-    rest = ways[1:]
+
+def _r(p: float) -> float:
+    return round(p, 5)  # ~1m precision keeps the file small
+
+
+def stitch(ways: list) -> list:
+    """Join way segments into one path by greedily attaching the nearest endpoint."""
+    def d2(a, b):
+        return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
+
+    # Ways to attach a segment w: (which endpoints touch, reverse w?, prepend to path?)
+    joins = (((0, -1), False, False), ((-1, -1), True, False), ((-1, 0), False, True), ((0, 0), True, True))
+    path, rest = list(ways[0]), ways[1:]
     while rest:
-        best = None
-        for i, w in enumerate(rest):
-            for cand, rev, front in ((d2(w[0], path[-1]), False, False),
-                                     (d2(w[-1], path[-1]), True, False),
-                                     (d2(w[-1], path[0]), False, True),
-                                     (d2(w[0], path[0]), True, True)):
-                if best is None or cand < best[0]:
-                    best = (cand, i, rev, front)
-        _, i, rev, front = best
+        # Nearest (segment, join); ties go to the earliest segment, then join order.
+        _, i, k = min((d2(w[a], path[b]), i, k)
+                      for i, w in enumerate(rest)
+                      for k, ((a, b), _rev, _front) in enumerate(joins))
+        _, rev, front = joins[k]
         w = list(reversed(rest[i])) if rev else list(rest[i])
         path = w + path if front else path + w
         rest.pop(i)
-    # drop consecutive duplicates
-    path = [p for j, p in enumerate(path) if j == 0 or p != path[j-1]]
-    out[name] = {"color": COLORS[name], "path": [[p[0],p[1]] for p in path], "stations": stations}
-    print(name, len(path), "pts,", len(stations), "stations")
-    time.sleep(20)
+    return [p for j, p in enumerate(path) if j == 0 or p != path[j - 1]]  # drop consecutive duplicates
 
-with open("data/metro_lines.json","w") as f:
-    json.dump(out, f, separators=(",",":"))
-print("bytes:", len(open("data/metro_lines.json").read()))
+
+def fetch_line(rel_id: int) -> tuple:
+    """(path, stations) for one metro route relation."""
+    rel = overpass(f"[out:json][timeout:90];relation({rel_id});out geom;")["elements"][0]
+    ways = [[(_r(p["lat"]), _r(p["lon"])) for p in m["geometry"]]
+            for m in rel["members"] if m["type"] == "way" and m.get("geometry")]
+    stops = [m for m in rel["members"] if m["type"] == "node" and m.get("role", "").startswith("stop")]
+
+    names = {}
+    if stops:
+        nodes = overpass("[out:json];node(id:" + ",".join(str(m["ref"]) for m in stops) + ");out;")
+        names = {e["id"]: e.get("tags", {}).get("name", "") for e in nodes["elements"]}
+    stations = [{"lat": _r(m["lat"]), "lng": _r(m["lon"]), "name": names.get(m["ref"], "")} for m in stops]
+    return stitch(ways), stations
+
+
+def main() -> None:
+    out = {}
+    for name, rel_id in RELATIONS.items():
+        path, stations = fetch_line(rel_id)
+        out[name] = {"color": COLORS[name], "path": [list(p) for p in path], "stations": stations}
+        print(name, len(path), "pts,", len(stations), "stations")
+        time.sleep(20)  # be polite to the public Overpass instance
+
+    text = json.dumps(out, separators=(",", ":"))
+    with open(OUTPUT, "w") as f:
+        f.write(text)
+    print("bytes:", len(text))
+
+
+if __name__ == "__main__":
+    main()
