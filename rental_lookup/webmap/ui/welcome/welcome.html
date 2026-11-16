@@ -11,34 +11,23 @@
         aria-labelledby="welcome-title"
         tabindex="-1"
     >
-        <p class="welcome-step" id="welcome-step-label">1 of 3</p>
-        <div class="welcome-progress" id="welcome-progress" aria-hidden="true">
-            <span class="on"></span><span></span><span></span>
-        </div>
-
         <div class="welcome-panels">
         <div id="welcome-title-step" class="welcome-panel on">
-            <div class="welcome-panel-body">
-                <div class="welcome-title-stage">
-                    <pre
-                        class="welcome-ascii"
-                        id="welcome-ascii"
-                        aria-hidden="true"
-                    ></pre>
-                    <h2 class="welcome-app-title" id="welcome-title">
-                        <span class="welcome-app-name">Rentals</span>
-                        <span class="welcome-app-place">Bangalore</span>
-                    </h2>
+            <pre class="welcome-ascii" id="welcome-ascii" aria-hidden="true"></pre>
+            <div class="welcome-title-copy">
+                <h2 class="welcome-app-title" id="welcome-title">
+                    <span class="welcome-app-name">Rentals</span>
+                    <span class="welcome-app-place">Bangalore</span>
+                </h2>
+                <div class="dialog-actions">
+                    <button
+                        class="primary-button"
+                        type="button"
+                        onclick="showWelcomeFeatures()"
+                    >
+                        Continue
+                    </button>
                 </div>
-            </div>
-            <div class="dialog-actions">
-                <button
-                    class="primary-button"
-                    type="button"
-                    onclick="showWelcomeFeatures()"
-                >
-                    Continue
-                </button>
             </div>
         </div>
 

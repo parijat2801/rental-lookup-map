@@ -24,7 +24,7 @@ function welcomeNeeded() {
 }
 function setWelcomeStep(step) {
     welcomeStep = step;
-    var index = WELCOME_STEPS.indexOf(step);
+    var overlay = byId("welcome-overlay");
     WELCOME_STEPS.forEach(function (name) {
         var panel = byId("welcome-" + (name === "title" ? "title-step" : name));
         var on = name === step;
@@ -32,15 +32,12 @@ function setWelcomeStep(step) {
         panel.setAttribute("aria-hidden", on ? "false" : "true");
         panel.inert = !on;
     });
-    byId("welcome-step-label").textContent = index + 1 + " of 3";
-    var segments = byId("welcome-progress").children;
-    for (var i = 0; i < segments.length; i++)
-        segments[i].classList.toggle("on", i <= index);
-    var dialog = byId("welcome-overlay").querySelector("[role=dialog]");
+    overlay.classList.toggle("welcome-title", step === "title");
+    var dialog = overlay.querySelector("[role=dialog]");
     dialog.setAttribute("aria-labelledby", WELCOME_LABELS[step]);
     dialog.focus();
     if (step === "title") startWelcomeAscii();
-    else stopWelcomeAscii();
+    else freezeWelcomeAscii();
     if (step === "title" && MOTION) animateIn(byId("welcome-title"), { y: 8 }, 0.45);
     if (step === "questions") paintWelcomeCost();
 }
@@ -64,87 +61,214 @@ function dismissWelcome() {
     markWelcomeDone();
     setOverlayOpen(byId("welcome-overlay"), false);
 }
-// A small city skyline. Windows wink and stars blink, in the manner of the
-// old ASCII skyline screensavers (asciiskyline / asciicity).
-var WELCOME_ASCII_W = 48;
-var WELCOME_ASCII_H = 13;
-var WELCOME_BUILDINGS = [
-    { x: 1, w: 6, h: 5 },
-    { x: 8, w: 7, h: 8 },
-    { x: 16, w: 5, h: 6 },
-    { x: 22, w: 8, h: 10 },
-    { x: 31, w: 6, h: 7 },
-    { x: 38, w: 8, h: 4 },
-];
-var WELCOME_STARS = [
-    [0, 4, "."],
-    [1, 14, "*"],
-    [0, 27, "."],
-    [2, 36, "*"],
-    [1, 44, "."],
-    [0, 20, "*"],
-];
+// Full-viewport Bangalore skyline. Vidhana Soudha sits in the middle, towers
+// pack the rest of the width, and the bottom rows are the elevated metro and
+// the road. The first paint is still. Motion (lit windows, traffic, a plane)
+// starts after a beat.
 var welcomeAsciiTimer = null;
+var welcomeAsciiDelay = null;
+var welcomeSkyline = null;
+var welcomeAsciiTick = 0;
+var welcomeResizeBound = false;
 function stopWelcomeAscii() {
+    if (welcomeAsciiDelay) {
+        clearTimeout(welcomeAsciiDelay);
+        welcomeAsciiDelay = null;
+    }
     if (welcomeAsciiTimer) {
         clearInterval(welcomeAsciiTimer);
         welcomeAsciiTimer = null;
     }
 }
-function paintWelcomeAscii(tick) {
-    var grid = [];
-    for (var y = 0; y < WELCOME_ASCII_H; y++) {
-        grid[y] = [];
-        for (var x = 0; x < WELCOME_ASCII_W; x++) grid[y][x] = " ";
-    }
-    WELCOME_STARS.forEach(function (star, i) {
-        if ((tick + i * 3) % 10 < 2) return;
-        grid[star[0]][star[1]] = star[2];
-    });
-    WELCOME_BUILDINGS.forEach(function (b) {
-        var top = WELCOME_ASCII_H - 1 - b.h;
-        var mid = b.x + Math.floor(b.w / 2);
-        if (top > 0) grid[top - 1][mid] = "|";
-        for (var y = top; y < WELCOME_ASCII_H; y++) {
-            grid[y][b.x] = "|";
-            grid[y][b.x + b.w - 1] = "|";
-            for (var x = b.x + 1; x < b.x + b.w - 1; x++) {
-                if (y === top || y === WELCOME_ASCII_H - 1) grid[y][x] = "_";
-                else if ((y - top) % 2 === 1 && (x - b.x) % 2 === 0)
-                    grid[y][x] =
-                        (tick + x * 5 + y * 3) % 14 < 10 ? "#" : " ";
-            }
+function welcomePut(grid, y, x, ch) {
+    if (y < 0 || x < 0 || y >= grid.length || x >= grid[0].length) return;
+    grid[y][x] = ch;
+}
+function welcomeTower(grid, x, ground, w, h) {
+    var top = ground - h;
+    for (var yy = top; yy < ground; yy++) {
+        for (var xx = x; xx < x + w; xx++) {
+            var edge = xx === x || xx === x + w - 1 || yy === top;
+            var pane = (xx - x) % 2 === 1 && (yy - top) % 2 === 1;
+            welcomePut(grid, yy, xx, edge ? "#" : pane ? ":" : "#");
         }
-    });
-    for (var gx = 0; gx < WELCOME_ASCII_W; gx++)
-        if (grid[WELCOME_ASCII_H - 1][gx] === " ")
-            grid[WELCOME_ASCII_H - 1][gx] = "_";
-    byId("welcome-ascii").innerHTML = grid
-        .map(function (row) {
-            return row
-                .map(function (ch) {
-                    if (ch === "#")
-                        return '<span class="welcome-ascii-on">#</span>';
-                    if (ch === "*" || ch === ".")
-                        return '<span class="welcome-ascii-star">' + ch + "</span>";
-                    return ch;
-                })
-                .join("");
-        })
-        .join("\n");
+    }
+    if (w >= 5) {
+        var mast = x + Math.floor(w / 2);
+        welcomePut(grid, top - 1, mast, "|");
+        welcomePut(grid, top - 2, mast, "+");
+    }
+}
+function welcomeSoudha(grid, x, ground, w) {
+    var rows = grid.length;
+    var bodyH = Math.max(10, Math.floor(rows * 0.42));
+    var top = ground - bodyH;
+    for (var yy = top; yy < ground; yy++) {
+        var cornice = (yy - top) % 4 === 0;
+        for (var xx = x; xx < x + w; xx++) {
+            var edge = xx === x || xx === x + w - 1;
+            var column = (xx - x) % 2 === 0;
+            welcomePut(grid, yy, xx, cornice || edge || column ? "#" : ":");
+        }
+    }
+    var steps = Math.max(4, Math.floor(rows * 0.12));
+    for (var s = 1; s <= steps; s++) {
+        var inset = Math.floor((s / steps) * w * 0.28);
+        for (var col = inset; col < w - inset; col++)
+            welcomePut(grid, top - s, x + col, "#");
+    }
+    var centerW = Math.max(10, Math.floor(w * 0.28));
+    if (centerW % 2) centerW--;
+    var cx = x + Math.floor((w - centerW) / 2);
+    var rise = Math.max(4, Math.floor(rows * 0.14));
+    for (var ry = 0; ry < rise; ry++) {
+        for (var rx = 0; rx < centerW; rx++) {
+            var column = rx % 2 === 0;
+            welcomePut(grid, top - steps - ry, cx + rx, column ? "#" : ":");
+        }
+    }
+    var domeW = Math.max(8, centerW - 2);
+    if (domeW % 2) domeW--;
+    var domeH = Math.max(4, Math.floor(rows * 0.1));
+    var dx = cx + Math.floor((centerW - domeW) / 2);
+    var dy = top - steps - rise - domeH;
+    for (var row = 0; row < domeH; row++) {
+        var t = (row + 0.5) / domeH;
+        var half = Math.max(1, Math.round(Math.sqrt(1 - (1 - t) * (1 - t)) * (domeW / 2)));
+        var mid = Math.floor(domeW / 2);
+        for (var col = mid - half; col <= mid + half; col++)
+            welcomePut(grid, dy + row, dx + col, "#");
+    }
+    var finial = dx + Math.floor(domeW / 2);
+    welcomePut(grid, dy - 1, finial, "|");
+    welcomePut(grid, dy - 2, finial, "+");
+}
+function buildWelcomeSkyline(cols, rows) {
+    var grid = [];
+    for (var y = 0; y < rows; y++) {
+        grid[y] = [];
+        for (var x = 0; x < cols; x++) grid[y][x] = ".";
+    }
+    var street = rows < 20 ? 3 : 4;
+    var ground = rows - street;
+    var soudhaW = Math.max(16, Math.floor(cols * 0.34));
+    if (soudhaW % 2) soudhaW--;
+    var soudhaX = Math.floor((cols - soudhaW) / 2);
+    function fillSide(from, to, tallFirst) {
+        var x = from;
+        var n = 0;
+        while (x < to) {
+            var span = to - x;
+            var w = 4 + ((x * 3 + n * 5) % 4);
+            if (span - w < 4) w = span;
+            var ramp = ((x * 7 + n * 11) % 13) / 12;
+            var h = Math.floor(ground * (0.62 + ramp * 0.34));
+            if (tallFirst && n === 0) h = Math.floor(ground * 0.96);
+            h = Math.max(8, Math.min(h, ground - 1));
+            welcomeTower(grid, x, ground, w, h);
+            x += w;
+            n++;
+        }
+    }
+    fillSide(0, soudhaX, false);
+    fillSide(soudhaX + soudhaW, cols, true);
+    welcomeSoudha(grid, soudhaX, ground, soudhaW);
+    for (var mx = 0; mx < cols; mx++) {
+        grid[ground][mx] = mx % 14 === 0 ? "|" : "=";
+        if (street > 1) grid[ground + 1][mx] = mx % 14 === 0 ? "|" : ":";
+        if (street > 2) grid[ground + 2][mx] = "-";
+        if (street > 3) grid[ground + 3][mx] = "-";
+    }
+    return { cols: cols, rows: rows, ground: ground, street: street, grid: grid };
+}
+function welcomeGridSize() {
+    var probe = byId("welcome-ascii");
+    var sample = document.createElement("span");
+    sample.textContent = "M";
+    probe.appendChild(sample);
+    var rect = sample.getBoundingClientRect();
+    sample.remove();
+    var charW = rect.width || 5.4;
+    var charH = rect.height || 9;
+    var box = probe.getBoundingClientRect();
+    var width = box.width || 400;
+    var height = box.height || 150;
+    return {
+        cols: Math.max(24, Math.floor(width / charW)),
+        rows: Math.max(12, Math.floor(height / charH)),
+    };
+}
+function paintWelcomeAscii(tick, moving) {
+    var size = welcomeGridSize();
+    if (
+        !welcomeSkyline ||
+        welcomeSkyline.cols !== size.cols ||
+        welcomeSkyline.rows !== size.rows
+    )
+        welcomeSkyline = buildWelcomeSkyline(size.cols, size.rows);
+    var sky = welcomeSkyline;
+    var t = moving ? tick : 0;
+    var planeX = t % sky.cols;
+    var east = t % sky.cols;
+    var west = (sky.cols - (t % sky.cols)) % sky.cols;
+    var lines = new Array(sky.rows);
+    for (var y = 0; y < sky.rows; y++) {
+        var parts = new Array(sky.cols);
+        var src = sky.grid[y];
+        for (var x = 0; x < sky.cols; x++) {
+            var ch = src[x];
+            if (y === 1 && x === planeX && ch === ".") ch = ">";
+            if (sky.street > 2 && y === sky.ground + 2 && (x - east + sky.cols) % 9 === 0)
+                ch = "o";
+            if (sky.street > 3 && y === sky.ground + 3 && (x - west + sky.cols) % 11 === 0)
+                ch = "o";
+            if (sky.street === 3 && y === sky.ground + 2 && (x - east + sky.cols) % 9 === 0)
+                ch = "o";
+            if (moving && ch === ":" && (x * 5 + y * 3 + tick) % 13 === 0) ch = "*";
+            parts[x] =
+                ch === "*" || ch === ">" || ch === "o"
+                    ? '<span class="welcome-ascii-on">' + ch + "</span>"
+                    : ch;
+        }
+        lines[y] = parts.join("");
+    }
+    byId("welcome-ascii").innerHTML = lines.join("\n");
+}
+function freezeWelcomeAscii() {
+    stopWelcomeAscii();
+    paintWelcomeAscii(0, false);
 }
 function startWelcomeAscii() {
     stopWelcomeAscii();
-    paintWelcomeAscii(0);
+    welcomeSkyline = null;
+    welcomeAsciiTick = 0;
+    paintWelcomeAscii(0, false);
+    requestAnimationFrame(function () {
+        if (welcomeStep !== "title") return;
+        welcomeSkyline = null;
+        paintWelcomeAscii(welcomeAsciiTick, !!welcomeAsciiTimer);
+    });
+    if (!welcomeResizeBound) {
+        welcomeResizeBound = true;
+        window.addEventListener("resize", function () {
+            welcomeSkyline = null;
+            var overlay = byId("welcome-overlay");
+            if (!overlay || overlay.hidden) return;
+            paintWelcomeAscii(welcomeAsciiTick, welcomeStep === "title" && !!welcomeAsciiTimer);
+        });
+    }
     if (!MOTION) return;
-    var tick = 0;
-    welcomeAsciiTimer = setInterval(function () {
-        if (welcomeStep !== "title" || !MOTION) {
-            stopWelcomeAscii();
-            return;
-        }
-        paintWelcomeAscii(++tick);
-    }, 160);
+    welcomeAsciiDelay = setTimeout(function () {
+        welcomeAsciiDelay = null;
+        if (welcomeStep !== "title") return;
+        welcomeAsciiTimer = setInterval(function () {
+            if (welcomeStep !== "title" || !MOTION) {
+                freezeWelcomeAscii();
+                return;
+            }
+            paintWelcomeAscii(++welcomeAsciiTick, true);
+        }, 140);
+    }, 700);
 }
 function onWelcomeBackdrop(event) {
     if (event.target !== event.currentTarget) return;
@@ -203,7 +327,7 @@ function maybeOpenWelcome() {
     try {
         localStorage.setItem(WELCOME_PENDING_KEY, "1");
     } catch (e) {}
-    setWelcomeStep("title");
     setOverlayOpen(byId("welcome-overlay"), true);
+    setWelcomeStep("title");
 }
 maybeOpenWelcome();

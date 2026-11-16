@@ -1,4 +1,25 @@
 /* --- First-visit welcome: feature intro, then optional budget and BHK -------- */
+.welcome-ascii {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    pointer-events: none;
+    font-family:
+        ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 7px;
+    line-height: 7px;
+    letter-spacing: 0;
+    text-align: center;
+    color: var(--border-strong);
+    user-select: none;
+    white-space: pre;
+}
+.welcome-ascii-on {
+    color: var(--text);
+}
 .welcome-dialog {
     position: relative;
     display: flex;
@@ -7,7 +28,18 @@
     max-width: 480px;
     max-height: min(88vh, 680px);
     overflow: hidden;
-    padding: 32px 36px 32px;
+    padding: 0;
+}
+#welcome-features,
+#welcome-questions {
+    padding: 32px 36px;
+}
+.welcome-title-copy {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 36px 32px;
 }
 .welcome-panels {
     display: grid;
@@ -28,64 +60,16 @@
     min-height: 0;
     overflow: auto;
 }
-#welcome-title-step .welcome-panel-body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.welcome-step {
-    font-size: var(--fs-xs);
-    font-weight: 500;
-    color: var(--muted);
-    margin-bottom: 10px;
-}
-.welcome-progress {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 28px;
-}
-.welcome-progress span {
-    flex: 1;
-    height: 2px;
-    border-radius: 1px;
-    background: var(--border);
-}
-.welcome-progress span.on {
-    background: var(--accent);
-}
 .welcome-dialog h2 {
     font-size: var(--fs-lg);
     font-weight: 600;
-}
-.welcome-title-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 22px;
-    padding: 8px 0 4px;
-}
-.welcome-ascii {
-    margin: 0;
-    font-family:
-        ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 11px;
-    line-height: 1.15;
-    letter-spacing: 0.04em;
-    color: var(--subtle);
-    user-select: none;
-    white-space: pre;
-}
-.welcome-ascii-on {
-    color: var(--text);
-}
-.welcome-ascii-star {
-    color: var(--muted);
 }
 .welcome-app-title {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    flex-shrink: 0;
     text-align: center;
     line-height: 0.92;
 }
@@ -106,9 +90,6 @@
     }
     .welcome-app-place {
         font-size: 22px;
-    }
-    .welcome-ascii {
-        font-size: 9px;
     }
 }
 .welcome-sub {
@@ -166,8 +147,11 @@
     gap: 10px;
 }
 .welcome-dialog .dialog-actions {
-    margin-top: 32px;
+    margin-top: 28px;
     flex-shrink: 0;
+}
+.welcome-title-copy .dialog-actions {
+    margin-top: 22px;
 }
 .welcome-dialog .text-button {
     text-decoration: none;
