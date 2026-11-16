@@ -111,45 +111,6 @@
             <div class="welcome-panel-body">
             <h2 id="welcome-questions-title">What should we show first?</h2>
             <p class="welcome-sub">Optional. Change these anytime in Filters.</p>
-            <div class="welcome-budget">
-                <div class="field-label">
-                    <span id="welcome-budget-label"
-                        >Monthly total (rent + maintenance)</span
-                    ><span class="slider-value" id="welcome-cost-value"></span>
-                </div>
-                <div class="cost-range">
-                    <div
-                        class="cost-hist"
-                        id="welcome-cost-hist"
-                        aria-hidden="true"
-                    ></div>
-                    <div class="dual-range">
-                    <div class="track">
-                        <div class="track-fill" id="welcome-cost-fill"></div>
-                    </div>
-                    <input
-                        type="range"
-                        id="welcome-cost-min"
-                        min="0"
-                        max="150000"
-                        step="5000"
-                        value="0"
-                        oninput="onWelcomeCostInput(this)"
-                        aria-label="Minimum monthly cost"
-                    />
-                    <input
-                        type="range"
-                        id="welcome-cost-max"
-                        min="0"
-                        max="150000"
-                        step="5000"
-                        value="150000"
-                        oninput="onWelcomeCostInput(this)"
-                        aria-label="Maximum monthly cost"
-                    />
-                    </div>
-                </div>
-            </div>
             <p class="welcome-group-label" id="welcome-bhk-label">BHK</p>
             <div
                 class="welcome-chips"
@@ -192,6 +153,45 @@
                 >
                     3+ BHK
                 </button>
+            </div>
+            <div class="welcome-budget">
+                <div class="field-label">
+                    <span id="welcome-budget-label"
+                        >Monthly total (rent + maintenance)</span
+                    ><span class="slider-value" id="welcome-cost-value"></span>
+                </div>
+                <div class="cost-range">
+                    <div
+                        class="cost-hist"
+                        id="welcome-cost-hist"
+                        aria-hidden="true"
+                    ></div>
+                    <div class="dual-range">
+                    <div class="track">
+                        <div class="track-fill" id="welcome-cost-fill"></div>
+                    </div>
+                    <input
+                        type="range"
+                        id="welcome-cost-min"
+                        min="0"
+                        max="150000"
+                        step="5000"
+                        value="0"
+                        oninput="onWelcomeCostInput(this)"
+                        aria-label="Minimum monthly cost"
+                    />
+                    <input
+                        type="range"
+                        id="welcome-cost-max"
+                        min="0"
+                        max="150000"
+                        step="5000"
+                        value="150000"
+                        oninput="onWelcomeCostInput(this)"
+                        aria-label="Maximum monthly cost"
+                    />
+                    </div>
+                </div>
             </div>
             </div>
             <div class="dialog-actions welcome-actions">

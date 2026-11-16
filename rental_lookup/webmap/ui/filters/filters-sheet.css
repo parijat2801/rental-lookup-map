@@ -112,7 +112,7 @@ input[type="range"]::-webkit-slider-runnable-track {
     border-radius: 2px;
     background: linear-gradient(
         to right,
-        var(--accent) var(--fill),
+        var(--range-fill) var(--fill),
         var(--border) var(--fill)
     );
 }
@@ -121,7 +121,7 @@ input[type="range"]::-moz-range-track {
     border-radius: 2px;
     background: linear-gradient(
         to right,
-        var(--accent) var(--fill),
+        var(--range-fill) var(--fill),
         var(--border) var(--fill)
     );
 }
@@ -184,7 +184,7 @@ input[type="range"]::-moz-range-thumb {
     position: absolute;
     top: 0;
     bottom: 0;
-    background: var(--accent);
+    background: var(--range-fill);
     border-radius: 2px;
 }
 .dual-range input {

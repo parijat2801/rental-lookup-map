@@ -63,15 +63,17 @@ def test_map_template_shows_1bhk_by_default():
 
 def test_map_template_filter_predicate_handles_bhk1():
     html = load_template()
-    assert "filterChips.bhk1 && bedrooms >= 1 && bedrooms < 2" in html, (
+    assert "chips.bhk1 && bedrooms >= 1 && bedrooms < 2" in html, (
         "1/1.5 BHK must match 1 and 1.5 bedrooms, not 2"
     )
-    assert "filterChips.bhk1 || filterChips.bhk2 || filterChips.bhk3 || filterChips.bhk3plus" in html, (
+    assert "chips.bhk1 || chips.bhk2 || chips.bhk3 || chips.bhk3plus" in html, (
         "the OR-set guard must include bhk1"
     )
-    assert "filterChips.bhk3plus && bedrooms > 3" in html, (
+    assert "chips.bhk3plus && bedrooms > 3" in html, (
         "3+ BHK must match above 3 bedrooms (3.5, 4, …), not an exact 3 BHK"
     )
+    assert "matchesBhk(d, filterChips)" in html
+    assert "matchesBhk(d, chips)" in html, "the cost histogram must follow the BHK chips"
     compact = re.sub(r"\s+", "", html)
     assert 'data-welcome-bhk="bhk1"' in html and ">1/1.5BHK<" in compact
     assert 'data-welcome-bhk="bhk3plus"' in html and ">3+BHK<" in compact

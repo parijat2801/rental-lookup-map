@@ -173,12 +173,20 @@ function paintWelcomeCost() {
         " – " +
         formatRupeesShort(+high.value) +
         (+high.value >= +high.max ? "+" : "");
-    paintCostHistogram("welcome-cost-hist", +low.value, +high.value);
+    paintCostHistogram("welcome-cost-hist", +low.value, +high.value, welcomeBhkSelection());
+}
+function welcomeBhkSelection() {
+    var chips = { bhk1: false, bhk2: false, bhk3: false, bhk3plus: false };
+    document.querySelectorAll("[data-welcome-bhk].on").forEach(function (chip) {
+        chips[chip.dataset.welcomeBhk] = true;
+    });
+    return chips;
 }
 function toggleWelcomeBhk(button) {
     var on = !button.classList.contains("on");
     button.classList.toggle("on", on);
     button.setAttribute("aria-pressed", on);
+    paintWelcomeCost();
 }
 function applyWelcome() {
     byId("filter-cost-min").value = byId("welcome-cost-min").value;

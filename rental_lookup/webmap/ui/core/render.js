@@ -27,6 +27,18 @@ function bhkCount(bhk) {
     var match = /^BHK(\d+(?:\.\d+)?)/.exec(bhk || "");
     return match ? +match[1] : 0;
 }
+// BHK chips are an OR-set: none selected = every size.
+// 1 covers 1 and 1.5. 3+ is above 3 (3.5, 4, …).
+function matchesBhk(d, chips) {
+    if (!(chips.bhk1 || chips.bhk2 || chips.bhk3 || chips.bhk3plus)) return true;
+    var bedrooms = bhkCount(d.bhk);
+    return (
+        (chips.bhk1 && bedrooms >= 1 && bedrooms < 2) ||
+        (chips.bhk2 && d.bhk === "BHK2") ||
+        (chips.bhk3 && d.bhk === "BHK3") ||
+        (chips.bhk3plus && bedrooms > 3)
+    );
+}
 function passesFilters(d, sliders) {
     if (sliders.searchTerms.length) {
         var haystack = (
@@ -56,18 +68,7 @@ function passesFilters(d, sliders) {
     if (d.photoCount < sliders.minPhotos) return false;
     if (d.rent > 0 && d.deposit / d.rent > sliders.maxDepositMonths)
         return false;
-    // BHK chips are an OR-set: none selected = show all.
-    // 1 covers 1 and 1.5. 3+ is above 3 (3.5, 4, …).
-    if (filterChips.bhk1 || filterChips.bhk2 || filterChips.bhk3 || filterChips.bhk3plus) {
-        var bedrooms = bhkCount(d.bhk);
-        if (!(
-            (filterChips.bhk1 && bedrooms >= 1 && bedrooms < 2) ||
-            (filterChips.bhk2 && d.bhk === "BHK2") ||
-            (filterChips.bhk3 && d.bhk === "BHK3") ||
-            (filterChips.bhk3plus && bedrooms > 3)
-        ))
-            return false;
-    }
+    if (!matchesBhk(d, filterChips)) return false;
     // Furnishing chips are an OR-set too; unknown furnishing only passes when none are selected
     if (
         filterChips.furnishedFull ||

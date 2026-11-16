@@ -170,27 +170,26 @@ function onFloorInput(slider) {
     onDualRangeInput("filter-floor-min", "filter-floor-max", slider);
 }
 // One bar per slider step. The top step also holds anything above the max.
+// Bins follow the BHK chips: none selected counts every listing.
 var COST_HIST_STEP = 5000;
 var COST_HIST_MAX = 150000;
-var costHistBins = null;
-function costHistogram() {
-    if (costHistBins) return costHistBins;
+function costHistogram(chips) {
     var count = COST_HIST_MAX / COST_HIST_STEP;
     var bins = [];
     for (var i = 0; i < count; i++) bins[i] = 0;
     LISTINGS.forEach(function (d) {
+        if (!matchesBhk(d, chips)) return;
         var index = Math.floor((+d.totalCost || 0) / COST_HIST_STEP);
         if (index < 0) return;
         if (index >= count) index = count - 1;
         bins[index]++;
     });
-    costHistBins = bins;
     return bins;
 }
-function paintCostHistogram(containerId, minValue, maxValue) {
+function paintCostHistogram(containerId, minValue, maxValue, chips) {
     var el = byId(containerId);
     if (!el) return;
-    var bins = costHistogram();
+    var bins = costHistogram(chips || filterChips);
     var peak = 0;
     for (var i = 0; i < bins.length; i++) if (bins[i] > peak) peak = bins[i];
     if (el.childElementCount !== bins.length) {
