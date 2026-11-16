@@ -1,4 +1,4 @@
-name: Update Rental Map
+name: update blr-rental-map
 
 on:
   push:
@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: '30 2 * * *'  # 8am IST (2:30 UTC)
   workflow_dispatch:  # manual trigger from Actions tab
+
+# Never run two deploys at once (they would race on gh-pages).
+concurrency:
+  group: update-map
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -15,87 +20,83 @@ jobs:
       pages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: pip install httpx osmnx geopandas geopy pandas tqdm shapely
+        run: python3 -m pip install -e '.[dev,acres99-apify]'
+
+      - name: Run tests
+        run: python3 -m pytest -q
 
       - name: Restore cached data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             data/cache
-            data/raw_prev
+            data/raw_nb
+            data/raw_nb_prev
+            data/raw_9a
+            data/raw_pa
           key: rental-data-${{ github.run_number }}
           restore-keys: |
             rental-data-
 
+      # Stars are personal (browser localStorage / local disk only) — never publish them.
+      - name: Drop personal stars from cache
+        run: rm -f data/cache/stars_and_dismissals.json
+
       - name: Fetch NoBroker listings
         run: |
-          rm -rf data/raw
-          mkdir -p data/raw
-          python3 -m rental_lookup
+          # Last run's listings become raw_nb_prev, used to show delisted listings on the map.
+          if compgen -G "data/raw_nb/*.json" > /dev/null; then
+            rm -rf data/raw_nb_prev
+            mv data/raw_nb data/raw_nb_prev
+          fi
+          rm -rf data/raw_nb
+          mkdir -p data/raw_nb
+          python3 -m rental_lookup.sources nobroker
 
       - name: Fetch MagicBricks listings
         run: |
-          mkdir -p data/raw_mb
           rm -rf data/raw_mb
-          mkdir -p data/raw_mb
-          python3 -m rental_lookup.magicbricks
+          python3 -m rental_lookup.sources magicbricks
 
-      - name: Sync stars (published stars.json + repo cache → merge)
+      - name: Fetch 99acres listings
+        continue-on-error: true
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          APIFY_MAX_RESULTS: '200'
         run: |
-          mkdir -p data/cache
+          rm -rf data/raw_9a
+          python3 -m rental_lookup.sources 99acres
 
-          # Published stars.json on gh-pages is the canonical shared copy — it is
-          # what the deployed page reads, and the Deploy step below republishes it.
-          curl -sf "https://parijat2801.github.io/rental-lookup-map/stars.json" -o /tmp/stars_published.json || echo '' > /tmp/stars_published.json
-          cp data/cache/stars_and_dismissals.json /tmp/stars_cached.json 2>/dev/null || echo '' > /tmp/stars_cached.json
-
-          # Merge using tested module (handles corrupted JSON safely)
-          python3 -c "
-          import json
-          from rental_lookup.star_merge import load_json_safe, merge_stars
-
-          sources = []
-          for f in ['/tmp/stars_published.json', '/tmp/stars_cached.json']:
-              try:
-                  sources.append(load_json_safe(open(f).read()))
-              except FileNotFoundError:
-                  sources.append({})
-
-          merged = merge_stars(sources)
-          if not merged['starred'] and not merged['dismissed']:
-              raise SystemExit('Refusing to publish empty stars — all sources were unreadable')
-
-          with open('data/cache/stars_and_dismissals.json', 'w') as f:
-              json.dump(merged, f, indent=2)
-
-          print(f'Merged: {len(merged[\"starred\"])} starred, {len(merged[\"dismissed\"])} dismissed')
-          "
+      # data/raw_pa is cached: only properties new since the last run are fetched (the API is rate-limited).
+      - name: Fetch Property Angel listings
+        run: python3 -m rental_lookup.sources propertyangel
 
       - name: Build map
-        run: |
-          mkdir -p output
-          python3 build_map.py
+        env:
+          CARTO_BASEMAPS_KEY: ${{ secrets.CARTO_BASEMAPS_KEY }}
+        run: python3 -m rental_lookup.webmap.builder
 
       - name: Deploy to GitHub Pages
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           cp output/map.html /tmp/map.html
-          cp data/cache/stars_and_dismissals.json /tmp/stars.json
           git stash --include-untracked || true
           git checkout gh-pages
           git reset --hard origin/gh-pages
           cp /tmp/map.html index.html
-          cp /tmp/stars.json stars.json
-          git add index.html stars.json
+          git rm -f stars.json 2>/dev/null || true
+          git add index.html
           git commit -m "Update map $(date -u +%Y-%m-%d)" || echo "No changes"
           git push origin gh-pages

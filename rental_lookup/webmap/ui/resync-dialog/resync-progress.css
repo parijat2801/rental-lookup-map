@@ -1,0 +1,74 @@
+/* --- Resync progress chip ---------------------------------------------------- */
+/* Mounted as a topright Leaflet control so it sits under the legend and shifts
+   when the legend expands. */
+.resync-progress {
+    display: grid;
+    gap: 8px;
+    width: max-content;
+    max-width: min(260px, calc(100vw - 32px));
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    pointer-events: none;
+    clear: both;
+}
+.resync-progress[hidden] {
+    display: none;
+}
+.resync-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.resync-progress-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    width: 10px;
+    height: 10px;
+    color: var(--muted);
+    animation: resync-spin 1s linear infinite;
+}
+.resync-progress-icon svg.icon {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+@keyframes resync-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .resync-progress-icon {
+        animation: none;
+    }
+}
+[data-motion="off"] .resync-progress-icon {
+    animation: none;
+}
+.resync-progress-label {
+    min-width: 0;
+    color: var(--text);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.resync-progress-track {
+    height: 2px;
+    border-radius: 999px;
+    background: var(--hover);
+    overflow: hidden;
+}
+.resync-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 0.35s ease;
+}

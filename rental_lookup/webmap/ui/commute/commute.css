@@ -1,0 +1,290 @@
+/* --- Places of interest (Commute tab) ------------------------------------------ */
+.areas-panel {
+    margin: 14px 0 0;
+    padding: 12px 18px 12px;
+    display: grid;
+    gap: 10px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+.areas-panel[hidden] {
+    display: none;
+}
+.areas-panel.collapsed {
+    gap: 0;
+}
+.areas-panel.collapsed .areas-body {
+    display: none;
+}
+.areas-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    height: 20px;
+    padding: 0;
+    text-align: left;
+    line-height: 1;
+    border-radius: 6px;
+}
+.areas-head:hover .label,
+.areas-head:hover .chevron {
+    color: var(--text);
+}
+.areas-head-left,
+.areas-head-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    min-width: 0;
+}
+.areas-head-right {
+    flex-shrink: 1;
+}
+/* Uppercase caps sit optically high in the em-box; nudge down to match the count pill. */
+.areas-head .label {
+    display: block;
+    line-height: 16px;
+    transform: translateY(1px);
+}
+.areas-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--border);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--chip-fg);
+}
+.areas-count[hidden] {
+    display: none;
+}
+.areas-head .chevron {
+    display: block;
+    width: 14px;
+    height: 14px;
+    color: var(--subtle);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+.areas-panel:not(.collapsed) .areas-head .chevron {
+    transform: rotate(180deg);
+}
+.areas-status {
+    font-size: var(--fs-xs);
+    color: var(--subtle);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.areas-status:empty {
+    display: none;
+}
+.areas-body {
+    display: grid;
+    gap: 6px;
+}
+.area-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.area-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.area-list:empty {
+    display: none;
+}
+.area-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px 3px 8px;
+    border-radius: 999px;
+    border: 1px dashed var(--border-strong);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--muted);
+}
+.area-add:hover {
+    color: var(--text);
+    border-color: var(--text);
+    background: var(--hover);
+}
+.area-add[hidden] {
+    display: none;
+}
+.area-add svg.icon {
+    width: 12px;
+    height: 12px;
+}
+.area-search {
+    position: relative;
+    display: flex;
+}
+.area-search[hidden] {
+    display: none;
+}
+.area-search .search-box {
+    flex: 1;
+    height: 32px;
+}
+.area-suggestions {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 36px;
+    z-index: 25;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 4px;
+}
+.area-suggestions[hidden] {
+    display: none;
+}
+.area-suggestion {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 7px 10px;
+    border-radius: 8px;
+}
+.area-suggestion:hover,
+.area-suggestion.on {
+    background: var(--hover);
+}
+.area-suggestion small {
+    display: block;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.area-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 3px 3px 3px 8px;
+    border-radius: 999px;
+    background: var(--border);
+    color: var(--chip-fg);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+}
+.area-chip .area-name {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.area-chip .area-name:hover {
+    background: none;
+    color: var(--text);
+    text-decoration: underline;
+}
+.area-chip button {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.area-chip button:hover {
+    background: var(--border-strong);
+    color: var(--text);
+}
+.area-chip svg.icon {
+    width: 12px;
+    height: 12px;
+}
+.area-marker span {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    color: var(--indigo);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+.area-marker svg.icon {
+    width: 28px;
+    height: 28px;
+    fill: var(--indigo);
+    stroke: var(--bg);
+    stroke-width: 1.5;
+}
+.area-marker svg.icon circle {
+    fill: var(--bg);
+    stroke: none;
+}
+/* Routes from each place of interest to the selected listing; metro rides keep their line colour. */
+.commute-path-drive {
+    stroke: var(--muted);
+    stroke-opacity: 0.6;
+}
+.commute-path-leg {
+    stroke: var(--muted);
+}
+.commute-path-casing {
+    stroke: var(--bg);
+}
+/* Cursor is the top-left corner (flips near edges). */
+.area-context-menu {
+    position: fixed;
+    z-index: 1200;
+    display: grid;
+    min-width: 200px;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: var(--shadow-lg);
+}
+.area-context-menu .area-menu-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: var(--fs-sm);
+    white-space: nowrap;
+    text-align: left;
+}
+.area-context-menu .area-menu-item:hover,
+.area-context-menu .area-menu-item:focus-visible {
+    background: var(--hover);
+}
+.area-context-menu .area-menu-item svg.icon {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+}

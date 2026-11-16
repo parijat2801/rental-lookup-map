@@ -1,5 +1,7 @@
 # Housing.com API Spike
 
+> **Status: not done.** There is no Housing.com source in the pipeline and no findings are recorded here yet; this is the checklist for investigating it. If you pursue it, record the endpoint in `data/spike/housing-api-contract.md` (as for the other sources) and see [CONTRIBUTING.md](../../CONTRIBUTING.md#adding-a-new-source) for wiring it in.
+
 ## Goal
 Determine if Housing.com has a scrapeable API endpoint for rental listings, similar to NoBroker's `/api/v3/multi/property/RENT/filter`.
 

@@ -1,5 +1,7 @@
 # MagicBricks API Spike
 
+> **Status: done.** MagicBricks is a live source (`rental_lookup/sources/magicbricks.py`). It exposes an unauthenticated JSON search endpoint; the verified endpoint, parameters and field mapping are in [`data/spike/magicbricks-api-contract.md`](../../data/spike/magicbricks-api-contract.md). The steps below are kept as a template for investigating a new source.
+
 ## Goal
 Determine if MagicBricks has a scrapeable API endpoint for rental listings.
 

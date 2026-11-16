@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Map: dev server with watcher",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "rental_lookup.webmap.dev",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Map: build once",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "rental_lookup.webmap.builder",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "CLI ranking (results.csv)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "rental_lookup",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

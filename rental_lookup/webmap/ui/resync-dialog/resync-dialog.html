@@ -1,0 +1,45 @@
+<div
+    class="overlay"
+    id="resync-overlay"
+    hidden
+    onclick="if (event.target === this) toggleResyncConfirm(false);"
+>
+    <div
+        class="dialog compact"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="resync-title"
+        aria-describedby="resync-description"
+    >
+        <div class="dialog-header">
+            <h2 id="resync-title">Resync listings?</h2>
+            <button
+                class="icon-button"
+                aria-label="Close"
+                onclick="toggleResyncConfirm(false)"
+            >
+                <span data-icon="x"></span>
+            </button>
+        </div>
+        <p class="dialog-body" id="resync-description">
+            This fetches fresh listings from NoBroker, MagicBricks and Property
+            Angel and rebuilds the map. It takes a few minutes, and the page
+            reloads when it finishes. Your stars and dismissals are kept.
+        </p>
+        <div class="dialog-actions">
+            <button class="text-button" onclick="toggleResyncConfirm(false)">
+                Cancel
+            </button>
+            <button
+                class="primary-button"
+                id="resync-confirm-button"
+                onclick="
+                    toggleResyncConfirm(false);
+                    startResync();
+                "
+            >
+                Resync
+            </button>
+        </div>
+    </div>
+</div>

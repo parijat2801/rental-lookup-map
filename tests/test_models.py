@@ -1,5 +1,4 @@
-import pytest
-from rental_lookup.models import Listing, LocationScore, ScoredListing
+from rental_lookup.models import Listing, NearbyDistances, ScoredListing
 
 
 def test_listing_from_nobroker_dict():
@@ -35,7 +34,7 @@ def test_listing_from_nobroker_dict():
     assert listing.lng == 77.6411
     assert listing.society == "Independent House"
     assert listing.has_power_backup is False
-    assert listing.has_gated_community is False
+    assert listing.is_gated_community is False
     assert listing.has_covered_parking is False
     assert listing.has_security is False
     assert listing.has_car_parking is False
@@ -68,7 +67,7 @@ def test_listing_from_nobroker_with_amenities():
     }
     listing = Listing.from_nobroker(raw)
     assert listing.has_power_backup is True
-    assert listing.has_gated_community is True
+    assert listing.is_gated_community is True
     assert listing.has_covered_parking is True
     assert listing.has_security is True
     assert listing.has_car_parking is True
@@ -112,11 +111,11 @@ def test_listing_no_photo_url():
     assert listing.photo_url == ""
 
 
-def test_location_score_defaults():
-    score = LocationScore()
-    assert score.nearest_park_m is None
-    assert score.nearest_lake_m is None
-    assert score.nearest_metro_m is None
+def test_nearby_distances_default_to_unknown():
+    distances = NearbyDistances()
+    assert distances.nearest_park_m is None
+    assert distances.nearest_lake_m is None
+    assert distances.nearest_metro_m is None
 
 
 def test_scored_listing_combines_listing_and_location():
@@ -131,8 +130,10 @@ def test_scored_listing_combines_listing_and_location():
         "amenitiesMap": {"PB": True, "GP": True, "CPA": True, "SECURITY": True},
     }
     listing = Listing.from_nobroker(raw)
-    loc = LocationScore(nearest_park_m=200, nearest_lake_m=1000, nearest_metro_m=500)
-    scored = ScoredListing(listing=listing, location=loc, total_score=85)
+    nearby = NearbyDistances(
+        nearest_park_m=200, nearest_lake_m=1000, nearest_woods_m=300, nearest_metro_m=500)
+    scored = ScoredListing(listing=listing, nearby=nearby, total_score=85)
     assert scored.listing.rent == 40000
-    assert scored.location.nearest_park_m == 200
+    assert scored.nearby.nearest_park_m == 200
+    assert scored.nearby.nearest_woods_m == 300
     assert scored.total_score == 85

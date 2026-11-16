@@ -1,6 +1,6 @@
 import copy
 
-from rental_lookup.nobroker import parse_listings, deduplicate, make_search_param
+from rental_lookup.sources.nobroker import dedupe_by_id, encode_search_anchor, parse_listings
 
 
 def test_parse_listings_from_sample_response(sample_nobroker_response):
@@ -37,7 +37,7 @@ def test_parse_listings_failed_response():
     assert listings == []
 
 
-def test_deduplicate_by_id():
+def test_dedupe_by_id():
     from rental_lookup.models import Listing
 
     raw1 = {
@@ -56,7 +56,7 @@ def test_deduplicate_by_id():
     l2 = Listing.from_nobroker(raw2)
     l3 = Listing.from_nobroker(raw3)
 
-    result = deduplicate([l1, l2, l3])
+    result = dedupe_by_id([l1, l2, l3])
     assert len(result) == 2
     assert result[0].id == "dup1"
     assert result[0].rent == 40000
@@ -65,6 +65,6 @@ def test_deduplicate_by_id():
 
 def test_make_search_param():
     import base64, json
-    param = make_search_param("Indiranagar", 12.9716, 77.6412, "ChIJ123")
+    param = encode_search_anchor("Indiranagar", 12.9716, 77.6412, "ChIJ123")
     decoded = json.loads(base64.b64decode(param))
     assert decoded == [{"lat": 12.9716, "lon": 77.6412, "placeId": "ChIJ123", "placeName": "Indiranagar"}]
