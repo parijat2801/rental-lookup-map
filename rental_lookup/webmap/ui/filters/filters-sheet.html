@@ -21,30 +21,37 @@
                         <span>Monthly total (rent + maintenance)</span
                         ><span class="slider-value" id="value-cost"></span>
                     </div>
-                    <div class="dual-range">
-                        <div class="track">
-                            <div class="track-fill" id="cost-track-fill"></div>
+                    <div class="cost-range">
+                        <div
+                            class="cost-hist"
+                            id="cost-hist"
+                            aria-hidden="true"
+                        ></div>
+                        <div class="dual-range">
+                            <div class="track">
+                                <div class="track-fill" id="cost-track-fill"></div>
+                            </div>
+                            <input
+                                type="range"
+                                id="filter-cost-min"
+                                min="0"
+                                max="150000"
+                                step="5000"
+                                value="0"
+                                oninput="onCostInput(this)"
+                                aria-label="Minimum monthly cost"
+                            />
+                            <input
+                                type="range"
+                                id="filter-cost-max"
+                                min="0"
+                                max="150000"
+                                step="5000"
+                                value="150000"
+                                oninput="onCostInput(this)"
+                                aria-label="Maximum monthly cost"
+                            />
                         </div>
-                        <input
-                            type="range"
-                            id="filter-cost-min"
-                            min="0"
-                            max="150000"
-                            step="5000"
-                            value="0"
-                            oninput="onCostInput(this)"
-                            aria-label="Minimum monthly cost"
-                        />
-                        <input
-                            type="range"
-                            id="filter-cost-max"
-                            min="0"
-                            max="150000"
-                            step="5000"
-                            value="150000"
-                            oninput="onCostInput(this)"
-                            aria-label="Maximum monthly cost"
-                        />
                     </div>
                 </div>
                 <div>
@@ -77,7 +84,7 @@
                         data-filter="bhk1"
                         onclick="toggleChip(this)"
                     >
-                        1 BHK
+                        1/1.5 BHK
                     </button>
                     <button
                         class="chip"
@@ -92,6 +99,13 @@
                         onclick="toggleChip(this)"
                     >
                         3 BHK
+                    </button>
+                    <button
+                        class="chip"
+                        data-filter="bhk3plus"
+                        onclick="toggleChip(this)"
+                    >
+                        3+ BHK
                     </button>
                 </div>
                 <div class="chip-row">

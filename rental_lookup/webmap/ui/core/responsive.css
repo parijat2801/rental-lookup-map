@@ -35,7 +35,8 @@
         width: 100%;
     }
     .resize-handle,
-    .sidebar-collapse-button {
+    .sidebar-collapse-button,
+    .shortcuts-button {
         display: none;
     }
     .floating-bar {

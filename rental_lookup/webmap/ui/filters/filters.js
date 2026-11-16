@@ -7,6 +7,7 @@ var filterChips = {
     bhk1: false,
     bhk2: false,
     bhk3: false,
+    bhk3plus: false,
     furnishedFull: false,
     furnishedSemi: false,
     furnishedNone: false,
@@ -168,6 +169,46 @@ function onCostInput(slider) {
 function onFloorInput(slider) {
     onDualRangeInput("filter-floor-min", "filter-floor-max", slider);
 }
+// One bar per slider step. The top step also holds anything above the max.
+var COST_HIST_STEP = 5000;
+var COST_HIST_MAX = 150000;
+var costHistBins = null;
+function costHistogram() {
+    if (costHistBins) return costHistBins;
+    var count = COST_HIST_MAX / COST_HIST_STEP;
+    var bins = [];
+    for (var i = 0; i < count; i++) bins[i] = 0;
+    LISTINGS.forEach(function (d) {
+        var index = Math.floor((+d.totalCost || 0) / COST_HIST_STEP);
+        if (index < 0) return;
+        if (index >= count) index = count - 1;
+        bins[index]++;
+    });
+    costHistBins = bins;
+    return bins;
+}
+function paintCostHistogram(containerId, minValue, maxValue) {
+    var el = byId(containerId);
+    if (!el) return;
+    var bins = costHistogram();
+    var peak = 0;
+    for (var i = 0; i < bins.length; i++) if (bins[i] > peak) peak = bins[i];
+    if (el.childElementCount !== bins.length) {
+        el.textContent = "";
+        bins.forEach(function () {
+            el.appendChild(document.createElement("span"));
+        });
+    }
+    for (var j = 0; j < bins.length; j++) {
+        var start = j * COST_HIST_STEP;
+        var inside = start + COST_HIST_STEP > minValue && start < maxValue;
+        var bar = el.children[j];
+        bar.style.height = bins[j]
+            ? Math.max(8, (bins[j] / peak) * 100) + "%"
+            : "0";
+        bar.classList.toggle("in", inside && bins[j] > 0);
+    }
+}
 function paintDualRangeTrack(lowId, highId, fillId) {
     var low = byId(lowId),
         high = byId(highId),
@@ -188,6 +229,11 @@ function paintSliders() {
             );
         });
     paintDualRangeTrack("filter-cost-min", "filter-cost-max", "cost-track-fill");
+    paintCostHistogram(
+        "cost-hist",
+        +byId("filter-cost-min").value,
+        +byId("filter-cost-max").value,
+    );
     paintDualRangeTrack(
         "filter-floor-min",
         "filter-floor-max",

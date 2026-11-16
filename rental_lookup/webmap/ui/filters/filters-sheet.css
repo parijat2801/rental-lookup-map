@@ -145,8 +145,30 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: var(--shadow);
     cursor: grab;
 }
+.cost-range {
+    display: flex;
+    flex-direction: column;
+}
+.cost-hist {
+    height: 48px;
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    /* The track starts 8px down in the range control. Pull the bars onto that line. */
+    margin-bottom: -8px;
+    pointer-events: none;
+}
+.cost-hist span {
+    flex: 1 1 0;
+    border-radius: 2px 2px 0 0;
+    background: var(--border);
+}
+.cost-hist span.in {
+    background: color-mix(in srgb, var(--accent) 38%, var(--border));
+}
 .dual-range {
     position: relative;
+    z-index: 1;
     height: 20px;
 }
 .dual-range .track {

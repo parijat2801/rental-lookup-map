@@ -16,6 +16,7 @@ MUST_HAVE_CHIPS = (
     "hideDismissed",
     "bhk1",
     "bhk2",
+    "bhk3plus",
     "furnishedFull",
     "furnishedSemi",
 )

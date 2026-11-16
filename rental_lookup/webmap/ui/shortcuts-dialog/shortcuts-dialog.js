@@ -16,6 +16,13 @@ document.addEventListener("keydown", function (e) {
         return;
     }
     if (openOverlay) {
+        if (openOverlay.id === "welcome-overlay") {
+            if (key === "Escape") {
+                e.preventDefault();
+                onWelcomeEscape();
+            }
+            return;
+        }
         if (
             key === "Escape" ||
             (key === "?" && openOverlay.id === "shortcuts-overlay")
